@@ -1,40 +1,73 @@
-# ragetech.dev — Independent Engineering Collective
+# ragetech.dev — Sovereign Systems Engineering Collective
 
-A clean, human-crafted landing page designed for **ragetech.dev** referencing the **Tailark Dusk** aesthetic (`dusk-landing-8`), stripped of generic AI marketing buzzwords, emoji clutter, and rainbow gradients.
+A production-grade, human-crafted web application and edge runtime designed for **ragetech.dev** referencing the **Tailark Dusk** aesthetic, backed by **Cloudflare Workers** and a **Cloudflare D1 SQLite Database**.
 
 ---
 
-## ✦ Core Design & Architectural Features
+## ✦ Core Design & Architecture
 
 1. **Restrained Dusk Aesthetic**:
-   - Deep matte zinc & charcoal canvas (`#09090b`), hairline 1px borders (`rgba(255, 255, 255, 0.07)`), and subtle architectural grid overlay.
-   - Clean typographic hierarchy using **Inter** with tight tracking (`-0.03em`) and tabular monospace figures with **JetBrains Mono**.
-   - Confident, technical voice without cliché AI marketing copy.
+   - Deep matte zinc & charcoal canvas (`#09090b`), hairline borders (`rgba(255, 255, 255, 0.07)`), and subtle ambient mesh gradients.
+   - Clean typographic hierarchy using **Plus Jakarta Sans** and tabular monospace with **JetBrains Mono**.
+   - No chaotic terminal box in the hero, no noisy tickers — pure technical serenity and craft.
 
-2. **Tailark Dusk Features 5 Sticky Scroll Highlight**:
-   - Sticky repository sidebar on the left (`Hyperion`, `PulseOS KV`, `Chimera Runtime`, `Eclipse UI`, `Vortex Scheduler`, `Aether P2P`).
-   - As you scroll down the page, `IntersectionObserver` dynamically highlights each active repository in the sidebar and illuminates the corresponding card with a subtle active border.
-   - Each project entry features clean architecture specs and a technical preview window (Rust io_uring setup, Raft cluster JSON, OpenTelemetry DAG trace, CSS tokens, cron manifest, WebRTC P2P log).
+2. **Cloudflare D1 Serverless Database**:
+   - Edge SQLite database storing all 6 collective projects, 29 builders, project assignees, and repository showcases.
+   - `schema.sql`: Full schema with relational integrity, foreign key cascades, and query indexes.
+   - `seed.sql`: Complete database seed with all collective projects and builder profiles.
 
-3. **The 29 Builders Directory**:
-   - Complete directory of all 29 collective engineers with authentic handles (`@alexv`, `@elena`, `@mchen`, etc.), roles, primary tech stack, and current focus.
-   - **Interactive View Switcher**: Toggle between **Card Grid View** and **High-Density Table View** (similar to Linear / Raycast).
-   - **Keyboard Shortcut**: Press <kbd>/</kbd> anywhere on the page to instantly jump focus to the developer search filter.
-   - Squad filters: `All 29`, `Systems [13]`, `Interface [6]`, `AI Runtimes [5]`, `Security & Infra [5]`.
+3. **Dynamic Universal Page Loaders (Zero Subdomains Required)**:
+   - **Universal Project Loader** (`/p/:slug` -> `project.html`): Fetches project blueprint, performance specs, architecture breakdown, and lead maintainers dynamically from Cloudflare D1.
+   - **Universal Builder Dossier** (`/d/:handle` or `/@:handle` -> `developer.html`): Displays custom developer profile, flagship repository flex showcase, secondary repos, GPG key, and verified status.
+   - Both loaders feature automatic offline fallback to local datasets (`data/projects.js` and `data/developers.js`) ensuring 100% uptime.
 
-4. **Zero Dependencies & Blazing Fast**:
-   - Pure HTML5, Vanilla CSS, and Vanilla JavaScript.
-   - 0ms build step, zero npm runtime dependencies, instant load.
+4. **In-Browser Developer Studio & Dynamic Maintenance**:
+   - Authenticated developers can update their status, bio, squad focus, and repos directly from the browser or via the REST API.
+   - Project leads can update blueprints, specifications, and code previews without modifying source code or waiting for PR builds.
 
 ---
 
-## 🚀 Running Locally
+## 🛠 Cloudflare D1 Database Commands
 
 ```bash
-# Direct browser opening or via local server:
-npx serve .
-# or
-npm start
+# 1. Generate or update seed.sql from current data registries:
+npm run db:build-seed
+
+# 2. Run migrations and seed on local emulator:
+npm run db:migrate:local
+npm run db:seed:local
+
+# 3. Create production D1 database on Cloudflare:
+npx wrangler d1 create ragetech_db
+# (Paste the generated database_id into wrangler.jsonc)
+
+# 4. Deploy schema and seed to production Cloudflare D1:
+npm run db:migrate:remote
+npm run db:seed:remote
 ```
 
-Visit [http://localhost:3000](http://localhost:3000).
+---
+
+## 🚀 Running Locally & Deploying
+
+```bash
+# Run local preview with Cloudflare Worker & D1 emulator:
+npm run dev
+
+# Or run lightweight static preview:
+npm start
+
+# Deploy to Cloudflare:
+npm run deploy
+```
+
+---
+
+## 🌐 Dynamic Routing Map
+
+- `/` — Collective Index (Tailark Dusk showcase & sticky scroll project inspector)
+- `/p/:slug` — Dedicated dynamic project page (e.g. `/p/hyperion`, `/p/pulseos`)
+- `/d/:handle` — Dedicated builder dossier (e.g. `/d/alexv`, `/d/elena`, `/d/mchen`)
+- `/api/projects` — REST API for collective projects
+- `/api/developers` — REST API for builders directory
+- `/api/auth/*` — Edge token authentication sessions

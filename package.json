@@ -1,12 +1,18 @@
 {
   "name": "ragetech-index",
   "version": "1.0.0",
-  "description": "Ragetech engineering collective landing page",
-  "main": "index.html",
+  "description": "Ragetech engineering collective hub with Cloudflare D1 & edge runtime",
+  "main": "worker.js",
   "scripts": {
+    "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "preview": "wrangler dev",
-    "start": "npx serve ."
+    "start": "npx serve .",
+    "db:build-seed": "node scripts/build_seed.js",
+    "db:migrate:local": "wrangler d1 execute ragetech_db --local --file=schema.sql",
+    "db:seed:local": "wrangler d1 execute ragetech_db --local --file=seed.sql",
+    "db:migrate:remote": "wrangler d1 execute ragetech_db --remote --file=schema.sql",
+    "db:seed:remote": "wrangler d1 execute ragetech_db --remote --file=seed.sql"
   },
   "devDependencies": {
     "wrangler": "^4.149.0"

@@ -10,3 +10,5 @@ wrangler.jsonc
 wrangler.toml
 .assetsignore
 .gitignore
+*.sql
+scripts/

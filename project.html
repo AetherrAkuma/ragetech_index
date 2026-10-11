@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Blueprint — Ragetech Collective</title>
+  <meta name="description" content="Dedicated architectural blueprint, telemetry benchmarks, and maintainers on Ragetech.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="page-project">
+  <!-- Ambient background glow -->
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <a href="/" class="brand-link">
+          <span class="brand-badge">R</span>
+          <span class="brand-text">ragetech<span class="brand-dot">.</span>dev</span>
+        </a>
+        <div class="header-tagline">
+          <span class="status-indicator"></span>
+          <span>Project Specification</span>
+        </div>
+      </div>
+
+      <nav class="header-nav">
+        <a href="/" class="nav-item">← Collective Index</a>
+        <a href="/#projects" class="nav-item">All Projects</a>
+        <a href="/#developers" class="nav-item">Builders</a>
+        <button id="projectEditBtn" class="btn-clean btn-ghost" style="display:none;" onclick="openProjectEditModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Edit Spec</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="project-page-container">
+    <div id="projectLoadingState" class="page-loading-state">
+      <div class="spinner"></div>
+      <p>Loading project blueprint...</p>
+    </div>
+
+    <div id="projectNotFoundState" class="page-error-state" style="display: none;">
+      <h2>Project Not Found</h2>
+      <p>The requested collective project could not be located in our registry.</p>
+      <a href="/" class="btn-clean btn-primary">Return to Index</a>
+    </div>
+
+    <!-- Loaded Content -->
+    <article id="projectContent" class="project-view" style="display: none;">
+      <!-- Hero Section -->
+      <section class="project-hero">
+        <div class="project-badge-row">
+          <span id="projBadge" class="version-badge">v0.1.0</span>
+          <span id="projLang" class="lang-pill"><span class="lang-dot" id="projLangDot"></span><span id="projLangText">Rust</span></span>
+          <span id="projStats" class="stars-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <span id="projStars">0</span> stars
+          </span>
+        </div>
+
+        <h1 id="projTitle" class="project-headline">Project Name</h1>
+        <p id="projSummary" class="project-lead">Project description and core objective.</p>
+
+        <!-- Command / Clone Bar -->
+        <div class="project-action-bar">
+          <div class="clone-box" onclick="copyCloneCommand()">
+            <span class="clone-prefix">$</span>
+            <code id="projCloneCmd">git clone https://github.com/ragetech/project.git</code>
+            <button class="clone-copy-btn" title="Copy to clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copyFeedback">Copy</span>
+            </button>
+          </div>
+
+          <a id="projGithubLink" href="#" target="_blank" rel="noopener" class="btn-clean btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span>GitHub Repository</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Key Performance Metrics Grid -->
+      <section class="project-specs-grid" id="projSpecsContainer">
+        <!-- Rendered dynamically -->
+      </section>
+
+      <!-- Architecture & Deep Technical Breakdown -->
+      <section class="project-deep-dive">
+        <div class="deep-dive-card">
+          <div class="deep-dive-header">
+            <span class="deep-dive-tag">ARCHITECTURAL DESIGN</span>
+            <h2 class="deep-dive-title">Engineering Core & Low-Level Subsystems</h2>
+          </div>
+          <div class="deep-dive-body">
+            <div class="spec-block">
+              <h3>System Topology</h3>
+              <p id="projArchText">Loading system architecture details...</p>
+            </div>
+            <div class="spec-block">
+              <h3>Design Motivation & Objective</h3>
+              <p id="projGoalText">Loading design objective...</p>
+            </div>
+            <div class="spec-block">
+              <h3>Production & Benchmark Status</h3>
+              <p id="projStatusText">Loading deployment status...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Code Preview Card -->
+        <div class="project-code-card">
+          <div class="code-card-header">
+            <div class="code-dots">
+              <span class="code-dot dot-red"></span>
+              <span class="code-dot dot-yellow"></span>
+              <span class="code-dot dot-green"></span>
+            </div>
+            <span id="projCodeTitle" class="code-filename">source_manifest.rs</span>
+            <span id="projCodeMeta" class="code-meta-badge">tokio v1.42</span>
+          </div>
+          <div class="code-card-body">
+            <pre><code id="projCodeBlock">// Loading preview code...</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Project Maintainers & Leads -->
+      <section class="project-maintainers-section">
+        <div class="section-heading">
+          <span class="section-label">ASSIGNED ENGINEERS</span>
+          <h2 class="section-title">Lead Maintainers & System Architects</h2>
+          <p class="section-subtitle">Engineers driving the implementation, benchmarks, and RFC designs.</p>
+        </div>
+
+        <div id="maintainersGrid" class="maintainers-grid">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <!-- Edit Project Modal -->
+  <div id="projectModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeProjectEditModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Project Blueprint</h3>
+        <button class="modal-close-btn" onclick="closeProjectEditModal()">&times;</button>
+      </div>
+      <form id="projectEditForm" onsubmit="saveProjectEdits(event)">
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" id="editProjName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label>Version Badge</label>
+          <input type="text" id="editProjBadge" class="form-input" placeholder="v0.9.4-alpha">
+        </div>
+        <div class="form-group">
+          <label>Executive Summary</label>
+          <textarea id="editProjSummary" class="form-input form-textarea" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Architecture Blueprint</label>
+          <textarea id="editProjArch" class="form-input form-textarea" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Code Preview File & Snippet</label>
+          <input type="text" id="editProjPreviewTitle" class="form-input" placeholder="manifest.rs" style="margin-bottom:8px;">
+          <textarea id="editProjCode" class="form-input form-textarea font-mono" rows="6"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-clean btn-ghost" onclick="closeProjectEditModal()">Cancel</button>
+          <button type="submit" class="btn-clean btn-primary" id="saveProjBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Fallback Scripts in case running offline -->
+  <script src="/data/projects.js"></script>
+  <script src="/data/developers.js"></script>
+  
+  <!-- Project Loader Logic -->
+  <script>
+    let currentProject = null;
+    let currentUser = null;
+
+    // Determine slug from /p/:slug or ?id=slug or #/project/:slug
+    function getProjectSlug() {
+      const path = window.location.pathname;
+      if (path.startsWith('/p/')) {
+        const slug = path.replace('/p/', '').replace(/\/$/, '');
+        if (slug) return slug;
+      }
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('id')) return params.get('id');
+      if (window.location.hash.startsWith('#/project/')) {
+        return window.location.hash.replace('#/project/', '').trim();
+      }
+      return 'hyperion'; // Default fallback
+    }
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            currentUser = data.user;
+          }
+        }
+      } catch (e) {
+        console.warn('Auth check skipped:', e);
+      }
+    }
+
+    async function loadProject() {
+      const slug = getProjectSlug();
+      document.getElementById('projectLoadingState').style.display = 'flex';
+      document.getElementById('projectContent').style.display = 'none';
+      document.getElementById('projectNotFoundState').style.display = 'none';
+
+      await checkAuth();
+
+      try {
+        // Try D1 API first
+        const res = await fetch(`/api/projects/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.project) {
+            renderProject(data.project);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('API fetch failed, falling back to local dataset:', err);
+      }
+
+      // Local fallback
+      const fallback = (window.PROJECTS || []).find(p => p.id === slug || p.slug === slug);
+      if (fallback) {
+        renderProject({
+          ...fallback,
+          slug: fallback.id,
+          repo_url: fallback.githubUrl || `https://github.com/${fallback.repo}`,
+          specs: fallback.specs || [],
+          fullSpec: fallback.fullSpec || {},
+          preview_title: fallback.previewTitle,
+          preview_content: fallback.previewContent,
+          preview_meta: fallback.previewMeta,
+          maintainers: (fallback.assignees || []).map(handle => {
+            const dev = (window.DEVELOPERS || []).find(d => d.handle === handle);
+            return dev ? {
+              handle: dev.handle,
+              name: dev.name,
+              role: dev.role,
+              squad: dev.squad,
+              avatar_url: dev.avatarUrl,
+              status: dev.status
+            } : { handle, name: handle, role: 'Maintainer' };
+          })
+        });
+      } else {
+        document.getElementById('projectLoadingState').style.display = 'none';
+        document.getElementById('projectNotFoundState').style.display = 'block';
+      }
+    }
+
+    function renderProject(p) {
+      currentProject = p;
+      document.title = `${p.name} — Ragetech Architecture Blueprint`;
+
+      document.getElementById('projTitle').textContent = p.name;
+      document.getElementById('projBadge').textContent = p.badge || 'v0.1.0';
+      document.getElementById('projSummary').textContent = p.summary || '';
+      document.getElementById('projStars').textContent = (p.stars || 0).toLocaleString();
+      
+      const langDot = document.getElementById('projLangDot');
+      langDot.style.backgroundColor = p.language_color || p.languageColor || '#dea584';
+      document.getElementById('projLangText').textContent = p.language || 'Rust';
+
+      const cloneUrl = p.clone_url || p.cloneUrl || `git clone https://github.com/ragetech/${p.slug}.git`;
+      document.getElementById('projCloneCmd').textContent = cloneUrl;
+
+      const ghLink = document.getElementById('projGithubLink');
+      ghLink.href = p.repo_url || p.githubUrl || `https://github.com/ragetech/${p.slug}`;
+
+      // Render specs
+      const specsContainer = document.getElementById('projSpecsContainer');
+      specsContainer.innerHTML = '';
+      const specs = p.specs || [];
+      specs.forEach(spec => {
+        const card = document.createElement('div');
+        card.className = 'spec-metric-card';
+        card.innerHTML = `
+          <div class="metric-label">${escapeHtml(spec.label)}</div>
+          <div class="metric-value">${escapeHtml(spec.val)}</div>
+        `;
+        specsContainer.appendChild(card);
+      });
+
+      // Deep dive
+      const fullSpec = p.fullSpec || {};
+      document.getElementById('projArchText').textContent = fullSpec.arch || 'Custom distributed architecture optimized for low-latency memory execution.';
+      document.getElementById('projGoalText').textContent = fullSpec.goal || 'Sub-millisecond determinism across edge nodes.';
+      document.getElementById('projStatusText').textContent = fullSpec.status || 'Active bench testing.';
+
+      // Code preview
+      document.getElementById('projCodeTitle').textContent = p.preview_title || p.previewTitle || `${p.slug}.rs`;
+      document.getElementById('projCodeMeta').textContent = p.preview_meta || p.previewMeta || 'Active Source';
+      document.getElementById('projCodeBlock').textContent = p.preview_content || p.previewContent || '// Source module';
+
+      // Maintainers
+      const mContainer = document.getElementById('maintainersGrid');
+      mContainer.innerHTML = '';
+      const maintainers = p.maintainers || [];
+      maintainers.forEach(m => {
+        const card = document.createElement('a');
+        card.href = `/d/${m.handle}`;
+        card.className = 'maintainer-card';
+        const avatar = m.avatar_url || m.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${m.handle}`;
+        card.innerHTML = `
+          <img src="${avatar}" alt="${escapeHtml(m.name)}" class="maintainer-avatar">
+          <div class="maintainer-info">
+            <div class="maintainer-name-row">
+              <span class="maintainer-name">${escapeHtml(m.name)}</span>
+              <span class="maintainer-handle">@${escapeHtml(m.handle)}</span>
+            </div>
+            <div class="maintainer-role">${escapeHtml(m.role || 'Maintainer')}</div>
+            ${m.status ? `<div class="maintainer-status">${escapeHtml(m.status)}</div>` : ''}
+          </div>
+        `;
+        mContainer.appendChild(card);
+      });
+
+      // Show edit button if current user is logged in
+      const editBtn = document.getElementById('projectEditBtn');
+      if (currentUser) {
+        editBtn.style.display = 'inline-flex';
+      }
+
+      document.getElementById('projectLoadingState').style.display = 'none';
+      document.getElementById('projectContent').style.display = 'block';
+    }
+
+    function copyCloneCommand() {
+      const text = document.getElementById('projCloneCmd').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const feedback = document.getElementById('copyFeedback');
+        feedback.textContent = 'Copied!';
+        setTimeout(() => feedback.textContent = 'Copy', 2000);
+      });
+    }
+
+    function openProjectEditModal() {
+      if (!currentProject) return;
+      document.getElementById('editProjName').value = currentProject.name || '';
+      document.getElementById('editProjBadge').value = currentProject.badge || '';
+      document.getElementById('editProjSummary').value = currentProject.summary || '';
+      document.getElementById('editProjArch').value = currentProject.fullSpec?.arch || '';
+      document.getElementById('editProjPreviewTitle').value = currentProject.preview_title || currentProject.previewTitle || '';
+      document.getElementById('editProjCode').value = currentProject.preview_content || currentProject.previewContent || '';
+      document.getElementById('projectModal').style.display = 'flex';
+    }
+
+    function closeProjectEditModal() {
+      document.getElementById('projectModal').style.display = 'none';
+    }
+
+    async function saveProjectEdits(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveProjBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      const updated = {
+        name: document.getElementById('editProjName').value,
+        badge: document.getElementById('editProjBadge').value,
+        summary: document.getElementById('editProjSummary').value,
+        previewTitle: document.getElementById('editProjPreviewTitle').value,
+        previewContent: document.getElementById('editProjCode').value,
+        fullSpec: {
+          ...currentProject.fullSpec,
+          arch: document.getElementById('editProjArch').value
+        }
+      };
+
+      try {
+        const res = await fetch(`/api/projects/${currentProject.slug}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        if (res.ok) {
+          closeProjectEditModal();
+          loadProject();
+        } else {
+          const err = await res.json();
+          alert('Error: ' + (err.error || 'Failed to update'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    window.addEventListener('DOMContentLoaded', loadProject);
+  </script>
+</body>
+</html>
