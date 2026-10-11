@@ -8,26 +8,12 @@
 let PROJECTS = window.PROJECTS || [];
 let DEVELOPERS = window.DEVELOPERS || [];
 
-// Check sessionStorage for any live studio overrides during the current session
-try {
-  const customDevs = sessionStorage.getItem('ragetech_custom_developers');
-  if (customDevs) {
-    const parsed = JSON.parse(customDevs);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      DEVELOPERS = parsed;
-    }
-  }
-} catch (e) {
-  console.warn('Could not read sessionStorage', e);
-}
-
 // Global state for directory filters & active route
 let currentSquadFilter = 'all';
 let currentStackFilter = 'all';
 let currentSearchQuery = '';
 let currentSortBy = 'featured';
 let currentDirectoryView = 'showcase'; // 'showcase' | 'compact' | 'terminal'
-let activeStudioDeveloperId = 1;
 let currentAuthUser = null;
 
 // ============================================================================
@@ -56,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function handleRoute() {
   const hash = window.location.hash || '#/';
-  const mainViews = ['view-landing', 'view-project-detail', 'view-developer-detail', 'view-studio'];
+  const mainViews = ['view-landing', 'view-project-detail', 'view-developer-detail'];
   
   // Hide all SPA views
   mainViews.forEach(id => {
@@ -73,10 +59,6 @@ function handleRoute() {
     const handle = hash.replace('#/developer/', '').trim();
     showView('view-developer-detail');
     renderDeveloperDetailPage(handle);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else if (hash === '#/studio') {
-    showView('view-studio');
-    renderStudioPage();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (hash === '#/projects') {
     showView('view-landing');
@@ -131,9 +113,8 @@ function renderProjectDetailPage(projectId) {
           <span>Back to Collective</span>
         </a>
         <div style="display:flex; gap:10px;">
-          <a href="#/studio" class="btn btn-secondary" style="font-size:0.75rem;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            <span>Edit in Studio</span>
+          <a href="/p/${p.id}" class="btn btn-secondary" style="font-size:0.75rem;">
+            <span>Dedicated Page ↗</span>
           </a>
           <a href="${p.githubUrl || 'https://github.com/ragetech/' + p.id}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:0.75rem;">
             <span>GitHub Repository ↗</span>
@@ -289,10 +270,9 @@ function renderDeveloperDetailPage(handle) {
           <span>Back to Roster</span>
         </a>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-secondary" onclick="openStudioForDeveloper(${b.id})" style="font-size:0.75rem;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            <span>Edit Profile in Studio</span>
-          </button>
+          <a href="/d/${b.handle}" class="btn btn-secondary" style="font-size:0.75rem;">
+            <span>Dedicated Dossier ↗</span>
+          </a>
           <a href="${b.socials.github}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:0.75rem;">
             <span>GitHub Profile ↗</span>
           </a>
@@ -436,352 +416,7 @@ function renderDeveloperDetailPage(handle) {
 }
 
 // ============================================================================
-// 5. IN-BROWSER DEVELOPER STUDIO & REPO MANAGER (#/studio)
-// ============================================================================
-
-function openStudioForDeveloper(id) {
-  activeStudioDeveloperId = id;
-  window.location.hash = '#/studio';
-}
-
-function renderStudioPage() {
-  const container = document.getElementById('view-studio');
-  if (!container) return;
-
-  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId) || DEVELOPERS[0];
-  const repo = currentDev.featuredRepo || {};
-
-  container.innerHTML = `
-    <div class="container studio-container">
-      <!-- Studio Header -->
-      <div class="studio-header-box">
-        <div>
-          <span class="section-kicker">In-Browser Developer Studio</span>
-          <h2 style="font-size:1.6rem; color:#fff; font-weight:600; margin-bottom:4px;">Manage Your Developer Profile & Repos</h2>
-          <p style="font-size:0.86rem; color:var(--text-medium);">
-            Live-edit your profile, flex your repositories, and test changes in real-time. Export ready-to-merge PR snippets.
-          </p>
-        </div>
-
-        <!-- Developer Select Bar -->
-        <div style="display:flex; align-items:center; gap:10px;">
-          <select id="studio-dev-picker" class="studio-select" style="min-width:240px;" onchange="onStudioDevChange(this.value)">
-            ${DEVELOPERS.map(b => `
-              <option value="${b.id}" ${b.id === currentDev.id ? 'selected' : ''}>
-                @${b.handle} (${b.name})
-              </option>
-            `).join('')}
-            <option value="new">+ Create New Developer Profile</option>
-          </select>
-          <a href="#/" class="btn btn-secondary" style="font-size:0.78rem;">Exit Studio</a>
-        </div>
-      </div>
-
-      <!-- Split Layout: Left Form Editor, Right Live Preview -->
-      <div class="studio-split-layout">
-        <!-- Left Panel: Form Controls -->
-        <div class="studio-panel">
-          <h3 style="font-size:1.1rem; color:#fff; margin-bottom:16px; border-bottom:1px solid var(--border-hairline); padding-bottom:8px;">
-            Developer Profile & Flagship Repo
-          </h3>
-
-          <form id="studio-form" class="studio-form-grid" oninput="onStudioFormInput()">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-              <div class="studio-field">
-                <label>GitHub Handle (@)</label>
-                <input type="text" id="studio-handle" class="studio-input" value="${escapeHtml(currentDev.handle)}">
-              </div>
-              <div class="studio-field">
-                <label>Full Name</label>
-                <input type="text" id="studio-name" class="studio-input" value="${escapeHtml(currentDev.name)}">
-              </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:12px;">
-              <div class="studio-field">
-                <label>Engineering Role</label>
-                <input type="text" id="studio-role" class="studio-input" value="${escapeHtml(currentDev.role)}">
-              </div>
-              <div class="studio-field">
-                <label>Technical Squad</label>
-                <select id="studio-squad" class="studio-select">
-                  <option value="systems" ${currentDev.squad === 'systems' ? 'selected' : ''}>Systems & Kernel</option>
-                  <option value="ai" ${currentDev.squad === 'ai' ? 'selected' : ''}>AI & Inference</option>
-                  <option value="security" ${currentDev.squad === 'security' ? 'selected' : ''}>Security & MicroVMs</option>
-                  <option value="frontend" ${currentDev.squad === 'frontend' ? 'selected' : ''}>Interface & Tooling</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="studio-field">
-              <label>Location & Timezone</label>
-              <input type="text" id="studio-location" class="studio-input" value="${escapeHtml(currentDev.location || 'Tokyo, JP (UTC+9)')}">
-            </div>
-
-            <div class="studio-field">
-              <label>Active Focus / Status Line</label>
-              <input type="text" id="studio-status" class="studio-input" value="${escapeHtml(currentDev.status || '')}">
-            </div>
-
-            <div class="studio-field">
-              <label>Engineering Bio</label>
-              <textarea id="studio-bio" class="studio-textarea">${escapeHtml(currentDev.bio)}</textarea>
-            </div>
-
-            <h4 style="font-size:0.95rem; color:#fff; margin-top:8px; border-bottom:1px solid var(--border-hairline); padding-bottom:6px;">
-              Featured Repository (The Flex)
-            </h4>
-
-            <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:12px;">
-              <div class="studio-field">
-                <label>Flagship Repo Name (user/repo)</label>
-                <input type="text" id="studio-repo-name" class="studio-input" value="${escapeHtml(repo.name || '')}">
-              </div>
-              <div class="studio-field">
-                <label>Primary Language</label>
-                <input type="text" id="studio-repo-lang" class="studio-input" value="${escapeHtml(repo.language || 'Rust')}">
-              </div>
-            </div>
-
-            <div class="studio-field">
-              <label>Repo Tagline / Pitch</label>
-              <input type="text" id="studio-repo-desc" class="studio-input" value="${escapeHtml(repo.tagline || '')}">
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-              <div class="studio-field">
-                <label>Stars Count ⭐</label>
-                <input type="number" id="studio-repo-stars" class="studio-input" value="${repo.stars || 1200}">
-              </div>
-              <div class="studio-field">
-                <label>Forks Count 🍴</label>
-                <input type="number" id="studio-repo-forks" class="studio-input" value="${repo.forks || 80}">
-              </div>
-            </div>
-
-            <div class="studio-field">
-              <label>Clone Command</label>
-              <input type="text" id="studio-repo-clone" class="studio-input" value="${escapeHtml(repo.cloneUrl || '')}">
-            </div>
-
-            <div class="studio-field">
-              <label>Tech Stack Chips (comma-separated)</label>
-              <input type="text" id="studio-stack" class="studio-input" value="${escapeHtml(currentDev.stack.join(', '))}">
-            </div>
-          </form>
-
-          <!-- Studio Toolbar Actions -->
-          <div class="studio-toolbar-actions">
-            <button class="btn btn-primary" onclick="applyStudioChangesLive()">
-              ⚡ Test on Live Site
-            </button>
-            <button class="btn btn-secondary" onclick="exportStudioPrSnippet()">
-              📋 Copy GitHub PR Snippet
-            </button>
-            <button class="btn btn-secondary" onclick="viewStudioDeveloperPage()">
-              View Dedicated Page →
-            </button>
-          </div>
-        </div>
-
-        <!-- Right Panel: Real-Time Live Preview -->
-        <div class="studio-panel">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-hairline); padding-bottom:8px;">
-            <h3 style="font-size:1.1rem; color:#fff;">Live Instant Preview</h3>
-            <span class="mono" style="font-size:0.7rem; color:#34d399; background:rgba(16,185,129,0.1); padding:2px 8px; border-radius:3px;">
-              ● UPDATES IN REAL-TIME
-            </span>
-          </div>
-
-          <div id="studio-live-preview-box">
-            <!-- Rendered by onStudioFormInput() -->
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Trigger initial live preview
-  onStudioFormInput();
-}
-
-window.onStudioDevChange = function(val) {
-  if (val === 'new') {
-    const newId = DEVELOPERS.length + 1;
-    const newDev = {
-      id: newId,
-      handle: 'newdev',
-      name: 'New Builder',
-      squad: 'systems',
-      role: 'Systems Engineer',
-      status: '⚡ Building edge zero-copy primitives',
-      location: 'Global (UTC)',
-      bio: 'Architecting high-throughput distributed infrastructure.',
-      stack: ['Rust', 'Linux', 'eBPF'],
-      ragetechProject: 'hyperion',
-      featuredRepo: {
-        name: 'newdev/fast-edge',
-        tagline: 'Lightweight zero-copy event streaming runner for Linux.',
-        stars: 450,
-        forks: 34,
-        language: 'Rust',
-        languageColor: '#dea584',
-        url: 'https://github.com/ragetech/hyperion',
-        cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
-        topics: ['rust', 'edge', 'systems']
-      },
-      secondaryRepos: [],
-      socials: { github: 'https://github.com/newdev' },
-      gpgKey: '4A8B 91F0 C128 7E53'
-    };
-    DEVELOPERS.push(newDev);
-    activeStudioDeveloperId = newId;
-    renderStudioPage();
-    showToast('Created new developer template');
-  } else {
-    activeStudioDeveloperId = parseInt(val, 10);
-    renderStudioPage();
-  }
-};
-
-window.onStudioFormInput = function() {
-  const previewBox = document.getElementById('studio-live-preview-box');
-  if (!previewBox) return;
-
-  const handle = document.getElementById('studio-handle').value || 'handle';
-  const name = document.getElementById('studio-name').value || 'Developer Name';
-  const role = document.getElementById('studio-role').value || 'Role';
-  const squad = document.getElementById('studio-squad').value;
-  const status = document.getElementById('studio-status').value;
-  const bio = document.getElementById('studio-bio').value;
-  const repoName = document.getElementById('studio-repo-name').value || 'user/repo';
-  const repoLang = document.getElementById('studio-repo-lang').value || 'Rust';
-  const repoDesc = document.getElementById('studio-repo-desc').value || 'Repository description';
-  const stars = parseInt(document.getElementById('studio-repo-stars').value, 10) || 0;
-  const forks = parseInt(document.getElementById('studio-repo-forks').value, 10) || 0;
-  const stack = document.getElementById('studio-stack').value.split(',').map(s => s.trim()).filter(Boolean);
-
-  const initials = name.split(' ').map(n => n[0]).join('') || 'DEV';
-
-  previewBox.innerHTML = `
-    <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--text-low); margin-bottom:8px;">ROSTER CARD PREVIEW:</div>
-    <div class="builder-showcase-card" style="box-shadow:none; margin-bottom:24px;">
-      <div class="showcase-card-top">
-        <div class="showcase-avatar-col">
-          <div class="builder-avatar-box">
-            ${initials}
-            <span class="builder-beacon-dot"></span>
-          </div>
-          <div class="builder-identity-meta">
-            <div class="builder-name-row">
-              <span class="builder-display-name">${escapeHtml(name)}</span>
-              <span class="builder-handle-link">@${escapeHtml(handle)}</span>
-              <span class="builder-squad-badge">${escapeHtml(squad)}</span>
-            </div>
-            <div class="builder-role-line">${escapeHtml(role)}</div>
-          </div>
-        </div>
-        <span class="builder-index-num">#${String(activeStudioDeveloperId).padStart(2, '0')}</span>
-      </div>
-
-      ${status ? `
-        <div class="builder-status-banner">
-          <span>${escapeHtml(status)}</span>
-        </div>
-      ` : ''}
-
-      <p class="builder-bio-p">${escapeHtml(bio)}</p>
-
-      <div class="repo-inset-box">
-        <div class="repo-inset-header">
-          <span class="repo-title-anchor">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
-            <span>${escapeHtml(repoName)}</span>
-          </span>
-          <span class="repo-flagship-pill">Flagship</span>
-        </div>
-        <p class="repo-inset-desc">${escapeHtml(repoDesc)}</p>
-        <div class="repo-inset-footer">
-          <div class="repo-stats-group">
-            <span class="repo-lang-spec">
-              <span class="repo-lang-dot" style="background-color: #dea584;"></span>
-              ${escapeHtml(repoLang)}
-            </span>
-            <span class="repo-stat-counter">⭐ ${stars.toLocaleString()}</span>
-            <span class="repo-stat-counter">🍴 ${forks}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="builder-card-bottom">
-        <div class="builder-stack-pills-row">
-          ${stack.map(s => `<span class="builder-tech-badge">${escapeHtml(s)}</span>`).join('')}
-        </div>
-      </div>
-    </div>
-
-    <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--text-low); margin-bottom:8px;">SHAREABLE URL:</div>
-    <div style="background:#09090c; border:1px solid var(--border-hairline); border-radius:6px; padding:8px 12px; font-family:var(--font-mono); font-size:0.78rem; color:var(--accent-blue);">
-      https://ragetech.dev/#/developer/${escapeHtml(handle)}
-    </div>
-  `;
-};
-
-window.applyStudioChangesLive = function() {
-  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId);
-  if (!currentDev) return;
-
-  currentDev.handle = document.getElementById('studio-handle').value.trim();
-  currentDev.name = document.getElementById('studio-name').value.trim();
-  currentDev.role = document.getElementById('studio-role').value.trim();
-  currentDev.squad = document.getElementById('studio-squad').value;
-  currentDev.location = document.getElementById('studio-location').value.trim();
-  currentDev.status = document.getElementById('studio-status').value.trim();
-  currentDev.bio = document.getElementById('studio-bio').value.trim();
-
-  currentDev.featuredRepo = currentDev.featuredRepo || {};
-  currentDev.featuredRepo.name = document.getElementById('studio-repo-name').value.trim();
-  currentDev.featuredRepo.language = document.getElementById('studio-repo-lang').value.trim();
-  currentDev.featuredRepo.tagline = document.getElementById('studio-repo-desc').value.trim();
-  currentDev.featuredRepo.stars = parseInt(document.getElementById('studio-repo-stars').value, 10) || 0;
-  currentDev.featuredRepo.forks = parseInt(document.getElementById('studio-repo-forks').value, 10) || 0;
-  currentDev.featuredRepo.cloneUrl = document.getElementById('studio-repo-clone').value.trim();
-  currentDev.stack = document.getElementById('studio-stack').value.split(',').map(s => s.trim()).filter(Boolean);
-
-  // Save to sessionStorage
-  try {
-    sessionStorage.setItem('ragetech_custom_developers', JSON.stringify(DEVELOPERS));
-  } catch (e) {
-    console.warn(e);
-  }
-
-  // Re-render directory
-  renderBuildersDirectory();
-  showToast(`Updated @${currentDev.handle} live on site!`);
-};
-
-window.viewStudioDeveloperPage = function() {
-  applyStudioChangesLive();
-  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId);
-  if (currentDev) {
-    window.location.hash = `#/developer/${currentDev.handle}`;
-  }
-};
-
-window.exportStudioPrSnippet = function() {
-  applyStudioChangesLive();
-  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId);
-  if (!currentDev) return;
-
-  const formattedCode = JSON.stringify(currentDev, null, 2);
-  navigator.clipboard.writeText(formattedCode).then(() => {
-    showToast('Copied PR code snippet to clipboard!');
-  }).catch(() => {
-    showToast('Copied to clipboard');
-  });
-};
-
-// ============================================================================
+// 5. BUILDERS DIRECTORY & SHOWCASE ENGINE (LANDING PAGE)
 // 6. BUILDERS DIRECTORY & SHOWCASE ENGINE (LANDING PAGE)
 // ============================================================================
 
@@ -1346,7 +981,7 @@ window.openProjectSpecModal = function(id) {
 };
 
 function openPrGuideModal() {
-  window.location.hash = '#/studio';
+  window.openLoginModal();
 }
 
 function initKeyboardShortcuts() {
