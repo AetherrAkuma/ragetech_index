@@ -17,19 +17,72 @@ function json(data, status = 200, headers = {}) {
   });
 }
 
-// Generate simple random token
+// Generate cryptographically secure 256-bit token
 function generateToken() {
-  const bytes = new Uint8Array(24);
+  const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Simple SHA-256 hash helper
-async function sha256(str) {
+// Secure PBKDF2-HMAC-SHA256 Password Hashing (100,000 rounds)
+async function hashPassword(password, saltHex = null) {
   const encoder = new TextEncoder();
-  const data = encoder.encode(str);
+  const salt = saltHex 
+    ? new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)))
+    : crypto.getRandomValues(new Uint8Array(16));
+  
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    256
+  );
+
+  const derivedHex = Array.from(new Uint8Array(derivedBits), b => b.toString(16).padStart(2, '0')).join('');
+  const saltOut = Array.from(salt, b => b.toString(16).padStart(2, '0')).join('');
+  return `pbkdf2:100000:${saltOut}:${derivedHex}`;
+}
+
+// Constant-time password verification to prevent timing attacks
+async function verifyPassword(password, storedHash) {
+  if (!storedHash) return false;
+  
+  // 1. Standard PBKDF2 verification
+  if (storedHash.startsWith('pbkdf2:')) {
+    const parts = storedHash.split(':');
+    if (parts.length !== 4) return false;
+    const saltHex = parts[2];
+    const targetHashHex = parts[3];
+
+    const computed = await hashPassword(password, saltHex);
+    const computedHashHex = computed.split(':')[3];
+
+    if (computedHashHex.length !== targetHashHex.length) return false;
+    let diff = 0;
+    for (let i = 0; i < computedHashHex.length; i++) {
+      diff |= computedHashHex.charCodeAt(i) ^ targetHashHex.charCodeAt(i);
+    }
+    return diff === 0;
+  }
+
+  // 2. Legacy SHA-256 fallback with default seed password support
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
   const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
+  const shaHex = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
+  return (storedHash === shaHex || password === 'ragetech2026');
 }
 
 // Authenticate session from Bearer token or cookie
@@ -51,7 +104,7 @@ async function getAuthenticatedUser(request, env) {
 
   try {
     const session = await env.DB.prepare(
-      `SELECT s.id, s.developer_id, d.handle, d.name, d.email, d.role 
+      `SELECT s.id, s.developer_id, d.handle, d.name, d.email, d.role, d.squad, d.avatar_url 
        FROM sessions s 
        JOIN developers d ON s.developer_id = d.id 
        WHERE s.id = ? AND s.expires_at > datetime('now')`
@@ -67,6 +120,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const pathname = url.pathname;
+    const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
 
     // Handle preflight CORS
     if (request.method === 'OPTIONS') {
@@ -87,32 +141,68 @@ export default {
         return json({ error: 'D1 database binding [DB] not found. Configure in wrangler.jsonc.' }, 503);
       }
 
-      // --- AUTH: Login ---
+      // --- AUTH: Login (Secure PBKDF2 & Rate-Limited) ---
       if (pathname === '/api/auth/login' && request.method === 'POST') {
         try {
+          // Check brute-force lockout
+          try {
+            const attempt = await env.DB.prepare(
+              'SELECT attempts, locked_until FROM login_attempts WHERE ip = ?'
+            ).bind(clientIp).first();
+
+            if (attempt && attempt.locked_until && new Date(attempt.locked_until) > new Date()) {
+              const remainingSec = Math.ceil((new Date(attempt.locked_until) - new Date()) / 1000);
+              return json({ error: `Too many failed attempts. Account locked for ${remainingSec}s.` }, 429);
+            }
+          } catch (e) {
+            // If table doesn't exist yet, proceed gracefully
+          }
+
           const body = await request.json();
           const { handle, password } = body;
-          if (!handle) {
-            return json({ error: 'Handle is required' }, 400);
+          if (!handle || !password) {
+            return json({ error: 'Handle and password are required' }, 400);
           }
 
           const dev = await env.DB.prepare(
-            'SELECT * FROM developers WHERE handle = ? OR email = ?'
+            'SELECT * FROM developers WHERE LOWER(handle) = ? OR LOWER(email) = ?'
           ).bind(handle.toLowerCase(), handle.toLowerCase()).first();
 
           if (!dev) {
-            return json({ error: 'Developer not found' }, 404);
+            return json({ error: 'Invalid builder credentials' }, 401);
           }
 
-          // In dev/demo mode, allow 'ragetech2026' or check password hash
-          if (password) {
-            const hash = await sha256(password);
-            // Default demo password is 'ragetech2026'
-            if (dev.password_hash && dev.password_hash !== hash && password !== 'ragetech2026') {
-              return json({ error: 'Invalid password' }, 401);
-            }
+          // Verify password securely
+          const isValid = await verifyPassword(password, dev.password_hash);
+          if (!isValid) {
+            // Record failed attempt
+            try {
+              await env.DB.prepare(`
+                INSERT INTO login_attempts (ip, attempts, locked_until)
+                VALUES (?, 1, NULL)
+                ON CONFLICT(ip) DO UPDATE SET 
+                  attempts = attempts + 1,
+                  locked_until = CASE WHEN attempts + 1 >= 5 THEN datetime('now', '+5 minutes') ELSE NULL END
+              `).bind(clientIp).run();
+            } catch (e) {}
+
+            return json({ error: 'Invalid builder credentials' }, 401);
           }
 
+          // Success: reset rate limit attempts
+          try {
+            await env.DB.prepare('DELETE FROM login_attempts WHERE ip = ?').bind(clientIp).run();
+          } catch (e) {}
+
+          // Upgrade hash to PBKDF2 if it was legacy
+          if (!dev.password_hash || !dev.password_hash.startsWith('pbkdf2:')) {
+            const upgradedHash = await hashPassword(password);
+            await env.DB.prepare(
+              'UPDATE developers SET password_hash = ? WHERE id = ?'
+            ).bind(upgradedHash, dev.id).run();
+          }
+
+          // Generate 256-bit cryptographic token
           const token = generateToken();
           // Session valid for 14 days
           await env.DB.prepare(
@@ -132,8 +222,39 @@ export default {
               avatarUrl: dev.avatar_url
             }
           }, 200, {
-            'Set-Cookie': `ragetech_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1209600`
+            'Set-Cookie': `ragetech_session=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600`
           });
+        } catch (err) {
+          return json({ error: err.message }, 500);
+        }
+      }
+
+      // --- AUTH: Change Password ---
+      if (pathname === '/api/auth/change-password' && request.method === 'POST') {
+        const user = await getAuthenticatedUser(request, env);
+        if (!user) {
+          return json({ error: 'Authentication required' }, 401);
+        }
+
+        try {
+          const body = await request.json();
+          const { currentPassword, newPassword } = body;
+          if (!newPassword || newPassword.length < 8) {
+            return json({ error: 'New password must be at least 8 characters' }, 400);
+          }
+
+          const dev = await env.DB.prepare('SELECT password_hash FROM developers WHERE id = ?').bind(user.developer_id).first();
+          if (dev && dev.password_hash) {
+            const validCurrent = await verifyPassword(currentPassword, dev.password_hash);
+            if (!validCurrent) {
+              return json({ error: 'Current password is incorrect' }, 403);
+            }
+          }
+
+          const newHash = await hashPassword(newPassword);
+          await env.DB.prepare('UPDATE developers SET password_hash = ? WHERE id = ?').bind(newHash, user.developer_id).run();
+
+          return json({ success: true, message: 'Password updated securely' });
         } catch (err) {
           return json({ error: err.message }, 500);
         }

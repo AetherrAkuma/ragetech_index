@@ -28,6 +28,7 @@ let currentSearchQuery = '';
 let currentSortBy = 'featured';
 let currentDirectoryView = 'showcase'; // 'showcase' | 'compact' | 'terminal'
 let activeStudioDeveloperId = 1;
+let currentAuthUser = null;
 
 // ============================================================================
 // 1. INITIALIZATION & CLIENT-SIDE SPA ROUTER
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDomainCopy();
   initModals();
   initHeaderScroll();
+  initAuth();
 
   // Route on initial load
   handleRoute();
@@ -1417,3 +1419,129 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+// ============================================================================
+// 10. SECURE D1 AUTHENTICATION & BUILDER PORTAL
+// ============================================================================
+
+async function initAuth() {
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        currentAuthUser = data.user;
+      }
+    }
+  } catch (err) {
+    // API not reachable or static dev server
+  }
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const widget = document.getElementById('authHeaderWidget');
+  if (!widget) return;
+
+  if (currentAuthUser) {
+    const avatar = currentAuthUser.avatar_url || currentAuthUser.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentAuthUser.handle}`;
+    widget.innerHTML = `
+      <div class="auth-logged-in-box">
+        <img src="${avatar}" alt="${escapeHtml(currentAuthUser.name || currentAuthUser.handle)}" class="auth-header-avatar">
+        <a href="#/developer/${currentAuthUser.handle}" class="auth-header-handle">@${escapeHtml(currentAuthUser.handle)}</a>
+        <button class="auth-logout-btn" onclick="handleLogout()" title="Log out">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    `;
+  } else {
+    widget.innerHTML = `
+      <button id="openLoginBtn" class="btn btn-secondary nav-login-btn" onclick="openLoginModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Builder Login</span>
+      </button>
+    `;
+  }
+}
+
+window.openLoginModal = function() {
+  const modal = document.getElementById('loginModal');
+  const alertBox = document.getElementById('loginAlertBox');
+  if (alertBox) alertBox.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      const handleInput = document.getElementById('loginHandle');
+      if (handleInput) handleInput.focus();
+    }, 50);
+  }
+};
+
+window.closeLoginModal = function() {
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.handleLoginSubmit = async function(e) {
+  e.preventDefault();
+  const handleInput = document.getElementById('loginHandle');
+  const passInput = document.getElementById('loginPassword');
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  const alertBox = document.getElementById('loginAlertBox');
+
+  const handle = (handleInput?.value || '').trim();
+  const password = passInput?.value || '';
+
+  if (!handle || !password) return;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Verifying...';
+  if (alertBox) alertBox.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handle, password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      currentAuthUser = data.developer;
+      updateAuthUI();
+      window.closeLoginModal();
+      showToast(`Authenticated as @${currentAuthUser.handle}`);
+      
+      // Clear inputs
+      if (handleInput) handleInput.value = '';
+      if (passInput) passInput.value = '';
+    } else {
+      if (alertBox) {
+        alertBox.className = 'auth-alert error';
+        alertBox.textContent = data.error || 'Authentication failed. Please verify credentials.';
+        alertBox.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    if (alertBox) {
+      alertBox.className = 'auth-alert error';
+      alertBox.textContent = 'Connection error. Ensure Worker & D1 are running.';
+      alertBox.style.display = 'block';
+    }
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Authenticate →';
+  }
+};
+
+window.handleLogout = async function() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch (e) {}
+
+  currentAuthUser = null;
+  updateAuthUI();
+  showToast('Logged out successfully');
+};
+

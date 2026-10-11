@@ -2967,3 +2967,109 @@ a {
   border-top: 1px solid var(--border-hairline);
 }
 
+/* ============================================================================
+   SECURE AUTHENTICATION & BUILDER PORTAL STYLING
+   ============================================================================ */
+
+.auth-header-widget {
+  display: flex;
+  align-items: center;
+}
+
+.auth-logged-in-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-hairline);
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+}
+
+.auth-header-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.auth-header-handle {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-high);
+  text-decoration: none;
+}
+
+.auth-logout-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-low);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 130ms var(--ease);
+}
+
+.auth-logout-btn:hover {
+  color: #ef4444;
+}
+
+.auth-modal-card {
+  max-width: 440px;
+}
+
+.auth-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-lock-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  margin-bottom: 14px;
+}
+
+.auth-alert.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.auth-alert.success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
+.auth-info-hint {
+  font-size: 0.74rem;
+  color: var(--text-low);
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+.hint-code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+

@@ -73,6 +73,12 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at DATETIME NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS login_attempts (
+  ip TEXT PRIMARY KEY,
+  attempts INTEGER DEFAULT 1,
+  locked_until DATETIME
+);
+
 CREATE INDEX IF NOT EXISTS idx_devs_handle ON developers(handle);
 CREATE INDEX IF NOT EXISTS idx_projects_slug ON projects(slug);
 CREATE INDEX IF NOT EXISTS idx_proj_members_proj ON project_members(project_id);
