@@ -15,14 +15,7 @@ function sqlEscape(val) {
   return "'" + String(val).replace(/'/g, "''") + "'";
 }
 
-let sql = `-- ============================================================================
--- RAGETECH.DEV — Cloudflare D1 Database Seed Data
--- 6 Flagship Projects & 29 Builders
--- Generated automatically from data/developers.js and data/projects.js
--- ============================================================================
-
--- Clear existing data (in reverse dependency order)
-DELETE FROM sessions;
+let sql = `DELETE FROM sessions;
 DELETE FROM developer_repos;
 DELETE FROM project_members;
 DELETE FROM projects;
@@ -30,8 +23,6 @@ DELETE FROM developers;
 
 `;
 
-// Insert developers
-sql += `-- 1. Insert Developers\n`;
 for (const dev of devs) {
   const handle = dev.handle;
   const name = dev.name;
@@ -69,8 +60,6 @@ for (const dev of devs) {
   }
 }
 
-// Insert Projects
-sql += `\n-- 3. Insert Collective Projects\n`;
 let projId = 1;
 const projectSlugToId = {};
 for (const p of projects) {
@@ -95,8 +84,6 @@ for (const p of projects) {
   projId++;
 }
 
-// Insert Project Members
-sql += `\n-- 4. Insert Project Maintainers & Assignees\n`;
 const devHandleToId = {};
 for (const dev of devs) {
   devHandleToId[dev.handle] = dev.id;

@@ -1,17 +1,9 @@
--- ============================================================================
--- RAGETECH.DEV — Cloudflare D1 Database Seed Data
--- 6 Flagship Projects & 29 Builders
--- Generated automatically from data/developers.js and data/projects.js
--- ============================================================================
-
--- Clear existing data (in reverse dependency order)
 DELETE FROM sessions;
 DELETE FROM developer_repos;
 DELETE FROM project_members;
 DELETE FROM projects;
 DELETE FROM developers;
 
--- 1. Insert Developers
 INSERT INTO developers (id, handle, name, email, password_hash, role, squad, bio, avatar_url, location, status, gpg_key, github_url, x_url, website, custom_slug, is_verified) VALUES (1, 'alexv', 'Alex Vance', 'alexv@ragetech.dev', 'b9c1d09e51c86518175f0a07106093510eefaa918e7d23d8c1c5ceec2f9d5be3', 'Lead Systems Architect', 'systems', 'Lock-free systems author. Specializing in Linux io_uring, AVX-512 SIMD pipelines, and microsecond telemetry runtimes.', 'https://api.dicebear.com/7.x/identicon/svg?seed=alexv', 'Stockholm, SE (UTC+1)', '⚡ SIMD ring buffers in Hyperion', '4A8B 91F0 C128 7E53', 'https://github.com/alexv', 'https://x.com/alexv_dev', 'https://alexvance.dev', 'alexv', 1);
 INSERT INTO developers (id, handle, name, email, password_hash, role, squad, bio, avatar_url, location, status, gpg_key, github_url, x_url, website, custom_slug, is_verified) VALUES (2, 'elena', 'Elena Rostova', 'elena@ragetech.dev', 'b9c1d09e51c86518175f0a07106093510eefaa918e7d23d8c1c5ceec2f9d5be3', 'Distributed Systems Lead', 'systems', 'Distributed storage author and consensus protocol researcher. Former maintainer of edge persistence engines.', 'https://api.dicebear.com/7.x/identicon/svg?seed=elena', 'Helsinki, FI (UTC+2)', '🟢 Multi-Raft v2 edge quorum', '9F1C 33A2 8B40 E511', 'https://github.com/elena-rostova', 'https://x.com/elena_systems', 'https://rostova.tech', 'elena', 1);
 INSERT INTO developers (id, handle, name, email, password_hash, role, squad, bio, avatar_url, location, status, gpg_key, github_url, x_url, website, custom_slug, is_verified) VALUES (3, 'mchen', 'Marcus Chen', 'mchen@ragetech.dev', 'b9c1d09e51c86518175f0a07106093510eefaa918e7d23d8c1c5ceec2f9d5be3', 'AI Systems Architect', 'ai', 'High-throughput inference batching and cognitive agent runtime architect. Optimizing tensor memory layouts.', 'https://api.dicebear.com/7.x/identicon/svg?seed=mchen', 'San Francisco, US (UTC-7)', '🔥 vLLM batching kernels', '18D3 74B2 99CE 45A1', 'https://github.com/mchen-ai', 'https://x.com/marcuschen_ai', 'https://mchen.io', 'mchen', 1);
@@ -105,8 +97,6 @@ INSERT INTO developer_repos (id, developer_id, name, tagline, url, clone_url, la
 INSERT INTO developer_repos (id, developer_id, name, tagline, url, clone_url, language, language_color, stars, forks, topics_json, is_flagship, sort_order) VALUES (60, 28, 'fzaid/simd-string-find', NULL, 'https://github.com/ragetech/hyperion', NULL, 'C++', '#f34b7d', 450, 0, '[]', 0, 1);
 INSERT INTO developer_repos (id, developer_id, name, tagline, url, clone_url, language, language_color, stars, forks, topics_json, is_flagship, sort_order) VALUES (61, 29, 'oberg/tui-forge', 'Composable high-performance terminal user interface framework for monitoring edge servers.', 'https://github.com/ragetech/eclipse-ui', 'git clone https://github.com/ragetech/eclipse-ui.git', 'Go', '#00ADD8', 2490, 195, '["tui","go","terminal","cli"]', 1, 0);
 INSERT INTO developer_repos (id, developer_id, name, tagline, url, clone_url, language, language_color, stars, forks, topics_json, is_flagship, sort_order) VALUES (62, 29, 'oberg/keybind-parser-rs', NULL, 'https://github.com/ragetech/eclipse-ui', NULL, 'Rust', '#dea584', 520, 0, '[]', 0, 1);
-
--- 3. Insert Collective Projects
 INSERT INTO projects (id, slug, name, repo_url, badge, summary, stars, forks, language, language_color, clone_url, specs_json, preview_title, preview_content, preview_meta, full_spec_json, is_featured) VALUES (1, 'hyperion', 'Hyperion', 'https://github.com/ragetech/hyperion', 'v0.9.4-alpha', 'Ultra-low-latency event streaming engine written in pure Rust. Built on lock-free memory ring buffers and Linux io_uring kernel bypass.', 1840, 142, 'Rust', '#dea584', 'git clone https://github.com/ragetech/hyperion.git', '[{"label":"Throughput","val":"1.42M events/sec / core"},{"label":"Latency (p99)","val":"0.24ms"},{"label":"Memory Overhead","val":"< 16 MB RSS baseline"},{"label":"Runtime Stack","val":"Rust / Tokio / io_uring"}]', 'telemetry_sink.rs', '// Socket ring buffer initialization
 let ring = IoUring::builder()
     .setup_sqpoll(1000)
@@ -156,8 +146,6 @@ INSERT INTO projects (id, slug, name, repo_url, badge, summary, stars, forks, la
 [18:24:02.110] HANDSHAKE: authenticated with Curve25519 key
 [18:24:02.114] CRDT_SYNC: Vector clock synchronized (delta=0)
 [18:24:02.116] STATUS: P2P mesh converged (4 active nodes)', 'Mesh topology: 4 peers connected directly', '{"arch":"Conflict-Free Replicated Data Types combined with direct peer-to-peer data channels.","goal":"Local-first collaborative editing with zero cloud dependency.","status":"Compiling to WebAssembly for browser clients."}', 1);
-
--- 4. Insert Project Maintainers & Assignees
 INSERT OR IGNORE INTO project_members (project_id, developer_id, role_in_project) VALUES (1, 1, 'lead');
 INSERT OR IGNORE INTO project_members (project_id, developer_id, role_in_project) VALUES (1, 11, 'maintainer');
 INSERT OR IGNORE INTO project_members (project_id, developer_id, role_in_project) VALUES (1, 19, 'maintainer');
