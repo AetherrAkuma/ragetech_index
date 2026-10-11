@@ -1,13 +1,14 @@
 {
-  "name": "ragetech-landing",
+  "name": "ragetech-index",
   "version": "1.0.0",
-  "description": "Initial modern landing page for ragetech.dev featuring projects showcase and 29 developer placeholders in Tailark Dusk aesthetic",
+  "description": "Ragetech engineering collective landing page",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve .",
-    "dev": "npx serve ."
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev",
+    "start": "npx serve ."
   },
-  "keywords": ["ragetech", "landing-page", "dusk-theme", "developer-collective"],
-  "author": "Ragetech Team",
-  "license": "MIT"
+  "devDependencies": {
+    "wrangler": "^4.149.0"
+  }
 }
