@@ -1,47 +1,40 @@
-# ragetech.dev — Initial Collective Landing Page
+# ragetech.dev — Independent Engineering Collective
 
-A modern, high-octane engineering landing page designed for **ragetech.dev**. Styled after the **Tailark Dusk** aesthetic (`dusk-landing-8`), featuring:
+A clean, human-crafted landing page designed for **ragetech.dev** referencing the **Tailark Dusk** aesthetic (`dusk-landing-8`), stripped of generic AI marketing buzzwords, emoji clutter, and rainbow gradients.
 
-- **Tailark Dusk Design System**: Midnight obsidian backdrop, ambient glowing radial orbs, subtle grid matrix overlay, and electric cyan/indigo neon accents.
-- **Projects Incubator**: Features 8 individual engineering projects (replacing generic workflow/agent placeholders) with technical metrics, architecture specs, and assigned builders.
-- **The 29 Builders Core Roster**: Dedicated bottom section with interactive placeholder cards for all **29 developers**, searchable in real time by name, role, squad, or tech skills (Rust, Go, WebGL, eBPF, CUDA, etc.).
-- **Interactive Telemetry Terminal**: Switchable telemetry tabs (`status.sh`, `stack.json`, `manifest.txt`).
-- **Interactive Modals & Toast Feedback**: Click any project to inspect its architecture RFC, click any developer card to see their specialization profile, and copy the `ragetech.dev` domain with instant visual toast confirmation.
-- **Zero Dependencies**: Pure HTML5, Vanilla CSS3, and Vanilla JavaScript. Runs directly in any browser with zero build errors and deploys instantaneously to Cloudflare Pages, Vercel, Netlify, or GitHub Pages.
+---
+
+## ✦ Core Design & Architectural Features
+
+1. **Restrained Dusk Aesthetic**:
+   - Deep matte zinc & charcoal canvas (`#09090b`), hairline 1px borders (`rgba(255, 255, 255, 0.07)`), and subtle architectural grid overlay.
+   - Clean typographic hierarchy using **Inter** with tight tracking (`-0.03em`) and tabular monospace figures with **JetBrains Mono**.
+   - Confident, technical voice without cliché AI marketing copy.
+
+2. **Tailark Dusk Features 5 Sticky Scroll Highlight**:
+   - Sticky repository sidebar on the left (`Hyperion`, `PulseOS KV`, `Chimera Runtime`, `Eclipse UI`, `Vortex Scheduler`, `Aether P2P`).
+   - As you scroll down the page, `IntersectionObserver` dynamically highlights each active repository in the sidebar and illuminates the corresponding card with a subtle active border.
+   - Each project entry features clean architecture specs and a technical preview window (Rust io_uring setup, Raft cluster JSON, OpenTelemetry DAG trace, CSS tokens, cron manifest, WebRTC P2P log).
+
+3. **The 29 Builders Directory**:
+   - Complete directory of all 29 collective engineers with authentic handles (`@alexv`, `@elena`, `@mchen`, etc.), roles, primary tech stack, and current focus.
+   - **Interactive View Switcher**: Toggle between **Card Grid View** and **High-Density Table View** (similar to Linear / Raycast).
+   - **Keyboard Shortcut**: Press <kbd>/</kbd> anywhere on the page to instantly jump focus to the developer search filter.
+   - Squad filters: `All 29`, `Systems [13]`, `Interface [6]`, `AI Runtimes [5]`, `Security & Infra [5]`.
+
+4. **Zero Dependencies & Blazing Fast**:
+   - Pure HTML5, Vanilla CSS, and Vanilla JavaScript.
+   - 0ms build step, zero npm runtime dependencies, instant load.
 
 ---
 
 ## 🚀 Running Locally
 
-You can open `index.html` directly in any web browser, or run a local static server:
-
 ```bash
-# Using Node / npx
+# Direct browser opening or via local server:
 npx serve .
-
-# Or using npm
+# or
 npm start
 ```
 
-Then visit [http://localhost:3000](http://localhost:3000) (or whichever port is assigned).
-
----
-
-## 📁 Project Structure
-
-```
-Ragetech/
-├── index.html        # Semantic HTML5 landing structure with dusk layout
-├── styles.css        # Dusk theme tokens, glassmorphism, responsive grid
-├── app.js            # 8 project specifications & 29 developer placeholders
-├── package.json      # NPM script configuration
-└── README.md         # Documentation
-```
-
----
-
-## 🛠 Features & Customization
-
-1. **Customizing Projects**: Edit `PROJECTS_DATA` in `app.js` to rename projects, change metrics, or update descriptions.
-2. **Customizing Developers**: Edit `DEVELOPERS_DATA` in `app.js` to change names, handles, avatars, or project assignments for the 29 developer slots.
-3. **Deploying**: Push to your Git repository connected to your hosting provider (e.g. Cloudflare Pages or Vercel) and point `ragetech.dev` to the deployment.
+Visit [http://localhost:3000](http://localhost:3000).

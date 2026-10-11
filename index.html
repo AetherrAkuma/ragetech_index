@@ -3,430 +3,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ragetech — High-Octane Engineering Collective | ragetech.dev</title>
-  <meta name="description" content="ragetech.dev is the incubator for next-generation developer tooling, distributed systems, and edge infrastructure built by 29 autonomous engineers.">
-  <meta name="keywords" content="ragetech, ragetech.dev, developer tools, distributed systems, rust, webassembly, ai agents">
+  <title>Ragetech — Engineering Collective | ragetech.dev</title>
+  <meta name="description" content="ragetech.dev is an independent collective of 29 systems engineers, compiler authors, and interface designers building edge infrastructure.">
   
   <!-- Open Graph -->
-  <meta property="og:title" content="Ragetech — High-Octane Engineering Collective | ragetech.dev">
-  <meta property="og:description" content="29 builders crafting foundational systems, distributed event engines, and next-gen developer tooling.">
+  <meta property="og:title" content="Ragetech — Engineering Collective">
+  <meta property="og:description" content="Independent collective of 29 systems engineers building edge infrastructure.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ragetech.dev">
 
-  <!-- Favicon / SVG Icon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230e111a'/><path d='M10 8l12 8-12 8z' fill='%236366f1'/></svg>">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23141418'/><path d='M10 9l12 7-12 7z' fill='%23f4f4f5'/></svg>">
 
-  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <!-- Inter & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- Ambient Dusk Background Glows & Grid -->
-  <div class="ambient-bg" aria-hidden="true">
-    <div class="ambient-grid"></div>
-    <div class="ambient-orb ambient-orb-1"></div>
-    <div class="ambient-orb ambient-orb-2"></div>
-    <div class="ambient-orb ambient-orb-3"></div>
-  </div>
+  <!-- Background Grid -->
+  <div class="bg-grid-overlay" aria-hidden="true"></div>
 
-  <!-- Site Navigation Header -->
+  <!-- Site Navigation -->
   <header class="site-header" id="main-header">
-    <div class="container nav-container">
-      <div class="brand-group">
-        <a href="#hero" class="brand-logo" aria-label="Ragetech Home">
-          <div class="brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
+    <div class="container header-row">
+      <div class="brand-wrapper">
+        <a href="#hero" class="brand-mark" aria-label="Ragetech Home">
+          <div class="brand-icon-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f4f4f5" stroke-width="2.5">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
           </div>
-          <span class="brand-name">RAGETECH</span>
+          <span class="brand-title">RAGETECH</span>
         </a>
-        <span class="domain-pill">ragetech.dev</span>
+        <span class="domain-badge">ragetech.dev</span>
       </div>
 
       <nav>
-        <ul class="nav-links">
-          <li><a href="#projects" class="nav-link">Projects</a></li>
-          <li><a href="#architecture" class="nav-link">Architecture</a></li>
-          <li><a href="#team" class="nav-link">The 29 Builders</a></li>
-          <li><a href="#faq" class="nav-link">FAQ</a></li>
+        <ul class="nav-menu">
+          <li><a href="#repositories" class="nav-item-link">Repositories</a></li>
+          <li><a href="#directory" class="nav-item-link">Builders (29)</a></li>
+          <li><a href="#about" class="nav-item-link">Collective</a></li>
         </ul>
       </nav>
 
-      <div class="nav-actions">
-        <div class="status-badge" title="Live builder network status">
-          <span class="status-dot"></span>
-          <span>29/29 Online</span>
-        </div>
+      <div class="header-actions">
         <button class="btn btn-secondary js-copy-domain" title="Copy domain to clipboard">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-          Copy Domain
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span>Copy Domain</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section (Tailark Dusk Style) -->
   <main>
-    <section class="hero-section" id="hero">
-      <div class="container hero-content">
-        <div class="pill-badge">
-          <span class="sparkle">✦</span>
-          <span>ragetech.dev v0.1 • Sovereign Developer Collective</span>
+    <!-- Hero Section (Clean, Confident, Understated) -->
+    <section class="hero-clean" id="hero">
+      <div class="container">
+        <div class="hero-tag-pill">
+          <span class="live-indicator-dot"></span>
+          <span>ragetech.dev / engineering collective</span>
         </div>
 
-        <h1 class="hero-title">
-          Engineering The Edge.<br>
-          <span class="gradient-text">Building What's Next.</span>
+        <h1 class="hero-heading">
+          An independent collective building foundational infrastructure.
         </h1>
 
-        <p class="hero-subtitle">
-          Ragetech is an independent guild of 29 builders crafting high-performance systems,
-          distributed developer tools, and next-generation applications. Zero bureaucracy, pure velocity.
+        <p class="hero-subheading">
+          29 systems architects, compiler authors, and interface engineers building
+          low-latency event buses, edge consensus databases, and local-first runtimes.
         </p>
 
-        <div class="hero-actions">
-          <a href="#projects" class="btn btn-primary">
-            Explore Projects [6]
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <div class="hero-cta-group">
+          <a href="#repositories" class="btn btn-primary">
+            View Repositories [6]
           </a>
-          <a href="#team" class="btn btn-secondary">
-            Meet The 29 Builders
+          <a href="#directory" class="btn btn-secondary">
+            Engineering Directory (29)
           </a>
         </div>
       </div>
     </section>
 
-    <!-- Stats Bar -->
-    <section class="stats-bar-section">
+    <!-- Metrics Strip -->
+    <section class="metrics-strip">
       <div class="container">
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-number gradient-text">29</div>
-            <div class="stat-label">Autonomous Builders</div>
+        <div class="metrics-strip-grid">
+          <div class="metric-unit">
+            <span class="metric-unit-num mono">29</span>
+            <span class="metric-unit-label">Active Builders</span>
           </div>
-          <div class="stat-item">
-            <div class="stat-number gradient-text">6</div>
-            <div class="stat-label">Core Systems</div>
+          <div class="metric-unit">
+            <span class="metric-unit-num mono">06</span>
+            <span class="metric-unit-label">Core Repositories</span>
           </div>
-          <div class="stat-item">
-            <div class="stat-number gradient-text">&lt;0.3ms</div>
-            <div class="stat-label">Target P99 Latency</div>
+          <div class="metric-unit">
+            <span class="metric-unit-num mono">&lt; 0.3ms</span>
+            <span class="metric-unit-label">p99 Event Latency</span>
           </div>
-          <div class="stat-item">
-            <div class="stat-number gradient-text">100%</div>
-            <div class="stat-label">Distributed & Remote</div>
+          <div class="metric-unit">
+            <span class="metric-unit-num mono">100%</span>
+            <span class="metric-unit-label">Native & Zero-Copy</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Projects Showcase (Tailark Dusk Features-5 Scroll Highlight Layout) -->
-    <section class="section-wrapper projects-showcase-section" id="projects">
+    <!-- Projects Sticky Scroll Section (Tailark Dusk Features 5 Pattern) -->
+    <section class="projects-section" id="repositories">
       <div class="container">
-        <div class="section-header" style="text-align: left; max-width: 820px; margin-bottom: 48px;">
-          <span class="section-tag">Incubated Systems</span>
-          <h2 class="section-title">
-            <span class="gradient-text">Built for Raw Velocity.</span><br>
-            Sovereign Engineering Projects.
-          </h2>
-          <p class="section-description">
-            Instead of generic workflows, Ragetech engineers native distributed infrastructure.
-            Scroll through each project below to explore architectural specifications and live node telemetry.
+        <div class="section-lead">
+          <span class="section-kicker">Incubated Systems</span>
+          <h2 class="section-h2">Built for systems engineers.</h2>
+          <p class="section-p">
+            Each repository addresses bottlenecks in modern distributed applications.
+            Scroll through each system below to inspect architectural parameters.
           </p>
         </div>
 
-        <!-- Mobile Horizontal Sticky Nav -->
-        <nav class="mobile-project-nav" id="mobile-project-nav" aria-label="Projects Mobile Menu">
-          <!-- Populated by app.js -->
-        </nav>
-
-        <!-- Main Scroll Highlight Grid -->
-        <div class="projects-scroll-layout">
-          <!-- Sticky Left Sidebar -->
-          <aside class="sticky-project-sidebar" aria-label="Projects Index">
-            <div class="sticky-sidebar-header">
-              <span class="mono">ACTIVE REPOSITORIES</span>
-            </div>
-            <div class="sticky-nav-list" id="sticky-project-nav">
-              <!-- Populated by app.js -->
+        <div class="scroll-layout-grid">
+          <!-- Sticky Left Index -->
+          <aside class="sticky-sidebar-nav" aria-label="Repository Index">
+            <div class="sidebar-section-title">Repositories</div>
+            <div id="sticky-project-nav">
+              <!-- Rendered by app.js -->
             </div>
           </aside>
 
           <!-- Main Scrollable Projects Stack -->
-          <div class="projects-scroll-stack" id="projects-scroll-container">
-            <!-- Populated dynamically by app.js -->
+          <div class="projects-stack" id="projects-stack">
+            <!-- Rendered by app.js with scroll highlight observer -->
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Architectural Bento Grid -->
-    <section class="section-wrapper" id="architecture" style="background: rgba(10, 13, 20, 0.4); border-top: 1px solid var(--border-subtle);">
+    <!-- The 29 Builders Directory Section -->
+    <section class="builders-section-clean" id="directory">
       <div class="container">
-        <div class="section-header">
-          <span class="section-tag">Engineering Doctrine</span>
-          <h2 class="section-title">The Ragetech Philosophy</h2>
-          <p class="section-description">
-            How 29 engineers ship world-class systems with zero bureaucracy and maximum execution speed.
+        <div class="section-lead" style="margin-bottom: 32px;">
+          <span class="section-kicker">Engineering Directory</span>
+          <h2 class="section-h2">The 29 Builders</h2>
+          <p class="section-p">
+            Directory of the 29 engineers contributing to core repositories.
+            Press <span class="kbd-badge">/</span> to search by handle, role, or stack.
           </p>
         </div>
 
-        <div class="bento-grid">
-          <div class="bento-card col-span-2">
-            <div class="bento-badge">Performance First</div>
-            <h3 class="bento-title">Native binaries, zero runtime garbage collection overhead</h3>
-            <p class="bento-desc">
-              We leverage Rust, Go, and WebAssembly to eliminate runtime stalls. From cache-line optimization
-              to io_uring asynchronous sockets, our code respects the underlying hardware.
-            </p>
-            <div class="bento-visual-bar">
-              <div class="bento-visual-progress"></div>
+        <!-- Directory Toolbar -->
+        <div class="builders-toolbar">
+          <div class="squad-filters-group">
+            <button class="squad-filter-btn active" data-squad="all">All 29</button>
+            <button class="squad-filter-btn" data-squad="systems">Systems [13]</button>
+            <button class="squad-filter-btn" data-squad="frontend">Interface [6]</button>
+            <button class="squad-filter-btn" data-squad="ai">AI Runtimes [5]</button>
+            <button class="squad-filter-btn" data-squad="security">Security & Infra [5]</button>
+          </div>
+
+          <div class="builders-right-controls">
+            <div class="search-box-clean">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="builder-search-input" placeholder="Search builders or stack (press /)..." aria-label="Search builders">
+            </div>
+
+            <!-- View Mode Switcher -->
+            <div class="view-toggle-group" title="Toggle Grid / Table view">
+              <button class="view-btn active" id="view-grid-btn" aria-label="Grid view">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+              </button>
+              <button class="view-btn" id="view-table-btn" aria-label="Table directory view">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
+              </button>
             </div>
           </div>
+        </div>
 
-          <div class="bento-card">
-            <div class="bento-badge">Autonomy</div>
-            <h3 class="bento-title">29 Builders, 0 Middlemen</h3>
-            <p class="bento-desc">
-              No product managers. No sprint theater. Engineers write code, debate architectures in RFCs,
-              and ship directly to production.
-            </p>
-          </div>
+        <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-low);" id="builders-count-badge">
+          29 of 29 Builders
+        </div>
 
-          <div class="bento-card">
-            <div class="bento-badge">Resilience</div>
-            <h3 class="bento-title">Local-First & Edge Partition Tolerant</h3>
-            <p class="bento-desc">
-              CRDT state synchronization and raft-backed edge databases guarantee uninterrupted operation
-              even across erratic uplinks.
-            </p>
-          </div>
+        <!-- View 1: Compact Grid View -->
+        <div class="builders-grid-compact" id="builders-grid">
+          <!-- Rendered by app.js -->
+        </div>
 
-          <div class="bento-card col-span-2">
-            <div class="bento-badge">Developer Ergonomics</div>
-            <h3 class="bento-title">Intuitive developer interfaces & instant setup</h3>
-            <p class="bento-desc">
-              Complex distributed infrastructure should not require hours of yaml wrangling.
-              We create beautiful CLI terminals, microVM environments, and headless design primitives that developers love.
-            </p>
-          </div>
+        <!-- View 2: High-Density Table Directory View -->
+        <div class="builders-table-wrap" id="builders-table-wrap">
+          <!-- Rendered by app.js -->
         </div>
       </div>
     </section>
 
-    <!-- The 29 Builders Section (Placeholders for all 29 developers) -->
-    <section class="section-wrapper builders-section" id="team">
+    <!-- Clean Launchpad Section -->
+    <section class="launchpad-section" id="about">
       <div class="container">
-        <div class="section-header">
-          <span class="section-tag">Core Engineering Guild</span>
-          <h2 class="section-title">The 29 Builders of ragetech.dev</h2>
-          <p class="section-description">
-            Meet the 29 engineers, researchers, and creators powering our infrastructure projects.
-            Search or filter by specialization to view assigned projects and technical skills.
-          </p>
-        </div>
-
-        <!-- Filter & Search Controls -->
-        <div class="filter-bar">
-          <div class="tab-group" id="dev-tabs">
-            <button class="tab-btn active" data-squad="all">All (29)</button>
-            <button class="tab-btn" data-squad="systems">Systems & Core</button>
-            <button class="tab-btn" data-squad="frontend">Frontend & DX</button>
-            <button class="tab-btn" data-squad="ai">AI & Inference</button>
-            <button class="tab-btn" data-squad="security">Security & DevOps</button>
+        <div class="launchpad-box">
+          <div class="launchpad-info">
+            <h3>Initial development for ragetech.dev</h3>
+            <p>Our repositories enter public test phases over the coming cycle. Check back for benchmarks and RFC access.</p>
           </div>
-
-          <div class="search-input-wrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="dev-search-input" class="search-input" placeholder="Search builders, skills (e.g. Rust, Raft, WebGL)...">
-          </div>
-        </div>
-
-        <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-          <span id="builders-counter" class="mono" style="font-size: 0.8rem; color: var(--accent-cyan);">
-            29 of 29 Active Builders
-          </span>
-          <span class="mono" style="font-size: 0.75rem; color: var(--text-dim);">
-            Click any builder card for full technical bio
-          </span>
-        </div>
-
-        <!-- 29 Developers Grid Container -->
-        <div class="builders-grid" id="builders-grid">
-          <!-- Populated dynamically by app.js with all 29 developer cards -->
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section class="faq-section" id="faq">
-      <div class="container">
-        <div class="section-header">
-          <span class="section-tag">Frequently Asked Questions</span>
-          <h2 class="section-title">Everything About ragetech.dev</h2>
-          <p class="section-description">
-            Key details about our domain, collective organization, and release schedule.
-          </p>
-        </div>
-
-        <div class="faq-list">
-          <div class="faq-item open">
-            <button class="faq-question">
-              <span>What is the purpose of ragetech.dev?</span>
-              <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <div class="faq-answer">
-              <p>ragetech.dev is the central umbrella and development portal for the Ragetech engineering collective. It hosts our open specifications, benchmarks, developer tools, and initial alphas for our distributed projects.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>Why are there placeholders for 29 developers?</span>
-              <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <div class="faq-answer">
-              <p>Our guild was founded with a dedicated core team roster of 29 engineers across distributed systems, kernel runtimes, compilers, and frontend architecture. This landing page provides individual profile slots for all 29 contributors as our initial public development launchpad.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>When will the individual project alphas go public?</span>
-              <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <div class="faq-answer">
-              <p>Project Hyperion and Eclipse UI are currently entering private beta. We are rolling out public RFCs and test binaries throughout upcoming milestones. You can track progress right here on ragetech.dev.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>How can developers contribute or get in touch?</span>
-              <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <div class="faq-answer">
-              <p>We welcome contributions and architectural review from like-minded systems hackers. Reach out via our GitHub repository or contact our core maintainers.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Call to Action Section (Launchpad) -->
-    <section class="cta-section">
-      <div class="container">
-        <div class="cta-box">
-          <h2 class="cta-title">
-            The Foundation for Next-Gen Software Starts at <span class="gradient-text">ragetech.dev</span>
-          </h2>
-          <p class="cta-desc">
-            Bookmark this domain as our 29 builders roll out initial public releases,
-            benchmarks, and open-source tooling.
-          </p>
-
-          <div class="cta-actions">
-            <button class="domain-copy-btn js-copy-domain">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-              <span>ragetech.dev</span>
-              <span style="font-size: 0.75rem; color: #818cf8; margin-left: 6px;">[Copy]</span>
-            </button>
-            <button class="btn btn-primary" onclick="showToast('Subscribed to ragetech.dev devlog updates')">
-              Receive Engineering Dispatches
-            </button>
-          </div>
+          <button class="btn btn-primary js-copy-domain">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>ragetech.dev</span>
+          </button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Site Footer -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <div class="brand-group">
-            <div class="brand-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.2">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-              </svg>
-            </div>
-            <span class="brand-name">RAGETECH</span>
-          </div>
-          <p>
-            ragetech.dev is an autonomous guild of 29 builders pioneering high-octane systems and developer primitives.
-          </p>
-        </div>
-
-        <div>
-          <div class="footer-col-title">Projects</div>
-          <ul class="footer-col-links">
-            <li><a href="#projects" onclick="openProjectModal('hyperion')">Hyperion Engine</a></li>
-            <li><a href="#projects" onclick="openProjectModal('chimera')">Chimera AI</a></li>
-            <li><a href="#projects" onclick="openProjectModal('pulseos')">PulseOS KV</a></li>
-            <li><a href="#projects" onclick="openProjectModal('eclipse')">Eclipse UI</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <div class="footer-col-title">Collective</div>
-          <ul class="footer-col-links">
-            <li><a href="#team">The 29 Builders</a></li>
-            <li><a href="#architecture">Architecture Principles</a></li>
-            <li><a href="#faq">FAQ</a></li>
-            <li><a href="javascript:void(0)" class="js-copy-domain">ragetech.dev Domain</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <div class="footer-col-title">Security & Stack</div>
-          <ul class="footer-col-links">
-            <li><a href="javascript:void(0)" onclick="showToast('Rust 1.84+ / LLVM Toolchain')">Rust & Tokio</a></li>
-            <li><a href="javascript:void(0)" onclick="showToast('Go 1.23+ Edge Daemons')">Go & eBPF</a></li>
-            <li><a href="javascript:void(0)" onclick="showToast('Zero-Telemetry Guarantee')">Privacy Doctrine</a></li>
-            <li><a href="javascript:void(0)" onclick="showToast('RFC process open to verified contributors')">Submit RFC</a></li>
-          </ul>
-        </div>
+  <!-- Clean Minimalist Footer -->
+  <footer class="site-footer-clean">
+    <div class="container footer-row-clean">
+      <div>
+        © 2026 ragetech.dev — Independent Engineering Collective
       </div>
-
-      <div class="footer-bottom">
-        <div>
-          © 2026 ragetech.dev. All rights reserved. Initial collective preview.
-        </div>
-        <div style="display: flex; gap: 16px; align-items: center;">
-          <span class="status-dot"></span>
-          <span class="mono">29 Builders Synchronized</span>
-        </div>
+      <div class="mono" style="font-size: 0.75rem; color: var(--text-faint);">
+        29 BUILDERS ACTIVE • ZERO TRACKING
       </div>
     </div>
   </footer>
 
-  <!-- Modal Dialog (Project Specs & Dev Profiles) -->
+  <!-- Modal Dialog -->
   <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-card">
-      <button class="modal-close-btn" id="modal-close-btn" aria-label="Close dialog">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    <div class="modal-card-clean">
+      <button class="modal-close-icon" id="modal-close-btn" aria-label="Close dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
       <div id="modal-dynamic-content">
-        <!-- Content injected dynamically by app.js -->
+        <!-- Rendered by app.js -->
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
+  <!-- Toast Container -->
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-  <!-- Scripts -->
   <script src="app.js"></script>
 </body>
 </html>
