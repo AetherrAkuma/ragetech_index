@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initStickyScrollObserver();
   renderBuildersDirectory();
   initDirectoryControls();
-  initHeroTerminalConsole();
   initKeyboardShortcuts();
   initDomainCopy();
   initModals();
@@ -99,60 +98,7 @@ function showView(viewId) {
 }
 
 // ============================================================================
-// 2. HERO INTERACTIVE SYSTEMS CLI CONSOLE
-// ============================================================================
-
-function initHeroTerminalConsole() {
-  const cmdBtns = document.querySelectorAll('.quick-cmd-btn');
-  const cmdLine = document.getElementById('hero-term-cmd');
-  const logOutput = document.getElementById('hero-term-output');
-  const deepLink = document.getElementById('hero-term-deep-link');
-
-  const cmdData = {
-    hyperion: {
-      cmd: 'ragetech run hyperion --zero-copy --workers 16',
-      log: `[00:00:00.001] io_uring: SQPOLL kernel bypass initialized on 16 worker rings\n[00:00:00.014] memory_bus: Lock-free SPMC ring buffers mapped (4,096 physical pages)\n[00:00:00.021] telemetry_sink: Listening on 0.0.0.0:8443 (throughput: 1.42M events/sec)\n[00:00:00.024] benchmark: p99 event latency converged at 0.24ms <-- OK`,
-      linkText: 'Open Dedicated Hyperion Page',
-      linkUrl: '#/project/hyperion'
-    },
-    pulseos: {
-      cmd: 'ragetech inspect pulseos --cluster pulse-edge-us-east',
-      log: `[00:00:00.003] raft_cluster: Term 8942 synchronized across 5 nodes (quorum: 5/5)\n[00:00:00.012] ebpf_filter: Zero-copy socket pass-through active on port 7443\n[00:00:00.018] persistence: NVMe direct-I/O flush completed in 0.12ms\n[00:00:00.020] status: Sovereign edge partition tolerance VERIFIED`,
-      linkText: 'Open Dedicated PulseOS KV Page',
-      linkUrl: '#/project/pulseos'
-    },
-    chimera: {
-      cmd: 'ragetech trace chimera --dag root_dispatch --agents 16',
-      log: `[00:00:00.004] runtime: Memory-mapped tensor cache initialized (2,000,000 tokens)\n[00:00:00.018] span: root_dispatch -> worker_pool [16 cognitive agents]\n[00:00:00.035] cuda_kernel: Quantized attention pass executed in 1.4ms (FP8 TensorRT)\n[00:00:00.042] gate: Checkpoint rollback verification PASS (total: 129ms, memory: 48MB)`,
-      linkText: 'Open Dedicated Chimera Page',
-      linkUrl: '#/project/chimera'
-    },
-    builders: {
-      cmd: 'ragetech list builders --verified-only',
-      log: `INDEX  HANDLE           SQUAD      FOCUS               FLAGSHIP REPO\n-------------------------------------------------------------------------\n#01    @alexv           systems    Hyperion            alexv/fast-ringbuf (1.8k ⭐)\n#02    @elena           systems    PulseOS KV          elena/raft-ebpf (2.2k ⭐)\n#03    @mchen           ai         Chimera Runtime     mchen/chimera-vllm (3.4k ⭐)\n#04    @slindqvist      frontend   Eclipse UI          slindqvist/eclipse-tokens (1.3k ⭐)\n...    [25 more builders active in registry]`,
-      linkText: 'Explore All 29 Builders in Roster',
-      linkUrl: '#/developers'
-    }
-  };
-
-  cmdBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      cmdBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const target = btn.getAttribute('data-cmd');
-      const data = cmdData[target];
-      if (data && cmdLine && logOutput && deepLink) {
-        cmdLine.textContent = data.cmd;
-        logOutput.textContent = data.log;
-        deepLink.setAttribute('href', data.linkUrl);
-        deepLink.querySelector('span').textContent = data.linkText;
-      }
-    });
-  });
-}
-
-// ============================================================================
-// 3. DEDICATED PROJECT DETAIL PAGE (#/project/:id)
+// 2. DEDICATED PROJECT DETAIL PAGE (#/project/:id)
 // ============================================================================
 
 function renderProjectDetailPage(projectId) {
