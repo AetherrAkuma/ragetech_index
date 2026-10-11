@@ -581,22 +581,36 @@ export default {
     }
 
     // =========================================================================
-    // 2. DYNAMIC PATH ROUTING (Clean URLs with Zero Subdomains)
+    // 2. DYNAMIC PATH ROUTING & CLEAN SECURITY HEADERS
     // =========================================================================
+
+    async function serveWithSecurityHeaders(assetRequest) {
+      const response = await env.ASSETS.fetch(assetRequest);
+      const headers = new Headers(response.headers);
+      // Clean, standard Permissions-Policy to eliminate browser ad-sandbox warnings
+      headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+      headers.set('X-Content-Type-Options', 'nosniff');
+      headers.set('X-Frame-Options', 'SAMEORIGIN');
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers
+      });
+    }
 
     // Route /p/:slug -> serves universal project.html
     if (pathname.startsWith('/p/')) {
       const newUrl = new URL('/project.html', request.url);
-      return env.ASSETS.fetch(new Request(newUrl, request));
+      return serveWithSecurityHeaders(new Request(newUrl, request));
     }
 
     // Route /d/:handle or /@:handle -> serves universal developer.html
     if (pathname.startsWith('/d/') || pathname.startsWith('/@')) {
       const newUrl = new URL('/developer.html', request.url);
-      return env.ASSETS.fetch(new Request(newUrl, request));
+      return serveWithSecurityHeaders(new Request(newUrl, request));
     }
 
-    // Fallback: serve static assets (index.html, styles.css, app.js, data/*.js, etc.)
-    return env.ASSETS.fetch(request);
+    // Fallback: serve static assets with clean security headers
+    return serveWithSecurityHeaders(request);
   }
 };
