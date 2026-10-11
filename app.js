@@ -1,39 +1,1108 @@
 /**
- * RAGETECH.DEV — Application Logic
- * High-craft engineering collective directory, sticky scroll project inspector,
- * modular repository showcase, and developer dossier modals.
+ * RAGETECH.DEV — Application Core & SPA Router
+ * High-craft systems engineering collective hub, client-side hash router,
+ * dedicated project & developer profile pages, and in-browser Developer Studio.
  */
 
 // Load modular registries from window (defined in data/projects.js and data/developers.js)
-const PROJECTS = window.PROJECTS || [];
-const DEVELOPERS = window.DEVELOPERS || [];
+let PROJECTS = window.PROJECTS || [];
+let DEVELOPERS = window.DEVELOPERS || [];
 
-// State management for developer directory
+// Check sessionStorage for any live studio overrides during the current session
+try {
+  const customDevs = sessionStorage.getItem('ragetech_custom_developers');
+  if (customDevs) {
+    const parsed = JSON.parse(customDevs);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      DEVELOPERS = parsed;
+    }
+  }
+} catch (e) {
+  console.warn('Could not read sessionStorage', e);
+}
+
+// Global state for directory filters & active route
 let currentSquadFilter = 'all';
 let currentStackFilter = 'all';
 let currentSearchQuery = '';
 let currentSortBy = 'featured';
 let currentDirectoryView = 'showcase'; // 'showcase' | 'compact' | 'terminal'
+let activeStudioDeveloperId = 1;
 
 // ============================================================================
-// 1. INITIALIZATION & EVENT BINDINGS
+// 1. INITIALIZATION & CLIENT-SIDE SPA ROUTER
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Listen for hash changes
+  window.addEventListener('hashchange', handleRoute);
+
+  // Initialize Landing Page components
   renderStickySidebar();
   renderProjectEntries();
   initStickyScrollObserver();
-
   renderBuildersDirectory();
   initDirectoryControls();
+  initHeroTerminalConsole();
   initKeyboardShortcuts();
   initDomainCopy();
   initModals();
   initHeaderScroll();
+
+  // Route on initial load
+  handleRoute();
 });
 
+function handleRoute() {
+  const hash = window.location.hash || '#/';
+  const mainViews = ['view-landing', 'view-project-detail', 'view-developer-detail', 'view-studio'];
+  
+  // Hide all SPA views
+  mainViews.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+
+  if (hash.startsWith('#/project/')) {
+    const projectId = hash.replace('#/project/', '').trim();
+    showView('view-project-detail');
+    renderProjectDetailPage(projectId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (hash.startsWith('#/developer/')) {
+    const handle = hash.replace('#/developer/', '').trim();
+    showView('view-developer-detail');
+    renderDeveloperDetailPage(handle);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (hash === '#/studio') {
+    showView('view-studio');
+    renderStudioPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (hash === '#/projects') {
+    showView('view-landing');
+    const el = document.getElementById('repositories');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (hash === '#/developers') {
+    showView('view-landing');
+    const el = document.getElementById('directory');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    // Default: Landing Page
+    showView('view-landing');
+  }
+}
+
+function showView(viewId) {
+  const target = document.getElementById(viewId);
+  if (target) {
+    target.classList.add('active');
+  }
+}
+
 // ============================================================================
-// 2. INCUBATED PROJECTS (STICKY SCROLL HIGHLIGHT)
+// 2. HERO INTERACTIVE SYSTEMS CLI CONSOLE
+// ============================================================================
+
+function initHeroTerminalConsole() {
+  const cmdBtns = document.querySelectorAll('.quick-cmd-btn');
+  const cmdLine = document.getElementById('hero-term-cmd');
+  const logOutput = document.getElementById('hero-term-output');
+  const deepLink = document.getElementById('hero-term-deep-link');
+
+  const cmdData = {
+    hyperion: {
+      cmd: 'ragetech run hyperion --zero-copy --workers 16',
+      log: `[00:00:00.001] io_uring: SQPOLL kernel bypass initialized on 16 worker rings\n[00:00:00.014] memory_bus: Lock-free SPMC ring buffers mapped (4,096 physical pages)\n[00:00:00.021] telemetry_sink: Listening on 0.0.0.0:8443 (throughput: 1.42M events/sec)\n[00:00:00.024] benchmark: p99 event latency converged at 0.24ms <-- OK`,
+      linkText: 'Open Dedicated Hyperion Page',
+      linkUrl: '#/project/hyperion'
+    },
+    pulseos: {
+      cmd: 'ragetech inspect pulseos --cluster pulse-edge-us-east',
+      log: `[00:00:00.003] raft_cluster: Term 8942 synchronized across 5 nodes (quorum: 5/5)\n[00:00:00.012] ebpf_filter: Zero-copy socket pass-through active on port 7443\n[00:00:00.018] persistence: NVMe direct-I/O flush completed in 0.12ms\n[00:00:00.020] status: Sovereign edge partition tolerance VERIFIED`,
+      linkText: 'Open Dedicated PulseOS KV Page',
+      linkUrl: '#/project/pulseos'
+    },
+    chimera: {
+      cmd: 'ragetech trace chimera --dag root_dispatch --agents 16',
+      log: `[00:00:00.004] runtime: Memory-mapped tensor cache initialized (2,000,000 tokens)\n[00:00:00.018] span: root_dispatch -> worker_pool [16 cognitive agents]\n[00:00:00.035] cuda_kernel: Quantized attention pass executed in 1.4ms (FP8 TensorRT)\n[00:00:00.042] gate: Checkpoint rollback verification PASS (total: 129ms, memory: 48MB)`,
+      linkText: 'Open Dedicated Chimera Page',
+      linkUrl: '#/project/chimera'
+    },
+    builders: {
+      cmd: 'ragetech list builders --verified-only',
+      log: `INDEX  HANDLE           SQUAD      FOCUS               FLAGSHIP REPO\n-------------------------------------------------------------------------\n#01    @alexv           systems    Hyperion            alexv/fast-ringbuf (1.8k ⭐)\n#02    @elena           systems    PulseOS KV          elena/raft-ebpf (2.2k ⭐)\n#03    @mchen           ai         Chimera Runtime     mchen/chimera-vllm (3.4k ⭐)\n#04    @slindqvist      frontend   Eclipse UI          slindqvist/eclipse-tokens (1.3k ⭐)\n...    [25 more builders active in registry]`,
+      linkText: 'Explore All 29 Builders in Roster',
+      linkUrl: '#/developers'
+    }
+  };
+
+  cmdBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      cmdBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.getAttribute('data-cmd');
+      const data = cmdData[target];
+      if (data && cmdLine && logOutput && deepLink) {
+        cmdLine.textContent = data.cmd;
+        logOutput.textContent = data.log;
+        deepLink.setAttribute('href', data.linkUrl);
+        deepLink.querySelector('span').textContent = data.linkText;
+      }
+    });
+  });
+}
+
+// ============================================================================
+// 3. DEDICATED PROJECT DETAIL PAGE (#/project/:id)
+// ============================================================================
+
+function renderProjectDetailPage(projectId) {
+  const container = document.getElementById('view-project-detail');
+  if (!container) return;
+
+  const p = PROJECTS.find(item => item.id === projectId);
+  if (!p) {
+    container.innerHTML = `
+      <div class="container" style="padding: 60px 24px; text-align: center;">
+        <h2 style="font-size:1.8rem; margin-bottom:12px;">Project Not Found</h2>
+        <p style="color:var(--text-medium); margin-bottom:24px;">The repository "${escapeHtml(projectId)}" does not exist in the registry.</p>
+        <a href="#/projects" class="btn btn-primary">Return to Repositories</a>
+      </div>
+    `;
+    return;
+  }
+
+  // Find assignees in DEVELOPERS registry
+  const maintainers = (p.assignees || []).map(h => DEVELOPERS.find(b => b.handle === h)).filter(Boolean);
+
+  container.innerHTML = `
+    <div class="container detail-view-container">
+      <!-- Breadcrumb Bar -->
+      <div class="detail-back-bar">
+        <a href="#/" class="detail-back-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+          <span>Back to Collective</span>
+        </a>
+        <div style="display:flex; gap:10px;">
+          <a href="#/studio" class="btn btn-secondary" style="font-size:0.75rem;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Edit in Studio</span>
+          </a>
+          <a href="${p.githubUrl || 'https://github.com/ragetech/' + p.id}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:0.75rem;">
+            <span>GitHub Repository ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero Box -->
+      <div class="project-detail-hero">
+        <div class="project-detail-top">
+          <div>
+            <div class="project-detail-slug">${p.repo}</div>
+            <h1 class="project-detail-title">${p.name}</h1>
+            <p class="project-detail-summary">${p.summary}</p>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+            <span class="mono" style="font-size:0.75rem; color:#34d399; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); padding:3px 10px; border-radius:999px;">${p.badge}</span>
+            <div class="mono" style="font-size:0.8rem; color:var(--text-low); display:flex; gap:12px;">
+              <span>⭐ ${(p.stars || 1400).toLocaleString()} Stars</span>
+              <span>🍴 ${p.forks || 120} Forks</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quickstart Box -->
+        <div class="project-quickstart-box">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:var(--text-low);">Quickstart:</span>
+            <code>${p.cloneUrl || `git clone https://github.com/${p.repo}.git`}</code>
+          </div>
+          <button class="repo-clone-copy-btn" onclick="copyCloneCommand('${p.cloneUrl || `git clone https://github.com/${p.repo}.git`}', event)">
+            Copy Command
+          </button>
+        </div>
+      </div>
+
+      <!-- Project Specification Cards Grid -->
+      <div class="project-spec-cards-grid">
+        ${p.specs.map(s => `
+          <div class="project-spec-card">
+            <div class="project-spec-card-lbl">${s.label}</div>
+            <div class="project-spec-card-val">${s.val}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Architectural Deep Dive -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:36px;">
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-hairline); border-radius:var(--radius-lg); padding:28px;">
+          <h3 style="font-size:1.15rem; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--accent-blue);">01.</span>
+            <span>Architecture Blueprint</span>
+          </h3>
+          <p style="font-size:0.9rem; color:var(--text-medium); line-height:1.6; margin-bottom:16px;">
+            ${p.fullSpec ? p.fullSpec.arch : 'Engineered on lock-free memory ring buffers and direct kernel bypass for microsecond determinism.'}
+          </p>
+          <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-low); text-transform:uppercase; margin-bottom:6px;">Core Objective:</div>
+          <div style="font-size:0.88rem; color:#d4d4d8;">${p.fullSpec ? p.fullSpec.goal : 'Zero-copy edge throughput without garbage collection latency.'}</div>
+        </div>
+
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-hairline); border-radius:var(--radius-lg); padding:28px;">
+          <h3 style="font-size:1.15rem; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--accent-emerald);">02.</span>
+            <span>Current Release State</span>
+          </h3>
+          <p style="font-size:0.9rem; color:var(--text-medium); line-height:1.6; margin-bottom:16px;">
+            ${p.fullSpec ? p.fullSpec.status : 'Benchmarked and verified across bare-metal 100GbE clusters and Firecracker microVM testbeds.'}
+          </p>
+          <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-low); text-transform:uppercase; margin-bottom:6px;">Runtime Target:</div>
+          <div style="font-size:0.88rem; color:#d4d4d8;">Linux 6.x x86_64 & aarch64 (Bare Metal / Sovereign Edge)</div>
+        </div>
+      </div>
+
+      <!-- Technical Preview Source -->
+      <div style="background:#09090c; border:1px solid var(--border-subtle); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:40px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#101015; border-bottom:1px solid rgba(255,255,255,0.06); font-family:var(--font-mono); font-size:0.75rem; color:var(--text-low);">
+          <span>${p.previewTitle}</span>
+          <span>READ-ONLY PREVIEW</span>
+        </div>
+        <pre class="mono" style="padding:24px 20px; font-size:0.82rem; color:#e4e4e7; line-height:1.6; overflow-x:auto;"><code>${escapeHtml(p.previewContent)}</code></pre>
+      </div>
+
+      <!-- Lead Maintainers Roster -->
+      <div style="margin-bottom:60px;">
+        <div style="margin-bottom:20px;">
+          <span class="section-kicker">Core Authors</span>
+          <h3 style="font-size:1.35rem; color:#fff;">Lead Maintainers (${maintainers.length})</h3>
+        </div>
+        <div class="project-maintainers-grid">
+          ${maintainers.map(m => {
+            const initials = m.name.split(' ').map(n => n[0]).join('');
+            return `
+              <div class="compact-roster-card" onclick="window.location.hash = '#/developer/${m.handle}'">
+                <div class="compact-header">
+                  <div class="compact-avatar-name">
+                    <div class="compact-avatar">${initials}</div>
+                    <div class="compact-name-block">
+                      <span class="compact-name">${m.name}</span>
+                      <span class="compact-handle">@${m.handle}</span>
+                    </div>
+                  </div>
+                  <span class="mono" style="font-size:0.72rem; color:var(--text-low);">#${String(m.id).padStart(2, '0')}</span>
+                </div>
+                <div class="compact-role">${m.role}</div>
+                <div class="mono" style="font-size:0.72rem; color:var(--accent-blue); margin-top:auto;">
+                  View Full Profile →
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// 4. DEDICATED DEVELOPER PROFILE PAGE (#/developer/:handle)
+// ============================================================================
+
+function renderDeveloperDetailPage(handle) {
+  const container = document.getElementById('view-developer-detail');
+  if (!container) return;
+
+  const b = DEVELOPERS.find(builder => builder.handle.toLowerCase() === handle.toLowerCase());
+  if (!b) {
+    container.innerHTML = `
+      <div class="container" style="padding: 60px 24px; text-align: center;">
+        <h2 style="font-size:1.8rem; margin-bottom:12px;">Developer Not Found</h2>
+        <p style="color:var(--text-medium); margin-bottom:24px;">The handle "@${escapeHtml(handle)}" does not exist in the collective.</p>
+        <a href="#/developers" class="btn btn-primary">Return to Roster</a>
+      </div>
+    `;
+    return;
+  }
+
+  const initials = b.name.split(' ').map(n => n[0]).join('');
+  const repo = b.featuredRepo;
+  const squadLabels = {
+    systems: 'Systems & Kernel Architecture',
+    ai: 'AI & Inference Systems',
+    security: 'Security, Cryptography & MicroVMs',
+    frontend: 'Developer Ergonomics & Interfaces'
+  };
+
+  container.innerHTML = `
+    <div class="container detail-view-container">
+      <!-- Breadcrumb Bar -->
+      <div class="detail-back-bar">
+        <a href="#/developers" class="detail-back-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+          <span>Back to Roster</span>
+        </a>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" onclick="openStudioForDeveloper(${b.id})" style="font-size:0.75rem;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Edit Profile in Studio</span>
+          </button>
+          <a href="${b.socials.github}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:0.75rem;">
+            <span>GitHub Profile ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Developer Hero Dossier -->
+      <div class="dev-profile-hero">
+        <div class="dev-profile-top-row">
+          <div class="dev-profile-avatar-xl">
+            ${initials}
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <h1 style="font-size:clamp(1.8rem, 3.5vw, 2.4rem); color:#fff; font-weight:600;">${b.name}</h1>
+              <span class="mono" style="font-size:0.9rem; color:var(--accent-blue);">@${b.handle}</span>
+              <span class="mono" style="font-size:0.7rem; color:var(--text-low); background:rgba(255,255,255,0.04); border:1px solid var(--border-hairline); padding:2px 8px; border-radius:4px;">
+                MEMBER #${String(b.id).padStart(2, '0')}/29
+              </span>
+            </div>
+            <div style="font-size:1rem; color:var(--text-medium);">${b.role} • <span style="color:#ffffff;">${squadLabels[b.squad] || b.squad}</span></div>
+            <div class="mono" style="font-size:0.8rem; color:var(--text-low);">${b.location || 'Location Not Specified'}</div>
+          </div>
+        </div>
+
+        <!-- Live Status Line -->
+        ${b.status ? `
+          <div style="background:rgba(0,0,0,0.35); border:1px solid var(--border-hairline); border-radius:8px; padding:10px 16px; margin-bottom:20px; font-family:var(--font-mono); font-size:0.82rem; color:#d4d4d8; display:flex; align-items:center; gap:8px;">
+            <span class="live-dot-pulse" style="width:6px;height:6px;"></span>
+            <span style="color:var(--text-low); text-transform:uppercase;">ACTIVE FOCUS:</span>
+            <span>${b.status}</span>
+          </div>
+        ` : ''}
+
+        <p class="dev-profile-bio-lead">${b.bio}</p>
+
+        <!-- Primary Tech Stack Badges -->
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:16px;">
+          ${b.stack.map(s => `<span class="builder-tech-badge" style="font-size:0.75rem; padding:3px 10px;">${s}</span>`).join('')}
+        </div>
+      </div>
+
+      <!-- Flagship Repository Card (The Flex!) -->
+      ${repo ? `
+        <div style="margin-bottom:32px;">
+          <div style="margin-bottom:14px;">
+            <span class="section-kicker">Showcase & Flex</span>
+            <h3 style="font-size:1.35rem; color:#fff;">Flagship Repository</h3>
+          </div>
+
+          <div class="dev-flagship-repo-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+              <a href="${repo.url}" target="_blank" rel="noopener" class="repo-title-anchor" style="font-size:1.1rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+                <span>${repo.name}</span>
+              </a>
+              <div style="display:flex; gap:10px;">
+                <span class="repo-flagship-pill" style="font-size:0.7rem;">Flagship Repository</span>
+                <a href="${repo.url}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:0.72rem; padding:3px 10px;">
+                  View on GitHub ↗
+                </a>
+              </div>
+            </div>
+
+            <p style="font-size:0.92rem; color:var(--text-medium); line-height:1.55; margin-bottom:18px;">${repo.tagline}</p>
+
+            ${repo.cloneUrl ? `
+              <div class="dossier-clone-box" style="margin-bottom:18px;">
+                <code>${repo.cloneUrl}</code>
+                <button class="repo-clone-copy-btn" onclick="copyCloneCommand('${repo.cloneUrl}', event)">Copy Clone</button>
+              </div>
+            ` : ''}
+
+            <div style="display:flex; align-items:center; gap:20px; font-family:var(--font-mono); font-size:0.8rem; color:var(--text-low); flex-wrap:wrap;">
+              <span style="display:inline-flex; align-items:center; gap:6px; color:#ffffff;">
+                <span style="width:9px; height:9px; border-radius:50%; background:${repo.languageColor};"></span>
+                ${repo.language}
+              </span>
+              <span>⭐ ${(repo.stars || 0).toLocaleString()} Stars</span>
+              <span>🍴 ${repo.forks || 0} Forks</span>
+              ${repo.topics ? repo.topics.map(t => `<span class="builder-tech-badge">#${t}</span>`).join('') : ''}
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Secondary Repositories Grid -->
+      ${(b.secondaryRepos && b.secondaryRepos.length > 0) ? `
+        <div style="margin-bottom:36px;">
+          <div style="margin-bottom:14px;">
+            <span class="section-kicker">Open Source Work</span>
+            <h3 style="font-size:1.35rem; color:#fff;">Secondary Repositories (${b.secondaryRepos.length})</h3>
+          </div>
+          <div class="dev-secondary-repos-grid">
+            ${b.secondaryRepos.map(sr => `
+              <div style="background:var(--bg-subtle); border:1px solid var(--border-hairline); border-radius:var(--radius-md); padding:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span class="mono" style="color:#ffffff; font-weight:600; font-size:0.9rem;">${sr.name}</span>
+                  <span class="mono" style="color:var(--text-low); font-size:0.75rem;">⭐ ${sr.stars}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:0.72rem; color:var(--text-low);">
+                  <span style="width:7px; height:7px; border-radius:50%; background:${sr.languageColor || '#fff'};"></span>
+                  <span>${sr.language}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Collective Incubator & Security Dossier -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:60px;">
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-hairline); border-radius:var(--radius-md); padding:24px;">
+          <div class="mono" style="font-size:0.72rem; color:var(--text-low); text-transform:uppercase; margin-bottom:6px;">Collective Contribution:</div>
+          <div style="font-size:1.05rem; color:#fff; font-weight:600; margin-bottom:8px;">${b.ragetechProject ? b.ragetechProject.toUpperCase() : 'Ragetech Core'}</div>
+          <p style="font-size:0.84rem; color:var(--text-medium); margin-bottom:14px;">
+            Active maintainer contributing to core architectural RFCs and sovereign edge codebases.
+          </p>
+          ${b.ragetechProject ? `
+            <a href="#/project/${b.ragetechProject}" class="btn btn-secondary" style="font-size:0.75rem;">
+              View ${b.ragetechProject} Blueprint →
+            </a>
+          ` : ''}
+        </div>
+
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-hairline); border-radius:var(--radius-md); padding:24px;">
+          <div class="mono" style="font-size:0.72rem; color:var(--text-low); text-transform:uppercase; margin-bottom:6px;">Verification & PGP:</div>
+          <div class="mono" style="font-size:0.86rem; color:#34d399; margin-bottom:8px;">GPG: ${b.gpgKey || '4A8B 91F0 C128 7E53'}</div>
+          <p style="font-size:0.84rem; color:var(--text-medium); margin-bottom:14px;">
+            Cryptographically signed commits verified across sovereign bare-metal infrastructure.
+          </p>
+          <div style="display:flex; gap:10px;">
+            <a href="${b.socials.github}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:0.75rem;">GitHub</a>
+            ${b.socials.x ? `<a href="${b.socials.x}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:0.75rem;">X</a>` : ''}
+            ${b.socials.website ? `<a href="${b.socials.website}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:0.75rem;">Site</a>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// 5. IN-BROWSER DEVELOPER STUDIO & REPO MANAGER (#/studio)
+// ============================================================================
+
+function openStudioForDeveloper(id) {
+  activeStudioDeveloperId = id;
+  window.location.hash = '#/studio';
+}
+
+function renderStudioPage() {
+  const container = document.getElementById('view-studio');
+  if (!container) return;
+
+  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId) || DEVELOPERS[0];
+  const repo = currentDev.featuredRepo || {};
+
+  container.innerHTML = `
+    <div class="container studio-container">
+      <!-- Studio Header -->
+      <div class="studio-header-box">
+        <div>
+          <span class="section-kicker">In-Browser Developer Studio</span>
+          <h2 style="font-size:1.6rem; color:#fff; font-weight:600; margin-bottom:4px;">Manage Your Developer Profile & Repos</h2>
+          <p style="font-size:0.86rem; color:var(--text-medium);">
+            Live-edit your profile, flex your repositories, and test changes in real-time. Export ready-to-merge PR snippets.
+          </p>
+        </div>
+
+        <!-- Developer Select Bar -->
+        <div style="display:flex; align-items:center; gap:10px;">
+          <select id="studio-dev-picker" class="studio-select" style="min-width:240px;" onchange="onStudioDevChange(this.value)">
+            ${DEVELOPERS.map(b => `
+              <option value="${b.id}" ${b.id === currentDev.id ? 'selected' : ''}>
+                @${b.handle} (${b.name})
+              </option>
+            `).join('')}
+            <option value="new">+ Create New Developer Profile</option>
+          </select>
+          <a href="#/" class="btn btn-secondary" style="font-size:0.78rem;">Exit Studio</a>
+        </div>
+      </div>
+
+      <!-- Split Layout: Left Form Editor, Right Live Preview -->
+      <div class="studio-split-layout">
+        <!-- Left Panel: Form Controls -->
+        <div class="studio-panel">
+          <h3 style="font-size:1.1rem; color:#fff; margin-bottom:16px; border-bottom:1px solid var(--border-hairline); padding-bottom:8px;">
+            Developer Profile & Flagship Repo
+          </h3>
+
+          <form id="studio-form" class="studio-form-grid" oninput="onStudioFormInput()">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div class="studio-field">
+                <label>GitHub Handle (@)</label>
+                <input type="text" id="studio-handle" class="studio-input" value="${escapeHtml(currentDev.handle)}">
+              </div>
+              <div class="studio-field">
+                <label>Full Name</label>
+                <input type="text" id="studio-name" class="studio-input" value="${escapeHtml(currentDev.name)}">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:12px;">
+              <div class="studio-field">
+                <label>Engineering Role</label>
+                <input type="text" id="studio-role" class="studio-input" value="${escapeHtml(currentDev.role)}">
+              </div>
+              <div class="studio-field">
+                <label>Technical Squad</label>
+                <select id="studio-squad" class="studio-select">
+                  <option value="systems" ${currentDev.squad === 'systems' ? 'selected' : ''}>Systems & Kernel</option>
+                  <option value="ai" ${currentDev.squad === 'ai' ? 'selected' : ''}>AI & Inference</option>
+                  <option value="security" ${currentDev.squad === 'security' ? 'selected' : ''}>Security & MicroVMs</option>
+                  <option value="frontend" ${currentDev.squad === 'frontend' ? 'selected' : ''}>Interface & Tooling</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="studio-field">
+              <label>Location & Timezone</label>
+              <input type="text" id="studio-location" class="studio-input" value="${escapeHtml(currentDev.location || 'Tokyo, JP (UTC+9)')}">
+            </div>
+
+            <div class="studio-field">
+              <label>Active Focus / Status Line</label>
+              <input type="text" id="studio-status" class="studio-input" value="${escapeHtml(currentDev.status || '')}">
+            </div>
+
+            <div class="studio-field">
+              <label>Engineering Bio</label>
+              <textarea id="studio-bio" class="studio-textarea">${escapeHtml(currentDev.bio)}</textarea>
+            </div>
+
+            <h4 style="font-size:0.95rem; color:#fff; margin-top:8px; border-bottom:1px solid var(--border-hairline); padding-bottom:6px;">
+              Featured Repository (The Flex)
+            </h4>
+
+            <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:12px;">
+              <div class="studio-field">
+                <label>Flagship Repo Name (user/repo)</label>
+                <input type="text" id="studio-repo-name" class="studio-input" value="${escapeHtml(repo.name || '')}">
+              </div>
+              <div class="studio-field">
+                <label>Primary Language</label>
+                <input type="text" id="studio-repo-lang" class="studio-input" value="${escapeHtml(repo.language || 'Rust')}">
+              </div>
+            </div>
+
+            <div class="studio-field">
+              <label>Repo Tagline / Pitch</label>
+              <input type="text" id="studio-repo-desc" class="studio-input" value="${escapeHtml(repo.tagline || '')}">
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div class="studio-field">
+                <label>Stars Count ⭐</label>
+                <input type="number" id="studio-repo-stars" class="studio-input" value="${repo.stars || 1200}">
+              </div>
+              <div class="studio-field">
+                <label>Forks Count 🍴</label>
+                <input type="number" id="studio-repo-forks" class="studio-input" value="${repo.forks || 80}">
+              </div>
+            </div>
+
+            <div class="studio-field">
+              <label>Clone Command</label>
+              <input type="text" id="studio-repo-clone" class="studio-input" value="${escapeHtml(repo.cloneUrl || '')}">
+            </div>
+
+            <div class="studio-field">
+              <label>Tech Stack Chips (comma-separated)</label>
+              <input type="text" id="studio-stack" class="studio-input" value="${escapeHtml(currentDev.stack.join(', '))}">
+            </div>
+          </form>
+
+          <!-- Studio Toolbar Actions -->
+          <div class="studio-toolbar-actions">
+            <button class="btn btn-primary" onclick="applyStudioChangesLive()">
+              ⚡ Test on Live Site
+            </button>
+            <button class="btn btn-secondary" onclick="exportStudioPrSnippet()">
+              📋 Copy GitHub PR Snippet
+            </button>
+            <button class="btn btn-secondary" onclick="viewStudioDeveloperPage()">
+              View Dedicated Page →
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Panel: Real-Time Live Preview -->
+        <div class="studio-panel">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-hairline); padding-bottom:8px;">
+            <h3 style="font-size:1.1rem; color:#fff;">Live Instant Preview</h3>
+            <span class="mono" style="font-size:0.7rem; color:#34d399; background:rgba(16,185,129,0.1); padding:2px 8px; border-radius:3px;">
+              ● UPDATES IN REAL-TIME
+            </span>
+          </div>
+
+          <div id="studio-live-preview-box">
+            <!-- Rendered by onStudioFormInput() -->
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Trigger initial live preview
+  onStudioFormInput();
+}
+
+window.onStudioDevChange = function(val) {
+  if (val === 'new') {
+    const newId = DEVELOPERS.length + 1;
+    const newDev = {
+      id: newId,
+      handle: 'newdev',
+      name: 'New Builder',
+      squad: 'systems',
+      role: 'Systems Engineer',
+      status: '⚡ Building edge zero-copy primitives',
+      location: 'Global (UTC)',
+      bio: 'Architecting high-throughput distributed infrastructure.',
+      stack: ['Rust', 'Linux', 'eBPF'],
+      ragetechProject: 'hyperion',
+      featuredRepo: {
+        name: 'newdev/fast-edge',
+        tagline: 'Lightweight zero-copy event streaming runner for Linux.',
+        stars: 450,
+        forks: 34,
+        language: 'Rust',
+        languageColor: '#dea584',
+        url: 'https://github.com/ragetech/hyperion',
+        cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
+        topics: ['rust', 'edge', 'systems']
+      },
+      secondaryRepos: [],
+      socials: { github: 'https://github.com/newdev' },
+      gpgKey: '4A8B 91F0 C128 7E53'
+    };
+    DEVELOPERS.push(newDev);
+    activeStudioDeveloperId = newId;
+    renderStudioPage();
+    showToast('Created new developer template');
+  } else {
+    activeStudioDeveloperId = parseInt(val, 10);
+    renderStudioPage();
+  }
+};
+
+window.onStudioFormInput = function() {
+  const previewBox = document.getElementById('studio-live-preview-box');
+  if (!previewBox) return;
+
+  const handle = document.getElementById('studio-handle').value || 'handle';
+  const name = document.getElementById('studio-name').value || 'Developer Name';
+  const role = document.getElementById('studio-role').value || 'Role';
+  const squad = document.getElementById('studio-squad').value;
+  const status = document.getElementById('studio-status').value;
+  const bio = document.getElementById('studio-bio').value;
+  const repoName = document.getElementById('studio-repo-name').value || 'user/repo';
+  const repoLang = document.getElementById('studio-repo-lang').value || 'Rust';
+  const repoDesc = document.getElementById('studio-repo-desc').value || 'Repository description';
+  const stars = parseInt(document.getElementById('studio-repo-stars').value, 10) || 0;
+  const forks = parseInt(document.getElementById('studio-repo-forks').value, 10) || 0;
+  const stack = document.getElementById('studio-stack').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  const initials = name.split(' ').map(n => n[0]).join('') || 'DEV';
+
+  previewBox.innerHTML = `
+    <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--text-low); margin-bottom:8px;">ROSTER CARD PREVIEW:</div>
+    <div class="builder-showcase-card" style="box-shadow:none; margin-bottom:24px;">
+      <div class="showcase-card-top">
+        <div class="showcase-avatar-col">
+          <div class="builder-avatar-box">
+            ${initials}
+            <span class="builder-beacon-dot"></span>
+          </div>
+          <div class="builder-identity-meta">
+            <div class="builder-name-row">
+              <span class="builder-display-name">${escapeHtml(name)}</span>
+              <span class="builder-handle-link">@${escapeHtml(handle)}</span>
+              <span class="builder-squad-badge">${escapeHtml(squad)}</span>
+            </div>
+            <div class="builder-role-line">${escapeHtml(role)}</div>
+          </div>
+        </div>
+        <span class="builder-index-num">#${String(activeStudioDeveloperId).padStart(2, '0')}</span>
+      </div>
+
+      ${status ? `
+        <div class="builder-status-banner">
+          <span>${escapeHtml(status)}</span>
+        </div>
+      ` : ''}
+
+      <p class="builder-bio-p">${escapeHtml(bio)}</p>
+
+      <div class="repo-inset-box">
+        <div class="repo-inset-header">
+          <span class="repo-title-anchor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+            <span>${escapeHtml(repoName)}</span>
+          </span>
+          <span class="repo-flagship-pill">Flagship</span>
+        </div>
+        <p class="repo-inset-desc">${escapeHtml(repoDesc)}</p>
+        <div class="repo-inset-footer">
+          <div class="repo-stats-group">
+            <span class="repo-lang-spec">
+              <span class="repo-lang-dot" style="background-color: #dea584;"></span>
+              ${escapeHtml(repoLang)}
+            </span>
+            <span class="repo-stat-counter">⭐ ${stars.toLocaleString()}</span>
+            <span class="repo-stat-counter">🍴 ${forks}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="builder-card-bottom">
+        <div class="builder-stack-pills-row">
+          ${stack.map(s => `<span class="builder-tech-badge">${escapeHtml(s)}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--text-low); margin-bottom:8px;">SHAREABLE URL:</div>
+    <div style="background:#09090c; border:1px solid var(--border-hairline); border-radius:6px; padding:8px 12px; font-family:var(--font-mono); font-size:0.78rem; color:var(--accent-blue);">
+      https://ragetech.dev/#/developer/${escapeHtml(handle)}
+    </div>
+  `;
+};
+
+window.applyStudioChangesLive = function() {
+  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId);
+  if (!currentDev) return;
+
+  currentDev.handle = document.getElementById('studio-handle').value.trim();
+  currentDev.name = document.getElementById('studio-name').value.trim();
+  currentDev.role = document.getElementById('studio-role').value.trim();
+  currentDev.squad = document.getElementById('studio-squad').value;
+  currentDev.location = document.getElementById('studio-location').value.trim();
+  currentDev.status = document.getElementById('studio-status').value.trim();
+  currentDev.bio = document.getElementById('studio-bio').value.trim();
+
+  currentDev.featuredRepo = currentDev.featuredRepo || {};
+  currentDev.featuredRepo.name = document.getElementById('studio-repo-name').value.trim();
+  currentDev.featuredRepo.language = document.getElementById('studio-repo-lang').value.trim();
+  currentDev.featuredRepo.tagline = document.getElementById('studio-repo-desc').value.trim();
+  currentDev.featuredRepo.stars = parseInt(document.getElementById('studio-repo-stars').value, 10) || 0;
+  currentDev.featuredRepo.forks = parseInt(document.getElementById('studio-repo-forks').value, 10) || 0;
+  currentDev.featuredRepo.cloneUrl = document.getElementById('studio-repo-clone').value.trim();
+  currentDev.stack = document.getElementById('studio-stack').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Save to sessionStorage
+  try {
+    sessionStorage.setItem('ragetech_custom_developers', JSON.stringify(DEVELOPERS));
+  } catch (e) {
+    console.warn(e);
+  }
+
+  // Re-render directory
+  renderBuildersDirectory();
+  showToast(`Updated @${currentDev.handle} live on site!`);
+};
+
+window.viewStudioDeveloperPage = function() {
+  applyStudioChangesLive();
+  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId);
+  if (currentDev) {
+    window.location.hash = `#/developer/${currentDev.handle}`;
+  }
+};
+
+window.exportStudioPrSnippet = function() {
+  applyStudioChangesLive();
+  const currentDev = DEVELOPERS.find(b => b.id === activeStudioDeveloperId);
+  if (!currentDev) return;
+
+  const formattedCode = JSON.stringify(currentDev, null, 2);
+  navigator.clipboard.writeText(formattedCode).then(() => {
+    showToast('Copied PR code snippet to clipboard!');
+  }).catch(() => {
+    showToast('Copied to clipboard');
+  });
+};
+
+// ============================================================================
+// 6. BUILDERS DIRECTORY & SHOWCASE ENGINE (LANDING PAGE)
+// ============================================================================
+
+function filterAndSortBuilders() {
+  const q = currentSearchQuery.toLowerCase().trim();
+
+  let list = DEVELOPERS.filter(b => {
+    const matchSquad = currentSquadFilter === 'all' || b.squad === currentSquadFilter;
+    const matchStack = currentStackFilter === 'all' || 
+      b.stack.some(s => s.toLowerCase() === currentStackFilter.toLowerCase()) ||
+      (b.featuredRepo && b.featuredRepo.language.toLowerCase() === currentStackFilter.toLowerCase());
+
+    const matchQuery = !q ||
+      b.name.toLowerCase().includes(q) ||
+      b.handle.toLowerCase().includes(q) ||
+      b.role.toLowerCase().includes(q) ||
+      b.bio.toLowerCase().includes(q) ||
+      (b.status && b.status.toLowerCase().includes(q)) ||
+      (b.featuredRepo && b.featuredRepo.name.toLowerCase().includes(q)) ||
+      (b.featuredRepo && b.featuredRepo.tagline.toLowerCase().includes(q)) ||
+      b.stack.some(s => s.toLowerCase().includes(q));
+
+    return matchSquad && matchStack && matchQuery;
+  });
+
+  if (currentSortBy === 'stars') {
+    list.sort((a, b) => ((b.featuredRepo && b.featuredRepo.stars) || 0) - ((a.featuredRepo && a.featuredRepo.stars) || 0));
+  } else if (currentSortBy === 'index') {
+    list.sort((a, b) => a.id - b.id);
+  } else if (currentSortBy === 'name') {
+    list.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return list;
+}
+
+function renderBuildersDirectory() {
+  const filtered = filterAndSortBuilders();
+  const counterEl = document.getElementById('builders-count-badge');
+  if (counterEl) {
+    counterEl.textContent = `Showing ${filtered.length} of ${DEVELOPERS.length}`;
+  }
+
+  renderShowcaseView(filtered);
+  renderCompactView(filtered);
+  renderTerminalView(filtered);
+}
+
+function renderShowcaseView(list) {
+  const container = document.getElementById('builders-showcase-view');
+  if (!container) return;
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 48px 0; text-align: center; color: var(--text-low); font-size: 0.9rem;">
+        No builders match your search criteria. Try adjusting filters or search term.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(b => {
+    const initials = b.name.split(' ').map(n => n[0]).join('');
+    const repo = b.featuredRepo;
+    const squadLabels = {
+      systems: 'Systems & Kernel',
+      ai: 'AI & Inference',
+      security: 'Security & MicroVM',
+      frontend: 'Interface & Tooling'
+    };
+
+    return `
+      <div class="builder-showcase-card" id="builder-card-${b.id}">
+        <!-- Top Identity Row -->
+        <div class="showcase-card-top">
+          <div class="showcase-avatar-col">
+            <div class="builder-avatar-box" onclick="window.location.hash = '#/developer/${b.handle}'" style="cursor:pointer;" title="View Dedicated Profile">
+              ${initials}
+              <span class="builder-beacon-dot" title="Active Collective Contributor"></span>
+            </div>
+            <div class="builder-identity-meta">
+              <div class="builder-name-row">
+                <a href="#/developer/${b.handle}" class="builder-display-name">${b.name}</a>
+                <a href="#/developer/${b.handle}" class="builder-handle-link">@${b.handle}</a>
+                <span class="builder-squad-badge">${squadLabels[b.squad] || b.squad}</span>
+              </div>
+              <div class="builder-role-line">${b.role}</div>
+            </div>
+          </div>
+          <span class="builder-index-num">#${String(b.id).padStart(2, '0')}</span>
+        </div>
+
+        <!-- Live Status Line -->
+        ${b.status ? `
+          <div class="builder-status-banner">
+            <span>${b.status}</span>
+          </div>
+        ` : ''}
+
+        <!-- Engineering Bio -->
+        <p class="builder-bio-p">${b.bio}</p>
+
+        <!-- The Featured Repo Showcase (The Flex!) -->
+        ${repo ? `
+          <div class="repo-inset-box">
+            <div class="repo-inset-header">
+              <a href="${repo.url}" target="_blank" rel="noopener" class="repo-title-anchor" onclick="event.stopPropagation();">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+                <span>${repo.name}</span>
+              </a>
+              <span class="repo-flagship-pill">Flagship</span>
+            </div>
+
+            <p class="repo-inset-desc">${repo.tagline}</p>
+
+            <div class="repo-inset-footer">
+              <div class="repo-stats-group">
+                <span class="repo-lang-spec">
+                  <span class="repo-lang-dot" style="background-color: ${repo.languageColor || '#dea584'};"></span>
+                  ${repo.language}
+                </span>
+                <span class="repo-stat-counter" title="GitHub Stars">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  ${(repo.stars || 0).toLocaleString()}
+                </span>
+                <span class="repo-stat-counter" title="Forks">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><path d="M12 12v3"/></svg>
+                  ${repo.forks || 0}
+                </span>
+              </div>
+
+              <div class="repo-quick-actions">
+                ${repo.cloneUrl ? `
+                  <button class="repo-clone-copy-btn" onclick="copyCloneCommand('${repo.cloneUrl}', event)" title="Copy clone command">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    <span>Clone</span>
+                  </button>
+                ` : ''}
+                <a href="${repo.url}" target="_blank" rel="noopener" class="repo-clone-copy-btn" onclick="event.stopPropagation();" title="Open repository">
+                  <span>Repo ↗</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Bottom Row: Stack Pills + Actions -->
+        <div class="builder-card-bottom">
+          <div class="builder-stack-pills-row">
+            ${b.stack.map(s => `<span class="builder-tech-badge" onclick="setQuickStackFilter('${s}', event)">${s}</span>`).join('')}
+          </div>
+
+          <div class="builder-actions-group">
+            <a href="#/developer/${b.handle}" class="btn-inspect-dossier">
+              <span>View Profile</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+            <a href="${b.socials.github}" target="_blank" rel="noopener" class="builder-icon-btn" title="GitHub Profile" onclick="event.stopPropagation();">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCompactView(list) {
+  const container = document.getElementById('builders-compact-view');
+  if (!container) return;
+
+  container.innerHTML = list.map(b => {
+    const initials = b.name.split(' ').map(n => n[0]).join('');
+    const repo = b.featuredRepo;
+
+    return `
+      <div class="compact-roster-card" onclick="window.location.hash = '#/developer/${b.handle}'">
+        <div class="compact-header">
+          <div class="compact-avatar-name">
+            <div class="compact-avatar">${initials}</div>
+            <div class="compact-name-block">
+              <span class="compact-name">${b.name}</span>
+              <span class="compact-handle">@${b.handle}</span>
+            </div>
+          </div>
+          <span class="mono" style="font-size:0.72rem; color:var(--text-low);">#${String(b.id).padStart(2, '0')}</span>
+        </div>
+
+        <div class="compact-role">${b.role}</div>
+
+        ${repo ? `
+          <div class="compact-pinned-repo">
+            <span class="compact-repo-name">${repo.name}</span>
+            <span class="compact-repo-stars">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              ${(repo.stars || 0).toLocaleString()}
+            </span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTerminalView(list) {
+  const container = document.getElementById('builders-terminal-view');
+  if (!container) return;
+
+  container.innerHTML = `
+    <table class="builders-matrix-table">
+      <thead>
+        <tr>
+          <th>Index</th>
+          <th>Engineer</th>
+          <th>Squad</th>
+          <th>Flagship Repository</th>
+          <th>Stars</th>
+          <th>Language</th>
+          <th>Primary Stack</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(b => {
+          const repo = b.featuredRepo;
+          return `
+            <tr>
+              <td class="mono" style="color:var(--text-low);">#${String(b.id).padStart(2, '0')}</td>
+              <td>
+                <div style="display:flex; flex-direction:column;">
+                  <span style="color:var(--text-high); font-weight:500;">${b.name}</span>
+                  <a href="#/developer/${b.handle}" class="mono" style="font-size:0.72rem; color:var(--text-low);">@${b.handle}</a>
+                </div>
+              </td>
+              <td><span class="builder-squad-badge">${b.squad}</span></td>
+              <td>
+                ${repo ? `
+                  <a href="${repo.url}" target="_blank" rel="noopener" class="mono" style="color:#ffffff; font-weight:500;" onclick="event.stopPropagation();">
+                    ${repo.name} ↗
+                  </a>
+                ` : '—'}
+              </td>
+              <td class="mono" style="color:var(--text-high);">
+                ${repo ? `⭐ ${(repo.stars || 0).toLocaleString()}` : '—'}
+              </td>
+              <td>
+                ${repo ? `
+                  <span style="display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:0.75rem;">
+                    <span style="width:7px; height:7px; border-radius:50%; background:${repo.languageColor || '#fff'};"></span>
+                    ${repo.language}
+                  </span>
+                ` : '—'}
+              </td>
+              <td class="mono" style="font-size:0.72rem; color:var(--text-low);">${b.stack.join(', ')}</td>
+              <td>
+                <a href="#/developer/${b.handle}" class="btn-inspect-dossier" style="padding:3px 8px; font-size:0.72rem;">
+                  Profile →
+                </a>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ============================================================================
+// 7. INCUBATED SYSTEMS SECTION (STICKY SCROLL ON LANDING)
 // ============================================================================
 
 function renderStickySidebar() {
@@ -57,11 +1126,10 @@ function renderProjectEntries() {
   if (!container) return;
 
   container.innerHTML = PROJECTS.map((p, idx) => {
-    // Generate avatar monograms for assignees
     const assigneeAvatars = (p.assignees || []).map(handle => {
       const b = DEVELOPERS.find(builder => builder.handle === handle);
       const initials = b ? b.name.split(' ').map(n => n[0]).join('') : handle.substring(0, 2).toUpperCase();
-      return `<div class="builder-pill-avatar" title="${b ? `${b.name} (@${b.handle})` : handle}" onclick="openBuilderModalByHandle('${handle}')">${initials}</div>`;
+      return `<a href="#/developer/${handle}" class="builder-pill-avatar" title="${b ? `${b.name} (@${b.handle})` : handle}">${initials}</a>`;
     }).join('');
 
     return `
@@ -92,14 +1160,19 @@ function renderProjectEntries() {
           </div>
 
           <div class="project-actions-row">
-            <div class="project-assignees-avatars" title="Assigned Contributors (Click to inspect)">
+            <div class="project-assignees-avatars" title="Assigned Maintainers">
               ${assigneeAvatars}
             </div>
 
-            <button class="btn btn-secondary" onclick="openProjectSpecModal('${p.id}')">
-              Inspect Spec
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </button>
+            <div style="display:flex; gap:8px;">
+              <a href="#/project/${p.id}" class="btn btn-primary" style="font-size:0.78rem;">
+                Dedicated Page
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </a>
+              <button class="btn btn-secondary" onclick="openProjectSpecModal('${p.id}')" style="font-size:0.78rem;">
+                Spec
+              </button>
+            </div>
           </div>
         </div>
 
@@ -172,298 +1245,10 @@ window.scrollToProject = function(id) {
 };
 
 // ============================================================================
-// 3. THE 29 BUILDERS REPOSITORY SHOWCASE ENGINE
-// ============================================================================
-
-function filterAndSortBuilders() {
-  const q = currentSearchQuery.toLowerCase().trim();
-
-  let list = DEVELOPERS.filter(b => {
-    // Squad filter
-    const matchSquad = currentSquadFilter === 'all' || b.squad === currentSquadFilter;
-
-    // Stack filter
-    const matchStack = currentStackFilter === 'all' || 
-      b.stack.some(s => s.toLowerCase() === currentStackFilter.toLowerCase()) ||
-      (b.featuredRepo && b.featuredRepo.language.toLowerCase() === currentStackFilter.toLowerCase());
-
-    // Search query
-    const matchQuery = !q ||
-      b.name.toLowerCase().includes(q) ||
-      b.handle.toLowerCase().includes(q) ||
-      b.role.toLowerCase().includes(q) ||
-      b.bio.toLowerCase().includes(q) ||
-      (b.status && b.status.toLowerCase().includes(q)) ||
-      (b.featuredRepo && b.featuredRepo.name.toLowerCase().includes(q)) ||
-      (b.featuredRepo && b.featuredRepo.tagline.toLowerCase().includes(q)) ||
-      b.stack.some(s => s.toLowerCase().includes(q));
-
-    return matchSquad && matchStack && matchQuery;
-  });
-
-  // Sorting
-  if (currentSortBy === 'stars') {
-    list.sort((a, b) => ((b.featuredRepo && b.featuredRepo.stars) || 0) - ((a.featuredRepo && a.featuredRepo.stars) || 0));
-  } else if (currentSortBy === 'index') {
-    list.sort((a, b) => a.id - b.id);
-  } else if (currentSortBy === 'name') {
-    list.sort((a, b) => a.name.localeCompare(b.name));
-  } // 'featured' keeps curated roster order
-
-  return list;
-}
-
-function renderBuildersDirectory() {
-  const filtered = filterAndSortBuilders();
-  const counterEl = document.getElementById('builders-count-badge');
-  if (counterEl) {
-    counterEl.textContent = `Showing ${filtered.length} of ${DEVELOPERS.length}`;
-  }
-
-  // 1. Render View 1: Flagship Showcase Grid
-  renderShowcaseView(filtered);
-
-  // 2. Render View 2: High-Density Compact Grid
-  renderCompactView(filtered);
-
-  // 3. Render View 3: Terminal Matrix Table
-  renderTerminalView(filtered);
-}
-
-// VIEW 1: Showcase Cards with Featured Repos
-function renderShowcaseView(list) {
-  const container = document.getElementById('builders-showcase-view');
-  if (!container) return;
-
-  if (list.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 48px 0; text-align: center; color: var(--text-low); font-size: 0.9rem;">
-        No builders match your search criteria. Try adjusting filters or search term.
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = list.map(b => {
-    const initials = b.name.split(' ').map(n => n[0]).join('');
-    const repo = b.featuredRepo;
-    const squadLabels = {
-      systems: 'Systems & Kernel',
-      ai: 'AI & Inference',
-      security: 'Security & MicroVM',
-      frontend: 'Interface & Tooling'
-    };
-
-    return `
-      <div class="builder-showcase-card" id="builder-card-${b.id}">
-        <!-- Top Identity Row -->
-        <div class="showcase-card-top">
-          <div class="showcase-avatar-col">
-            <div class="builder-avatar-box">
-              ${initials}
-              <span class="builder-beacon-dot" title="Active Collective Contributor"></span>
-            </div>
-            <div class="builder-identity-meta">
-              <div class="builder-name-row">
-                <span class="builder-display-name">${b.name}</span>
-                <a href="${b.socials.github}" target="_blank" rel="noopener" class="builder-handle-link" onclick="event.stopPropagation();">@${b.handle}</a>
-                <span class="builder-squad-badge">${squadLabels[b.squad] || b.squad}</span>
-              </div>
-              <div class="builder-role-line">${b.role}</div>
-            </div>
-          </div>
-          <span class="builder-index-num">#${String(b.id).padStart(2, '0')}</span>
-        </div>
-
-        <!-- Live Status Line -->
-        ${b.status ? `
-          <div class="builder-status-banner">
-            <span>${b.status}</span>
-          </div>
-        ` : ''}
-
-        <!-- Engineering Bio -->
-        <p class="builder-bio-p">${b.bio}</p>
-
-        <!-- The Featured Repo Showcase (The Flex!) -->
-        ${repo ? `
-          <div class="repo-inset-box">
-            <div class="repo-inset-header">
-              <a href="${repo.url}" target="_blank" rel="noopener" class="repo-title-anchor" onclick="event.stopPropagation();">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
-                <span>${repo.name}</span>
-              </a>
-              <span class="repo-flagship-pill">Flagship</span>
-            </div>
-
-            <p class="repo-inset-desc">${repo.tagline}</p>
-
-            <div class="repo-inset-footer">
-              <div class="repo-stats-group">
-                <span class="repo-lang-spec">
-                  <span class="repo-lang-dot" style="background-color: ${repo.languageColor};"></span>
-                  ${repo.language}
-                </span>
-                <span class="repo-stat-counter" title="GitHub Stars">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                  ${repo.stars.toLocaleString()}
-                </span>
-                <span class="repo-stat-counter" title="Forks">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><path d="M12 12v3"/></svg>
-                  ${repo.forks}
-                </span>
-              </div>
-
-              <div class="repo-quick-actions">
-                ${repo.cloneUrl ? `
-                  <button class="repo-clone-copy-btn" onclick="copyCloneCommand('${repo.cloneUrl}', event)" title="Copy clone command">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                    <span>Clone</span>
-                  </button>
-                ` : ''}
-                <a href="${repo.url}" target="_blank" rel="noopener" class="repo-clone-copy-btn" onclick="event.stopPropagation();" title="Open repository">
-                  <span>Repo</span>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-                </a>
-              </div>
-            </div>
-          </div>
-        ` : ''}
-
-        <!-- Bottom Row: Stack Pills + Actions -->
-        <div class="builder-card-bottom">
-          <div class="builder-stack-pills-row">
-            ${b.stack.map(s => `<span class="builder-tech-badge" onclick="setQuickStackFilter('${s}', event)">${s}</span>`).join('')}
-          </div>
-
-          <div class="builder-actions-group">
-            <button class="btn-inspect-dossier" onclick="openBuilderModal(${b.id})">
-              <span>Inspect Dossier</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </button>
-            <a href="${b.socials.github}" target="_blank" rel="noopener" class="builder-icon-btn" title="GitHub Profile" onclick="event.stopPropagation();">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-            </a>
-            ${b.socials.website ? `
-              <a href="${b.socials.website}" target="_blank" rel="noopener" class="builder-icon-btn" title="Personal Website" onclick="event.stopPropagation();">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-              </a>
-            ` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// VIEW 2: Compact Roster Grid
-function renderCompactView(list) {
-  const container = document.getElementById('builders-compact-view');
-  if (!container) return;
-
-  container.innerHTML = list.map(b => {
-    const initials = b.name.split(' ').map(n => n[0]).join('');
-    const repo = b.featuredRepo;
-
-    return `
-      <div class="compact-roster-card" onclick="openBuilderModal(${b.id})">
-        <div class="compact-header">
-          <div class="compact-avatar-name">
-            <div class="compact-avatar">${initials}</div>
-            <div class="compact-name-block">
-              <span class="compact-name">${b.name}</span>
-              <span class="compact-handle">@${b.handle}</span>
-            </div>
-          </div>
-          <span class="mono" style="font-size:0.72rem; color:var(--text-low);">#${String(b.id).padStart(2, '0')}</span>
-        </div>
-
-        <div class="compact-role">${b.role}</div>
-
-        ${repo ? `
-          <div class="compact-pinned-repo">
-            <span class="compact-repo-name">${repo.name}</span>
-            <span class="compact-repo-stars">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              ${repo.stars.toLocaleString()}
-            </span>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-// VIEW 3: Terminal Matrix Table
-function renderTerminalView(list) {
-  const container = document.getElementById('builders-terminal-view');
-  if (!container) return;
-
-  container.innerHTML = `
-    <table class="builders-matrix-table">
-      <thead>
-        <tr>
-          <th>Index</th>
-          <th>Engineer</th>
-          <th>Squad</th>
-          <th>Flagship Repository</th>
-          <th>Stars</th>
-          <th>Language</th>
-          <th>Primary Stack</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${list.map(b => {
-          const repo = b.featuredRepo;
-          return `
-            <tr>
-              <td class="mono" style="color:var(--text-low);">#${String(b.id).padStart(2, '0')}</td>
-              <td>
-                <div style="display:flex; flex-direction:column;">
-                  <span style="color:var(--text-high); font-weight:500;">${b.name}</span>
-                  <a href="${b.socials.github}" target="_blank" rel="noopener" class="mono" style="font-size:0.72rem; color:var(--text-low);" onclick="event.stopPropagation();">@${b.handle}</a>
-                </div>
-              </td>
-              <td><span class="builder-squad-badge">${b.squad}</span></td>
-              <td>
-                ${repo ? `
-                  <a href="${repo.url}" target="_blank" rel="noopener" class="mono" style="color:#ffffff; font-weight:500;" onclick="event.stopPropagation();">
-                    ${repo.name} ↗
-                  </a>
-                ` : '—'}
-              </td>
-              <td class="mono" style="color:var(--text-high);">
-                ${repo ? `⭐ ${repo.stars.toLocaleString()}` : '—'}
-              </td>
-              <td>
-                ${repo ? `
-                  <span style="display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:0.75rem;">
-                    <span style="width:7px; height:7px; border-radius:50%; background:${repo.languageColor};"></span>
-                    ${repo.language}
-                  </span>
-                ` : '—'}
-              </td>
-              <td class="mono" style="font-size:0.72rem; color:var(--text-low);">${b.stack.join(', ')}</td>
-              <td>
-                <button class="btn-inspect-dossier" style="padding:3px 8px; font-size:0.72rem;" onclick="openBuilderModal(${b.id})">
-                  Dossier
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-}
-
-// ============================================================================
-// 4. DIRECTORY INTERACTION CONTROLS
+// 8. DIRECTORY CONTROLS & EVENT BINDINGS
 // ============================================================================
 
 function initDirectoryControls() {
-  // Squad Filters
   const squadBtns = document.querySelectorAll('.squad-filter-btn');
   squadBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -474,7 +1259,6 @@ function initDirectoryControls() {
     });
   });
 
-  // Stack Quick Filters
   const stackBtns = document.querySelectorAll('.stack-tag-pill');
   stackBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -485,7 +1269,6 @@ function initDirectoryControls() {
     });
   });
 
-  // Search Input
   const searchInput = document.getElementById('builder-search-input');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -494,7 +1277,6 @@ function initDirectoryControls() {
     });
   }
 
-  // Sort Select Dropdown
   const sortSelect = document.getElementById('builder-sort-select');
   if (sortSelect) {
     sortSelect.addEventListener('change', (e) => {
@@ -503,7 +1285,6 @@ function initDirectoryControls() {
     });
   }
 
-  // View Switchers (Showcase vs Compact vs Terminal)
   const viewShowcaseBtn = document.getElementById('view-showcase-btn');
   const viewCompactBtn = document.getElementById('view-compact-btn');
   const viewTerminalBtn = document.getElementById('view-terminal-btn');
@@ -514,7 +1295,6 @@ function initDirectoryControls() {
 
   function setView(view) {
     currentDirectoryView = view;
-
     [viewShowcaseBtn, viewCompactBtn, viewTerminalBtn].forEach(b => b && b.classList.remove('active'));
     if (showcaseViewEl) showcaseViewEl.style.display = 'none';
     if (compactViewEl) compactViewEl.style.display = 'none';
@@ -536,7 +1316,6 @@ function initDirectoryControls() {
   if (viewCompactBtn) viewCompactBtn.addEventListener('click', () => setView('compact'));
   if (viewTerminalBtn) viewTerminalBtn.addEventListener('click', () => setView('terminal'));
 
-  // PR Guide Button
   document.querySelectorAll('.js-open-pr-guide').forEach(btn => {
     btn.addEventListener('click', openPrGuideModal);
   });
@@ -556,12 +1335,6 @@ window.setQuickStackFilter = function(stack, e) {
   });
 
   renderBuildersDirectory();
-
-  // Scroll to directory if clicking from card
-  const dirSection = document.getElementById('directory');
-  if (dirSection) {
-    dirSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 };
 
 window.copyCloneCommand = function(cmd, e) {
@@ -574,7 +1347,7 @@ window.copyCloneCommand = function(cmd, e) {
 };
 
 // ============================================================================
-// 5. MODAL SYSTEM (BUILDER DOSSIER & PR GUIDE)
+// 9. MODALS & GENERAL UTILITIES
 // ============================================================================
 
 function initModals() {
@@ -594,117 +1367,6 @@ function closeModal() {
   if (overlay) overlay.classList.remove('active');
 }
 
-window.openBuilderModal = function(id) {
-  const b = DEVELOPERS.find(builder => builder.id === id);
-  if (!b) return;
-
-  const content = document.getElementById('modal-dynamic-content');
-  const overlay = document.getElementById('modal-overlay');
-  const initials = b.name.split(' ').map(n => n[0]).join('');
-  const repo = b.featuredRepo;
-
-  content.innerHTML = `
-    <div class="dossier-modal-box">
-      <!-- Header Bar -->
-      <div class="dossier-header-bar">
-        <div class="dossier-avatar-large">${initials}</div>
-        <div style="display:flex; flex-direction:column; gap:3px;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <h3 style="font-size:1.35rem; color:#fff; font-weight:600;">${b.name}</h3>
-            <span class="mono" style="font-size:0.75rem; color:var(--accent-blue);">@${b.handle}</span>
-          </div>
-          <div style="font-size:0.85rem; color:var(--text-medium);">${b.role}</div>
-          <div class="mono" style="font-size:0.72rem; color:var(--text-low);">${b.location}</div>
-        </div>
-      </div>
-
-      <!-- Live Focus Status -->
-      ${b.status ? `
-        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-hairline); border-radius:6px; padding:8px 12px; font-family:var(--font-mono); font-size:0.76rem; color:#d4d4d8;">
-          <span style="color:var(--text-low); text-transform:uppercase; margin-right:6px;">Focus:</span>
-          <span>${b.status}</span>
-        </div>
-      ` : ''}
-
-      <!-- Bio -->
-      <p style="font-size:0.88rem; color:var(--text-medium); line-height:1.55;">${b.bio}</p>
-
-      <!-- Featured Flex Repository -->
-      ${repo ? `
-        <div style="background:#09090c; border:1px solid var(--border-subtle); border-radius:8px; padding:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:0.95rem; font-weight:600; color:#ffffff;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
-              <span>${repo.name}</span>
-            </div>
-            <a href="${repo.url}" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:3px 9px; font-size:0.72rem;">
-              GitHub ↗
-            </a>
-          </div>
-
-          <p style="font-size:0.82rem; color:var(--text-medium); line-height:1.45; margin-bottom:12px;">${repo.tagline}</p>
-
-          ${repo.cloneUrl ? `
-            <div class="dossier-clone-box">
-              <code>${repo.cloneUrl}</code>
-              <button class="repo-clone-copy-btn" onclick="copyCloneCommand('${repo.cloneUrl}', event)">Copy</button>
-            </div>
-          ` : ''}
-
-          <div style="display:flex; align-items:center; gap:16px; margin-top:12px; font-family:var(--font-mono); font-size:0.75rem; color:var(--text-low);">
-            <span style="display:inline-flex; align-items:center; gap:5px; color:#fff;">
-              <span style="width:8px; height:8px; border-radius:50%; background:${repo.languageColor};"></span>
-              ${repo.language}
-            </span>
-            <span>⭐ ${repo.stars.toLocaleString()} Stars</span>
-            <span>🍴 ${repo.forks} Forks</span>
-          </div>
-        </div>
-      ` : ''}
-
-      <!-- Secondary Repositories (if any) -->
-      ${(b.secondaryRepos && b.secondaryRepos.length > 0) ? `
-        <div>
-          <div class="mono" style="font-size:0.72rem; color:var(--text-low); text-transform:uppercase; margin-bottom:8px;">Secondary Repositories</div>
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            ${b.secondaryRepos.map(sr => `
-              <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid var(--border-hairline); border-radius:6px; padding:8px 12px; font-family:var(--font-mono); font-size:0.76rem;">
-                <span style="color:#ffffff;">${sr.name}</span>
-                <span style="color:var(--text-low);">⭐ ${sr.stars} • ${sr.language}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-
-      <!-- Identity & Security Fingerprint -->
-      <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid var(--border-hairline); flex-wrap:wrap; gap:10px;">
-        ${b.gpgKey ? `
-          <div class="dossier-gpg-pill" title="Cryptographic GPG Fingerprint">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>GPG: ${b.gpgKey}</span>
-          </div>
-        ` : '<div></div>'}
-
-        <div style="display:flex; gap:10px;">
-          <a href="${b.socials.github}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:0.75rem; padding:5px 12px;">GitHub</a>
-          ${b.socials.x ? `<a href="${b.socials.x}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:0.75rem; padding:5px 12px;">X / Twitter</a>` : ''}
-          <button class="btn btn-primary" onclick="closeModal()" style="font-size:0.75rem; padding:5px 14px;">Done</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  overlay.classList.add('active');
-};
-
-window.openBuilderModalByHandle = function(handle) {
-  const b = DEVELOPERS.find(builder => builder.handle === handle);
-  if (b) {
-    openBuilderModal(b.id);
-  }
-};
-
 window.openProjectSpecModal = function(id) {
   const p = PROJECTS.find(item => item.id === id);
   if (!p) return;
@@ -719,13 +1381,15 @@ window.openProjectSpecModal = function(id) {
 
     <div style="background:#09090b; border:1px solid var(--border-hairline); border-radius:8px; padding:16px; margin-bottom:20px;">
       <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-low); text-transform:uppercase; margin-bottom:8px;">Architecture Blueprint</div>
-      <p style="font-size:0.86rem; color:#e4e4e7; margin-bottom:12px; line-height:1.5;">${p.fullSpec.arch}</p>
+      <p style="font-size:0.86rem; color:#e4e4e7; margin-bottom:12px; line-height:1.5;">${p.fullSpec ? p.fullSpec.arch : 'Lock-free memory ring buffer mapped into shared physical memory.'}</p>
       <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-low); margin-bottom:4px;">Core Objective:</div>
-      <div style="font-size:0.86rem; color:#a1a1aa;">${p.fullSpec.goal}</div>
+      <div style="font-size:0.86rem; color:#a1a1aa;">${p.fullSpec ? p.fullSpec.goal : 'Zero-downtime persistence during edge partitions.'}</div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span class="mono" style="font-size:0.72rem; color:#71717a;">${p.badge}</span>
+      <a href="#/project/${p.id}" class="btn btn-primary" onclick="closeModal()">
+        Open Full Project Page →
+      </a>
       <button class="btn btn-secondary" onclick="closeModal()">Close</button>
     </div>
   `;
@@ -734,78 +1398,8 @@ window.openProjectSpecModal = function(id) {
 };
 
 function openPrGuideModal() {
-  const content = document.getElementById('modal-dynamic-content');
-  const overlay = document.getElementById('modal-overlay');
-
-  const templateCode = `{
-  id: 30,
-  handle: "your_github_handle",
-  name: "Your Full Name",
-  squad: "systems", // "systems" | "ai" | "security" | "frontend"
-  role: "Systems Engineer",
-  status: "⚡ Building fast zero-copy pipelines",
-  location: "City, Country (UTC+X)",
-  bio: "Architecting low-latency edge tools and consensus protocols.",
-  stack: ["Rust", "eBPF", "Linux"],
-  featuredRepo: {
-    name: "your_handle/your-repo",
-    tagline: "Lock-free event streaming engine with zero cache contention.",
-    stars: 1250,
-    forks: 98,
-    language: "Rust",
-    languageColor: "#dea584",
-    url: "https://github.com/your_handle/your-repo",
-    cloneUrl: "git clone https://github.com/your_handle/your-repo.git",
-    topics: ["rust", "systems", "perf"]
-  },
-  socials: {
-    github: "https://github.com/your_handle",
-    x: "https://x.com/your_handle"
-  }
-}`;
-
-  content.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:16px;">
-      <div>
-        <div class="mono" style="font-size:0.72rem; color:var(--accent-blue); margin-bottom:4px;">MODULAR CONTRIBUTOR GUIDE</div>
-        <h3 style="font-size:1.3rem; color:#fff; font-weight:600;">How to flex your repo in ragetech.dev</h3>
-        <p style="font-size:0.85rem; color:var(--text-medium); line-height:1.5; margin-top:4px;">
-          Anyone contributing to Ragetech can add or update their profile. Copy the schema below and add it to <code class="mono" style="color:#fff;">data/developers.js</code> via a Pull Request.
-        </p>
-      </div>
-
-      <div style="background:#09090b; border:1px solid var(--border-hairline); border-radius:8px; padding:12px; position:relative;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span class="mono" style="font-size:0.72rem; color:var(--text-low);">data/developers.js schema template</span>
-          <button class="repo-clone-copy-btn" id="js-copy-pr-template">Copy Template</button>
-        </div>
-        <pre class="mono" style="font-size:0.75rem; color:#d4d4d8; line-height:1.45; overflow-x:auto; max-height:260px;"><code>${escapeHtml(templateCode)}</code></pre>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid var(--border-hairline);">
-        <a href="https://github.com/AetherrAkuma/ragetech_index" target="_blank" rel="noopener" class="btn btn-secondary">
-          Open GitHub Repository ↗
-        </a>
-        <button class="btn btn-primary" onclick="closeModal()">Close</button>
-      </div>
-    </div>
-  `;
-
-  overlay.classList.add('active');
-
-  const copyBtn = document.getElementById('js-copy-pr-template');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(templateCode).then(() => {
-        showToast('Copied developer template!');
-      });
-    });
-  }
+  window.location.hash = '#/studio';
 }
-
-// ============================================================================
-// 6. UTILITIES
-// ============================================================================
 
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
