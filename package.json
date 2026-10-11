@@ -1,0 +1,13 @@
+{
+  "name": "ragetech-landing",
+  "version": "1.0.0",
+  "description": "Initial modern landing page for ragetech.dev featuring projects showcase and 29 developer placeholders in Tailark Dusk aesthetic",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": ["ragetech", "landing-page", "dusk-theme", "developer-collective"],
+  "author": "Ragetech Team",
+  "license": "MIT"
+}
