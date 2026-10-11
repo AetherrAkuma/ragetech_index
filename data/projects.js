@@ -7,7 +7,7 @@
  * 2. Submit a Pull Request to ragetech_index.
  */
 
-export const PROJECTS = [
+window.PROJECTS = [
   {
     id: 'hyperion',
     name: 'Hyperion',
@@ -227,7 +227,7 @@ println!("Hyperion worker pool online: 16 rings active");`,
   }
 ];
 
-// Attach to window for global script tag compatibility
-if (typeof window !== 'undefined') {
-  window.PROJECTS = PROJECTS;
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PROJECTS: window.PROJECTS };
 }
+

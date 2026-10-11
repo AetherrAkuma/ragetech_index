@@ -9,7 +9,7 @@
  * 4. Submit a Pull Request. Your profile will deploy automatically!
  */
 
-export const DEVELOPERS = [
+window.DEVELOPERS = [
   {
     id: 1,
     handle: 'alexv',
@@ -944,7 +944,7 @@ export const DEVELOPERS = [
   }
 ];
 
-// Attach to window for global script tag compatibility
-if (typeof window !== 'undefined') {
-  window.DEVELOPERS = DEVELOPERS;
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { DEVELOPERS: window.DEVELOPERS };
 }
+
