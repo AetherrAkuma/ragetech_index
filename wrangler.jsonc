@@ -15,8 +15,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "ragetech_db",
-      "database_id": "ragetech-d1-db"
+      "database_name": "ragetech_database",
+      "database_id": "ac7535a2-d9a1-4932-851c-00a06135fac1"
     }
   ]
 }
