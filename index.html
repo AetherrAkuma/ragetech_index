@@ -141,58 +141,144 @@
       </div>
     </section>
 
-    <!-- The 29 Builders Directory Section -->
+    <!-- The 29 Builders Showcase & Repository Flex Section -->
     <section class="builders-section-clean" id="directory">
       <div class="container">
-        <div class="section-lead" style="margin-bottom: 32px;">
-          <span class="section-kicker">Engineering Directory</span>
+        <div class="section-lead" style="margin-bottom: 24px;">
+          <div class="roster-badge-strip">
+            <span class="section-kicker">COLLECTIVE ROSTER & REPO SHOWCASE</span>
+            <div class="roster-live-indicator">
+              <span class="live-dot-pulse"></span>
+              <span>29 BUILDERS ACTIVE</span>
+            </div>
+          </div>
           <h2 class="section-h2">The 29 Builders</h2>
           <p class="section-p">
-            Directory of the 29 engineers contributing to core repositories.
-            Press <span class="kbd-badge">/</span> to search by handle, role, or stack.
+            Systems engineers, kernel authors, and runtime architects building sovereign infrastructure.
+            Explore each member's flagship repository, active stack, and architectural contributions.
           </p>
-        </div>
 
-        <!-- Directory Toolbar -->
-        <div class="builders-toolbar">
-          <div class="squad-filters-group">
-            <button class="squad-filter-btn active" data-squad="all">All 29</button>
-            <button class="squad-filter-btn" data-squad="systems">Systems [13]</button>
-            <button class="squad-filter-btn" data-squad="frontend">Interface [6]</button>
-            <button class="squad-filter-btn" data-squad="ai">AI Runtimes [5]</button>
-            <button class="squad-filter-btn" data-squad="security">Security & Infra [5]</button>
-          </div>
-
-          <div class="builders-right-controls">
-            <div class="search-box-clean">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              <input type="text" id="builder-search-input" placeholder="Search builders or stack (press /)..." aria-label="Search builders">
+          <!-- Roster Stats Telemetry Bar -->
+          <div class="roster-metrics-strip">
+            <div class="roster-stat-pill">
+              <span class="stat-num mono">29</span>
+              <span class="stat-lbl">Engineers</span>
             </div>
-
-            <!-- View Mode Switcher -->
-            <div class="view-toggle-group" title="Toggle Grid / Table view">
-              <button class="view-btn active" id="view-grid-btn" aria-label="Grid view">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-              </button>
-              <button class="view-btn" id="view-table-btn" aria-label="Table directory view">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
-              </button>
+            <div class="roster-stat-divider">/</div>
+            <div class="roster-stat-pill">
+              <span class="stat-num mono">42+</span>
+              <span class="stat-lbl">Open Repositories</span>
+            </div>
+            <div class="roster-stat-divider">/</div>
+            <div class="roster-stat-pill">
+              <span class="stat-num mono">47.8k</span>
+              <span class="stat-lbl">Total Stars</span>
+            </div>
+            <div class="roster-stat-divider">/</div>
+            <div class="roster-stat-pill">
+              <span class="stat-num mono">100%</span>
+              <span class="stat-lbl">Zero-Telemetry Code</span>
             </div>
           </div>
         </div>
 
-        <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-low);" id="builders-count-badge">
-          29 of 29 Builders
+        <!-- Directory Controls & Filters -->
+        <div class="builders-controls-panel">
+          <!-- Top Row: Squad Filters & Search -->
+          <div class="builders-toolbar">
+            <div class="squad-filters-group" id="squad-filters-container">
+              <button class="squad-filter-btn active" data-squad="all">All [29]</button>
+              <button class="squad-filter-btn" data-squad="systems">Systems & Kernels [13]</button>
+              <button class="squad-filter-btn" data-squad="ai">AI & Inference [5]</button>
+              <button class="squad-filter-btn" data-squad="security">Security & MicroVMs [5]</button>
+              <button class="squad-filter-btn" data-squad="frontend">Interface & Tools [6]</button>
+            </div>
+
+            <div class="builders-right-controls">
+              <!-- Search Box -->
+              <div class="search-box-clean">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="builder-search-input" placeholder="Search handle, repo, stack... (press /)" aria-label="Search builders">
+                <span class="search-kbd-hint">/</span>
+              </div>
+
+              <!-- Sort Dropdown -->
+              <div class="sort-select-wrap">
+                <select id="builder-sort-select" class="sort-select-input" aria-label="Sort builders">
+                  <option value="featured">Sort: Featured</option>
+                  <option value="stars">Sort: Most Stars ⭐</option>
+                  <option value="index">Sort: Member # (01-29)</option>
+                  <option value="name">Sort: Name (A-Z)</option>
+                </select>
+              </div>
+
+              <!-- View Mode Switcher -->
+              <div class="view-toggle-group" title="Switch layout mode">
+                <button class="view-btn active" id="view-showcase-btn" title="Repo Flex Cards View" aria-label="Repo Flex View">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="1.5"/><rect width="8" height="8" x="13" y="3" rx="1.5"/><rect width="8" height="8" x="3" y="13" rx="1.5"/><rect width="8" height="8" x="13" y="13" rx="1.5"/></svg>
+                </button>
+                <button class="view-btn" id="view-compact-btn" title="Compact Roster Grid" aria-label="Compact Grid View">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/></svg>
+                </button>
+                <button class="view-btn" id="view-terminal-btn" title="Terminal Matrix Table" aria-label="Terminal Table View">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Stack Tag Quick Filters -->
+          <div class="stack-filters-row">
+            <span class="stack-filters-label">Stack Quick-Filter:</span>
+            <div class="stack-chips-scroll" id="stack-chips-container">
+              <button class="stack-tag-pill active" data-stack="all">All</button>
+              <button class="stack-tag-pill" data-stack="Rust">Rust</button>
+              <button class="stack-tag-pill" data-stack="Go">Go</button>
+              <button class="stack-tag-pill" data-stack="TypeScript">TypeScript</button>
+              <button class="stack-tag-pill" data-stack="eBPF">eBPF</button>
+              <button class="stack-tag-pill" data-stack="CUDA">CUDA</button>
+              <button class="stack-tag-pill" data-stack="WASM">WASM</button>
+              <button class="stack-tag-pill" data-stack="C++">C++</button>
+              <button class="stack-tag-pill" data-stack="Python">Python</button>
+            </div>
+            <div class="builders-count-label mono" id="builders-count-badge">
+              Showing 29 of 29
+            </div>
+          </div>
         </div>
 
-        <!-- View 1: Compact Grid View -->
-        <div class="builders-grid-compact" id="builders-grid">
-          <!-- Rendered by app.js -->
+        <!-- View 1: Flagship Repo Showcase View (Default) -->
+        <div class="builders-showcase-grid" id="builders-showcase-view">
+          <!-- Rendered dynamically by app.js -->
         </div>
 
-        <!-- View 2: High-Density Table Directory View -->
-        <div class="builders-table-wrap" id="builders-table-wrap">
-          <!-- Rendered by app.js -->
+        <!-- View 2: High-Density Compact Roster View -->
+        <div class="builders-compact-grid" id="builders-compact-view" style="display: none;">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <!-- View 3: Terminal Matrix Table View -->
+        <div class="builders-terminal-wrap" id="builders-terminal-view" style="display: none;">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <!-- Dynamic Modular Contribution Callout -->
+        <div class="builder-contribute-card">
+          <div class="contribute-card-content">
+            <div class="contribute-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+            </div>
+            <div>
+              <div class="contribute-card-title">Flex your own repository in ragetech.dev</div>
+              <p class="contribute-card-desc">
+                Contributing to ragetech core or adjacent edge tools? Add your profile and pinned repo to <code class="mono">data/developers.js</code>. No build step required — merge and deploy directly.
+              </p>
+            </div>
+          </div>
+          <button class="btn btn-secondary js-open-pr-guide" style="white-space: nowrap;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 9v12"/><path d="M18 9a9 9 0 0 0-9 9"/></svg>
+            <span>PR Template Guide</span>
+          </button>
         </div>
       </div>
     </section>
@@ -228,7 +314,7 @@
 
   <!-- Modal Dialog -->
   <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-card-clean">
+    <div class="modal-card-clean" id="modal-card-container">
       <button class="modal-close-icon" id="modal-close-btn" aria-label="Close dialog">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
@@ -241,6 +327,9 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
+  <!-- Modular Data Registries & Application Core -->
+  <script src="data/projects.js"></script>
+  <script src="data/developers.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
