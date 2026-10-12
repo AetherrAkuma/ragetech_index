@@ -798,6 +798,10 @@
     document.querySelectorAll('.sidebar-nav-button').forEach(btn => {
       if (btn.getAttribute('data-project-id') === slug) {
         btn.setAttribute('data-state', 'active');
+        // Auto-scroll active tab into view horizontally on mobile/tablet viewports
+        if (window.innerWidth <= 960) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
       } else {
         btn.removeAttribute('data-state');
       }
@@ -815,7 +819,16 @@
   function scrollToProject(slug) {
     const target = document.getElementById(`project-${slug}`);
     if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const header = document.querySelector('.site-header');
+      const headerHeight = header ? header.offsetHeight : 64;
+      const isMobile = window.innerWidth <= 960;
+      const navOffset = isMobile ? (headerHeight + 64) : (headerHeight + 36);
+      const targetTop = target.getBoundingClientRect().top + window.pageYOffset - navOffset;
+
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: 'smooth'
+      });
       highlightProject(slug);
     }
   }
