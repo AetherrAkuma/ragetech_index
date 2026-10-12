@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS developers (
   gpg_key TEXT,
   gpg_fingerprint TEXT,
   is_verified INTEGER NOT NULL DEFAULT 1,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

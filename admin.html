@@ -301,7 +301,7 @@
             </div>
             <a href="repository_editor.html" class="btn-primary">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>+ Create New Project</span>
+              <span>Create New Project</span>
             </a>
           </div>
 
@@ -315,29 +315,35 @@
           </div>
 
           <div class="data-table-container">
-            <table class="data-table">
+            <table class="data-table" id="reposTable">
               <thead>
                 <tr>
+                  <th style="width: 44px; text-align: center;" title="Drag to reorder repositories">Order</th>
                   <th>Project Name & Path</th>
                   <th>Version Badge</th>
                   <th>Category</th>
                   <th>Assigned Maintainers</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 ${projectsData.length === 0 ? `
                   <tr>
-                    <td colspan="6" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+                    <td colspan="7" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
                       <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">No Projects Registered</div>
-                      <div style="font-size: 0.85rem;">Currently 0 repositories exist in Cloudflare D1. Click <strong>+ Create New Project</strong> to publish a new repository.</div>
+                      <div style="font-size: 0.85rem;">Currently 0 repositories exist in Cloudflare D1. Click <strong>Create New Project</strong> to publish a new repository.</div>
                     </td>
                   </tr>
                 ` : projectsData.map(p => {
                   const maintainers = p.assignees || p.maintainer_handles || (p.maintainers ? p.maintainers.map(m => m.handle) : []);
                   return `
-                    <tr>
+                    <tr class="draggable-row" draggable="true" data-type="project" data-id="${p.id || p.slug}">
+                      <td class="drag-handle-cell">
+                        <div class="drag-grip-btn" title="Drag to reorder this repository">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.8"></circle><circle cx="15" cy="5" r="1.8"></circle><circle cx="9" cy="12" r="1.8"></circle><circle cx="15" cy="12" r="1.8"></circle><circle cx="9" cy="19" r="1.8"></circle><circle cx="15" cy="19" r="1.8"></circle></svg>
+                        </div>
+                      </td>
                       <td>
                         <div style="font-weight: 700; font-size: 0.95rem;">${p.name}</div>
                         <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan); margin-top: 2px;">${p.repo || `ragetech/${p.slug}`}</div>
@@ -355,8 +361,11 @@
                       <td><span class="verified-icon-chip" style="font-size: 0.72rem;">${(p.status || 'ACTIVE').toUpperCase()}</span></td>
                       <td>
                         <div class="table-actions" style="justify-content: flex-end;">
-                          <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;" title="Open Visual Customizer">
-                            Customize
+                          <button class="btn-primary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="openQuickProjectModal('${p.slug}')" title="Quick Edit Metadata & Slug">
+                            Edit
+                          </button>
+                          <a href="repository_editor.html?id=${p.slug}" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;" title="Open Visual Customizer">
+                            Studio
                           </a>
                           <a href="project.html?id=${p.slug}" target="_blank" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 8px; text-decoration: none;" title="View Public Page">
                             View
@@ -382,14 +391,15 @@
             </div>
             <button class="btn-primary" onclick="openDeveloperModal()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>+ Add New Developer</span>
+              <span>Add New Developer</span>
             </button>
           </div>
 
           <div class="data-table-container">
-            <table class="data-table">
+            <table class="data-table" id="buildersTable">
               <thead>
                 <tr>
+                  <th style="width: 44px; text-align: center;" title="Drag to reorder developers">Order</th>
                   <th style="min-width: 170px;">Developer Profile</th>
                   <th style="min-width: 170px;">Engineering Title</th>
                   <th style="min-width: 120px;">Assigned Repos</th>
@@ -400,7 +410,12 @@
               </thead>
               <tbody>
                 ${developersData.map(d => `
-                  <tr>
+                  <tr class="draggable-row" draggable="true" data-type="developer" data-id="${d.id || d.handle}">
+                    <td class="drag-handle-cell">
+                      <div class="drag-grip-btn" title="Drag to reorder this developer">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.8"></circle><circle cx="15" cy="5" r="1.8"></circle><circle cx="9" cy="12" r="1.8"></circle><circle cx="15" cy="12" r="1.8"></circle><circle cx="9" cy="19" r="1.8"></circle><circle cx="15" cy="19" r="1.8"></circle></svg>
+                      </div>
+                    </td>
                     <td>
                       <div style="display: flex; align-items: center; gap: 10px;">
                         <img src="${d.avatar_url}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle); flex-shrink: 0;" alt="${d.name}">
@@ -454,7 +469,8 @@
               <p class="dash-subtitle">Easily assign developers to maintain repositories and sign release whitepapers.</p>
             </div>
             <button class="btn-primary" onclick="openAssignmentModal()">
-              <span>+ Assign Developer</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>Assign Developer</span>
             </button>
           </div>
 
@@ -540,6 +556,324 @@
           </div>
         `;
       }
+
+      if (currentView === 'repos') {
+        initTableDragAndDrop('#reposTable', 'project', handleProjectsReorder);
+      } else if (currentView === 'builders') {
+        initTableDragAndDrop('#buildersTable', 'developer', handleDevelopersReorder);
+      }
+    }
+
+    function showToast(msg) {
+      let toast = document.getElementById('dashboardToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'dashboardToast';
+        toast.style.cssText = 'position: fixed; bottom: 24px; right: 24px; z-index: 9999; background: rgba(9, 9, 11, 0.95); border: 1px solid var(--accent-cyan); color: var(--text-primary); padding: 10px 18px; border-radius: var(--radius-md); font-size: 0.82rem; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(12px); transition: all 0.25s ease; opacity: 0; transform: translateY(10px); pointer-events: none;';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+      }, 2500);
+    }
+
+    function initTableDragAndDrop(tableSelector, type, onReorderCallback) {
+      const table = document.querySelector(tableSelector);
+      if (!table) return;
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+
+      let draggedRow = null;
+
+      tbody.querySelectorAll('tr.draggable-row').forEach(row => {
+        row.addEventListener('dragstart', (e) => {
+          draggedRow = row;
+          row.classList.add('is-dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', row.getAttribute('data-id'));
+        });
+
+        row.addEventListener('dragend', () => {
+          if (draggedRow) draggedRow.classList.remove('is-dragging');
+          tbody.querySelectorAll('tr.draggable-row').forEach(r => {
+            r.classList.remove('drag-over-top', 'drag-over-bottom');
+          });
+          draggedRow = null;
+        });
+
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (!draggedRow || draggedRow === row) return;
+          e.dataTransfer.dropEffect = 'move';
+          const rect = row.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            row.classList.add('drag-over-top');
+            row.classList.remove('drag-over-bottom');
+          } else {
+            row.classList.add('drag-over-bottom');
+            row.classList.remove('drag-over-top');
+          }
+        });
+
+        row.addEventListener('dragleave', () => {
+          row.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        row.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          if (!draggedRow || draggedRow === row) return;
+          const rect = row.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            tbody.insertBefore(draggedRow, row);
+          } else {
+            tbody.insertBefore(draggedRow, row.nextSibling);
+          }
+          row.classList.remove('drag-over-top', 'drag-over-bottom');
+
+          const newOrder = Array.from(tbody.querySelectorAll('tr.draggable-row')).map(r => r.getAttribute('data-id'));
+          if (typeof onReorderCallback === 'function') {
+            await onReorderCallback(newOrder);
+          }
+        });
+      });
+    }
+
+    async function handleProjectsReorder(newOrder) {
+      const map = new Map(projectsData.map(p => [p.id || p.slug, p]));
+      const reordered = [];
+      newOrder.forEach(key => {
+        const item = map.get(key) || projectsData.find(p => p.slug === key || p.id === key);
+        if (item) reordered.push(item);
+      });
+      projectsData.forEach(p => {
+        if (!reordered.includes(p)) reordered.push(p);
+      });
+      projectsData = reordered;
+
+      showToast('Saving repository display order...');
+      const session = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+      const token = session.token || '';
+      const actorHandle = currentAdminUser?.handle || session.user?.handle || 'admin';
+      const actorRole = currentAdminUser?.account_role || session.user?.account_role || 'admin';
+
+      try {
+        const res = await fetch('/api/manage/projects/reorder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-role': actorRole,
+            'x-actor-handle': actorHandle,
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          body: JSON.stringify({
+            order: newOrder,
+            actor_role: actorRole,
+            actor_handle: actorHandle
+          })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok && json.success) {
+          showToast('✓ Repository layout order saved to Cloudflare D1!');
+        } else if (res.status === 403 || json.message?.includes('Forbidden')) {
+          showToast('⚠️ Error: Only administrators have authority to customize layout order.');
+        } else {
+          showToast('✓ Repository order applied locally');
+        }
+      } catch (err) {
+        showToast('✓ Repository order applied locally');
+      }
+      try { localStorage.setItem('ragetech_projects_order', JSON.stringify(newOrder)); } catch (e) {}
+      window.RagetechSync?.broadcast({ type: 'PROJECTS_REORDERED', order: newOrder });
+    }
+
+    async function handleDevelopersReorder(newOrder) {
+      const map = new Map(developersData.map(d => [d.id || d.handle, d]));
+      const reordered = [];
+      newOrder.forEach(key => {
+        const item = map.get(key) || developersData.find(d => d.handle === key || d.id === key);
+        if (item) reordered.push(item);
+      });
+      developersData.forEach(d => {
+        if (!reordered.includes(d)) reordered.push(d);
+      });
+      developersData = reordered;
+
+      showToast('Saving developer team display order...');
+      const session = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+      const token = session.token || '';
+      const actorHandle = currentAdminUser?.handle || session.user?.handle || 'admin';
+      const actorRole = currentAdminUser?.account_role || session.user?.account_role || 'admin';
+
+      try {
+        const res = await fetch('/api/manage/developers/reorder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-role': actorRole,
+            'x-actor-handle': actorHandle,
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          body: JSON.stringify({
+            order: newOrder,
+            actor_role: actorRole,
+            actor_handle: actorHandle
+          })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok && json.success) {
+          showToast('✓ Developer collective order saved to Cloudflare D1!');
+        } else if (res.status === 403 || json.message?.includes('Forbidden')) {
+          showToast('⚠️ Error: Only administrators have authority to customize layout order.');
+        } else {
+          showToast('✓ Developer order applied locally');
+        }
+      } catch (err) {
+        showToast('✓ Developer order applied locally');
+      }
+      try { localStorage.setItem('ragetech_developers_order', JSON.stringify(newOrder)); } catch (e) {}
+      window.RagetechSync?.broadcast({ type: 'DEVELOPERS_REORDERED', order: newOrder });
+    }
+
+    // Quick Project Metadata & Slug Editor Modal
+    function openQuickProjectModal(slugOrId) {
+      const p = projectsData.find(item => item.slug === slugOrId || item.id === slugOrId);
+      if (!p) return;
+      const content = document.getElementById('crudModalContent');
+      content.innerHTML = `
+        <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 20px;">
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0 0 6px;">Edit Project Identity & URL Slug</h2>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0;">Update repository routing slug, display name, release badge, and status directly in Cloudflare D1.</p>
+        </div>
+
+        <form id="quickProjForm" onsubmit="handleSaveQuickProject(event, '${p.id || p.slug}')">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label class="form-label" for="qpName">Project Name</label>
+              <input type="text" id="qpName" class="form-input" required value="${p.name || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="qpSlug">URL Slug (Editable)</label>
+              <input type="text" id="qpSlug" class="form-input" required value="${p.slug || ''}" placeholder="e.g. hyperion">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label class="form-label" for="qpRepo">GitHub Repository Path</label>
+              <input type="text" id="qpRepo" class="form-input" value="${p.repo || `ragetech/${p.slug}`}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="qpBadge">Release Version Tag</label>
+              <input type="text" id="qpBadge" class="form-input" value="${p.badge || 'v0.9.4-alpha'}">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label class="form-label" for="qpCategory">Category</label>
+              <select id="qpCategory" class="form-select">
+                <option value="System" ${p.category === 'System' ? 'selected' : ''}>System</option>
+                <option value="Project" ${p.category === 'Project' ? 'selected' : ''}>Project</option>
+                <option value="Thesis" ${p.category === 'Thesis' ? 'selected' : ''}>Thesis</option>
+                <option value="Portfolio" ${p.category === 'Portfolio' ? 'selected' : ''}>Portfolio</option>
+                <option value="Hobby Project" ${p.category === 'Hobby Project' ? 'selected' : ''}>Hobby Project</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="qpStatus">Repository Status</label>
+              <select id="qpStatus" class="form-select">
+                <option value="active" ${(p.status || '').toLowerCase() === 'active' ? 'selected' : ''}>Active</option>
+                <option value="beta" ${(p.status || '').toLowerCase() === 'beta' ? 'selected' : ''}>Beta</option>
+                <option value="archived" ${(p.status || '').toLowerCase() === 'archived' ? 'selected' : ''}>Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="qpTagline">Project Tagline</label>
+            <input type="text" id="qpTagline" class="form-input" value="${p.tagline || ''}" placeholder="Brief technical summary">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="qpTechStack">Tech Stack</label>
+            <input type="text" id="qpTechStack" class="form-input" value="${p.tech_stack || ''}" placeholder="e.g. Rust, Tokio, SIMD">
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
+            <button type="submit" class="btn-primary" id="saveQuickProjBtn">
+              <span>Save & Sync Database</span>
+            </button>
+          </div>
+        </form>
+      `;
+
+      const modal = document.getElementById('crudModal');
+      modal.inert = false;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function handleSaveQuickProject(e, targetId) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveQuickProjBtn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span>Saving...</span>`;
+      }
+
+      const p = projectsData.find(item => item.id === targetId || item.slug === targetId) || {};
+      const newSlug = document.getElementById('qpSlug').value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/(^-|-$)/g, '');
+      const newName = document.getElementById('qpName').value.trim();
+      const newRepo = document.getElementById('qpRepo').value.trim();
+      const newBadge = document.getElementById('qpBadge').value.trim();
+      const newCat = document.getElementById('qpCategory').value;
+      const newStat = document.getElementById('qpStatus').value;
+      const newTag = document.getElementById('qpTagline').value.trim();
+      const newTech = document.getElementById('qpTechStack').value.trim();
+
+      const payload = {
+        ...p,
+        id: p.id || targetId,
+        slug: newSlug || p.slug,
+        name: newName,
+        repo: newRepo || `ragetech/${newSlug}`,
+        badge: newBadge,
+        category: newCat,
+        status: newStat,
+        tagline: newTag,
+        tech_stack: newTech
+      };
+
+      try {
+        const res = await fetch('/api/manage/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to update project: ' + (json.message || `HTTP ${res.status}`));
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = `<span>Save & Sync Database</span>`; }
+          return;
+        }
+      } catch (err) {
+        alert('Network error connecting to D1 API: ' + err.message);
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = `<span>Save & Sync Database</span>`; }
+        return;
+      }
+
+      window.RagetechSync?.broadcast({ type: 'PROJECT_SAVED', slug: payload.slug, data: payload });
+      closeCrudModal();
+      showToast('✓ Project metadata & URL slug saved to D1!');
+      await loadData();
     }
 
     async function handleAdminUpdatePassword(e) {
@@ -755,7 +1089,7 @@
                 <label class="form-label" style="margin-bottom: 0;">Engineering Title / Roles</label>
                 <button type="button" class="btn-secondary" onclick="addTitleInputRow()" style="font-size: 0.74rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 4px;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span>+ Add Title</span>
+                  <span>Add Title</span>
                 </button>
               </div>
               <div id="titleInputsContainer" style="display: flex; flex-direction: column; gap: 8px;">

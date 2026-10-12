@@ -232,11 +232,11 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
           <div class="form-group">
             <label class="form-label" for="editName">Repository Name</label>
-            <input type="text" id="editName" class="form-input" placeholder="e.g. Hyperion" oninput="onDataChange()">
+            <input type="text" id="editName" class="form-input" placeholder="e.g. Hyperion" oninput="handleNameInput(this.value)">
           </div>
           <div class="form-group">
             <label class="form-label" for="editSlug">URL Slug</label>
-            <input type="text" id="editSlug" class="form-input" placeholder="e.g. hyperion" oninput="onDataChange()">
+            <input type="text" id="editSlug" class="form-input" placeholder="e.g. hyperion" oninput="slugManuallyEdited = true; onDataChange()">
           </div>
         </div>
 
@@ -1454,6 +1454,7 @@ Existing alternatives required significant hardware resources and heavy runtimes
     // Populate Form From Data
     function populateForm(p) {
       currentProject = p;
+      slugManuallyEdited = true;
       document.getElementById('editName').value = p.name || '';
       document.getElementById('editSlug').value = p.slug || '';
       document.getElementById('editRepo').value = p.repo || `ragetech/${p.slug}`;
@@ -1528,6 +1529,15 @@ Existing alternatives required significant hardware resources and heavy runtimes
       assignees.forEach(h => selectedMaintainers.add(h));
       renderMaintainersPicker();
 
+      onDataChange();
+    }
+
+    let slugManuallyEdited = false;
+    function handleNameInput(name) {
+      if (!currentProject && !slugManuallyEdited) {
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        document.getElementById('editSlug').value = slug;
+      }
       onDataChange();
     }
 
@@ -1867,6 +1877,28 @@ Existing alternatives required significant hardware resources and heavy runtimes
         : `Repository "${name}" saved in browser cache (${d1ErrorMsg || 'offline'})`;
       toast.style.transform = 'translateY(0)';
       setTimeout(() => { toast.style.transform = 'translateY(140%)'; }, 3500);
+
+      // Update in-memory project references with new slug & id
+      if (currentProject) {
+        currentProject.slug = slug;
+        currentProject.id = payload.id;
+        currentProject.name = name;
+      } else {
+        currentProject = { ...payload };
+      }
+
+      // Seamlessly sync URL query parameter without page reload
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set('id', slug);
+        window.history.replaceState({}, '', u.toString());
+      } catch (e) {}
+
+      // Update fixed path and link preview
+      const fixedPathEl = document.getElementById('previewFixedPath');
+      const fixedLinkEl = document.getElementById('previewFixedLink');
+      if (fixedPathEl) fixedPathEl.textContent = `project.html?id=${slug}`;
+      if (fixedLinkEl) fixedLinkEl.href = `project.html?id=${slug}`;
 
       document.getElementById('studioModeTitle').textContent = `Editing: ${slug}`;
       document.getElementById('studioStatusBadge').textContent = d1Success ? 'SYNCED D1' : 'LOCAL CACHE';

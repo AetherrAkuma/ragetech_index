@@ -70,6 +70,18 @@
     };
   }
 
+  // Cross-tab/window storage event fallback
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'ragetech_last_sync' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          syncListeners.forEach(fn => { try { fn(data); } catch (err) {} });
+        } catch (err) {}
+      }
+    });
+  }
+
   // 5. Seamless Localhost Development Bridge (VS Code Live Server :5500, Vite, file://)
   // When running locally on a static development server (e.g., Live Server port 5500),
   // automatically proxy /api/* requests to the live Cloudflare D1 backend (https://ragetech.dev)

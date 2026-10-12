@@ -90,8 +90,8 @@ export default {
             maintainer_handles: p.maintainers_json ? JSON.parse(p.maintainers_json) : []
           }));
 
-          // ETag for browser-level conditional requests (304 Not Modified)
-          const versionString = projects.map(p => `${p.id}:${p.updated_at || p.created_at || ''}`).join('|');
+          // ETag for browser-level conditional requests (includes featured_order so orientation changes invalidate instantly)
+          const versionString = projects.map(p => `${p.id}:${p.featured_order}:${p.updated_at || p.created_at || ''}`).join('|');
           const etag = `"${await sha256Hex(versionString)}"`;
 
           const clientEtag = request.headers.get('If-None-Match');
@@ -126,8 +126,8 @@ export default {
       if (env.DB) {
         try {
           const project = await env.DB.prepare(`
-            SELECT * FROM projects WHERE slug = ?
-          `).bind(slug).first();
+            SELECT * FROM projects WHERE slug = ? OR id = ?
+          `).bind(slug, slug).first();
 
           if (project) {
             const { results: sections } = await env.DB.prepare(`
@@ -190,27 +190,46 @@ export default {
       return jsonResponse({ success: false, message: 'Project not found' }, corsHeaders, 404);
     }
 
-    // GET /api/developers — Always read from D1; no PoP caching so changes are instant
+    // GET /api/developers — Always read from D1; supports customizable sort order
     if (pathname === '/api/developers' && request.method === 'GET') {
       if (env.DB) {
         try {
-          const { results: devs } = await env.DB.prepare(`
-            SELECT d.id, d.handle, d.name, d.email, d.role, d.account_role, d.squad, d.bio, 
-                   d.avatar_url, d.website_url, d.github_url, d.gpg_fingerprint, d.is_verified, d.updated_at,
-                   (SELECT json_group_array(p.slug)
-                    FROM project_assignments pa
-                    JOIN projects p ON pa.project_id = p.id
-                    WHERE pa.developer_id = d.id) as assigned_projects_json
-            FROM developers d
-            ORDER BY d.id ASC
-          `).all();
+          let devs;
+          try {
+            const res = await env.DB.prepare(`
+              SELECT d.id, d.handle, d.name, d.email, d.role, d.account_role, d.squad, d.bio, 
+                     d.avatar_url, d.website_url, d.github_url, d.gpg_fingerprint, d.is_verified, d.updated_at,
+                     COALESCE(d.sort_order, 0) as sort_order,
+                     (SELECT json_group_array(p.slug)
+                      FROM project_assignments pa
+                      JOIN projects p ON pa.project_id = p.id
+                      WHERE pa.developer_id = d.id) as assigned_projects_json
+              FROM developers d
+              ORDER BY COALESCE(d.sort_order, 0) ASC, d.id ASC
+            `).all();
+            devs = res.results;
+          } catch (e) {
+            try { await env.DB.prepare('ALTER TABLE developers ADD COLUMN sort_order INTEGER DEFAULT 0').run(); } catch (_) {}
+            const res = await env.DB.prepare(`
+              SELECT d.id, d.handle, d.name, d.email, d.role, d.account_role, d.squad, d.bio, 
+                     d.avatar_url, d.website_url, d.github_url, d.gpg_fingerprint, d.is_verified, d.updated_at,
+                     (SELECT json_group_array(p.slug)
+                      FROM project_assignments pa
+                      JOIN projects p ON pa.project_id = p.id
+                      WHERE pa.developer_id = d.id) as assigned_projects_json
+              FROM developers d
+              ORDER BY d.id ASC
+            `).all();
+            devs = res.results;
+          }
 
           const formatted = devs.map(d => ({
             ...d,
             assigned_projects: d.assigned_projects_json ? JSON.parse(d.assigned_projects_json) : []
           }));
 
-          const devVersion = devs.map(d => `${d.id}:${d.updated_at || ''}`).join('|');
+          // ETag for developers (includes sort_order so team orientation changes invalidate instantly)
+          const devVersion = devs.map(d => `${d.id}:${d.sort_order || 0}:${d.updated_at || ''}`).join('|');
           const etag = `"${await sha256Hex(devVersion)}"`;
 
           const clientEtag = request.headers.get('If-None-Match');
@@ -456,6 +475,16 @@ export default {
             .bind(targetId, effectiveSlug)
             .first();
 
+          // Check if changing slug causes collision with another project
+          if (effectiveSlug) {
+            const slugCollision = await env.DB.prepare('SELECT id FROM projects WHERE slug = ? AND id != ?')
+              .bind(effectiveSlug, existing ? existing.id : targetId)
+              .first();
+            if (slugCollision) {
+              return jsonResponse({ success: false, message: `Repository URL slug '${effectiveSlug}' is already in use by another project.` }, corsHeaders, 400);
+            }
+          }
+
           if (existing) {
             await env.DB.prepare(`
               UPDATE projects 
@@ -595,6 +624,71 @@ export default {
       }
     }
 
+    // POST /api/manage/projects/reorder — Persist drag-and-drop order for repositories (Admin Only)
+    if (pathname === '/api/manage/projects/reorder' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { order } = body;
+        let actorRole = request.headers.get('x-user-role') || body.actor_role;
+        const authHeader = request.headers.get('Authorization') || '';
+        const actorHandle = request.headers.get('x-actor-handle') || body.actor_handle;
+
+        if (env.DB && (actorHandle || authHeader)) {
+          let handleToCheck = actorHandle;
+          if (!handleToCheck && authHeader.startsWith('Bearer tok_')) {
+            const parts = authHeader.replace('Bearer tok_', '').split('_');
+            handleToCheck = parts[0];
+          }
+          if (handleToCheck) {
+            const actorDev = await env.DB.prepare('SELECT account_role FROM developers WHERE lower(handle) = lower(?)').bind(handleToCheck).first();
+            if (actorDev) {
+              actorRole = actorDev.account_role;
+            }
+          }
+        }
+
+        if (actorRole !== 'admin') {
+          return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to customize layout and orientation.' }, corsHeaders, 403);
+        }
+
+        if (!Array.isArray(order) || order.length === 0) {
+          return jsonResponse({ success: false, message: 'Invalid or empty order array' }, corsHeaders, 400);
+        }
+        if (env.DB) {
+          const stmts = [];
+          for (let i = 0; i < order.length; i++) {
+            const key = String(order[i]).trim();
+            if (key) {
+              stmts.push(env.DB.prepare('UPDATE projects SET featured_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR slug = ?').bind(i + 1, key, key));
+            }
+          }
+          if (stmts.length > 0) {
+            await env.DB.batch(stmts);
+          }
+          await recordAuditLog(env, {
+            actor_handle: request.headers.get('x-actor-handle') || 'admin',
+            action: 'PROJECTS_REORDER',
+            target_type: 'project',
+            target_id: 'all',
+            details: `Reordered ${order.length} projects on dashboard`
+          });
+
+          // Invalidate edge cache for projects
+          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
+            try {
+              const origin = url.origin;
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/projects`)));
+            } catch (e) {}
+          }
+
+          return jsonResponse({ success: true, message: 'Project order saved successfully to D1', count: order.length }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Reordered (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
     // POST / PUT /api/manage/developers — Create or Update developer
     if ((pathname === '/api/manage/developers' || pathname === '/api/manage/developers/') && (request.method === 'POST' || request.method === 'PUT')) {
       try {
@@ -629,12 +723,22 @@ export default {
           const devId = existing ? existing.id : ((id || '').trim() || `dev-${Date.now()}`);
 
           if (existing) {
+            // Check if changing handle causes collision with another developer
+            if (cleanHandle) {
+              const handleCollision = await env.DB.prepare('SELECT id FROM developers WHERE lower(handle) = ? AND id != ?')
+                .bind(cleanHandle, existing.id)
+                .first();
+              if (handleCollision) {
+                return jsonResponse({ success: false, message: `Handle @${cleanHandle} is already registered to another developer.` }, corsHeaders, 400);
+              }
+            }
+
             await env.DB.prepare(`
               UPDATE developers 
-              SET name = ?, email = ?, password_hash = ?, role = ?, account_role = ?, squad = ?, bio = ?, avatar_url = ?, website_url = ?, github_url = ?, gpg_fingerprint = ?, is_verified = ?, updated_at = CURRENT_TIMESTAMP
+              SET handle = ?, name = ?, email = ?, password_hash = ?, role = ?, account_role = ?, squad = ?, bio = ?, avatar_url = ?, website_url = ?, github_url = ?, gpg_fingerprint = ?, is_verified = ?, updated_at = CURRENT_TIMESTAMP
               WHERE id = ?
             `).bind(
-              cleanName, cleanEmail, passHash, cleanRole, cleanAccountRole, cleanSquad,
+              cleanHandle, cleanName, cleanEmail, passHash, cleanRole, cleanAccountRole, cleanSquad,
               cleanBio, cleanAvatar, cleanWebsite, cleanGithub, cleanFingerprint, cleanVerified,
               existing.id
             ).run();
@@ -744,6 +848,72 @@ export default {
           return jsonResponse({ success: true, message: 'Developer removed from Cloudflare D1', deletedId: targetId }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Developer removed (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // POST /api/manage/developers/reorder — Persist drag-and-drop order for developers (Admin Only)
+    if (pathname === '/api/manage/developers/reorder' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { order } = body;
+        let actorRole = request.headers.get('x-user-role') || body.actor_role;
+        const authHeader = request.headers.get('Authorization') || '';
+        const actorHandle = request.headers.get('x-actor-handle') || body.actor_handle;
+
+        if (env.DB && (actorHandle || authHeader)) {
+          let handleToCheck = actorHandle;
+          if (!handleToCheck && authHeader.startsWith('Bearer tok_')) {
+            const parts = authHeader.replace('Bearer tok_', '').split('_');
+            handleToCheck = parts[0];
+          }
+          if (handleToCheck) {
+            const actorDev = await env.DB.prepare('SELECT account_role FROM developers WHERE lower(handle) = lower(?)').bind(handleToCheck).first();
+            if (actorDev) {
+              actorRole = actorDev.account_role;
+            }
+          }
+        }
+
+        if (actorRole !== 'admin') {
+          return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to customize layout and orientation.' }, corsHeaders, 403);
+        }
+
+        if (!Array.isArray(order) || order.length === 0) {
+          return jsonResponse({ success: false, message: 'Invalid or empty order array' }, corsHeaders, 400);
+        }
+        if (env.DB) {
+          try { await env.DB.prepare('ALTER TABLE developers ADD COLUMN sort_order INTEGER DEFAULT 0').run(); } catch (_) {}
+          const stmts = [];
+          for (let i = 0; i < order.length; i++) {
+            const key = String(order[i]).trim();
+            if (key) {
+              stmts.push(env.DB.prepare('UPDATE developers SET sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR lower(handle) = lower(?)').bind(i + 1, key, key));
+            }
+          }
+          if (stmts.length > 0) {
+            await env.DB.batch(stmts);
+          }
+          await recordAuditLog(env, {
+            actor_handle: request.headers.get('x-actor-handle') || 'admin',
+            action: 'DEVELOPERS_REORDER',
+            target_type: 'developer',
+            target_id: 'all',
+            details: `Reordered ${order.length} developers on dashboard`
+          });
+
+          // Invalidate edge cache for developers
+          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
+            try {
+              const origin = url.origin;
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers`)));
+            } catch (e) {}
+          }
+
+          return jsonResponse({ success: true, message: 'Developer order saved successfully to D1', count: order.length }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Reordered (offline mode)' }, corsHeaders);
       } catch (err) {
         return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
       }

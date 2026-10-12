@@ -173,6 +173,13 @@
               <input type="text" id="devFullName" class="form-input" required value="${currentDev.name}">
             </div>
             <div class="form-group">
+              <label class="form-label">Developer Alias / Handle</label>
+              <div style="position: relative; display: flex; align-items: center;">
+                <span style="position: absolute; left: 12px; color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 700;">@</span>
+                <input type="text" id="devHandleInput" class="form-input" style="padding-left: 28px;" required placeholder="e.g. username" value="${currentDev.handle}">
+              </div>
+            </div>
+            <div class="form-group">
               <label class="form-label">Engineering Role / Title</label>
               <input type="text" id="devRoleTitle" class="form-input" required value="${currentDev.role}">
             </div>
@@ -270,6 +277,8 @@
 
     async function handleSaveDevProfile(e) {
       e.preventDefault();
+      const rawHandle = document.getElementById('devHandleInput') ? document.getElementById('devHandleInput').value.trim().replace(/^@/, '') : currentDev.handle;
+      if (rawHandle) currentDev.handle = rawHandle;
       currentDev.name = document.getElementById('devFullName').value.trim();
       currentDev.role = document.getElementById('devRoleTitle').value.trim();
       currentDev.bio = document.getElementById('devBioInput').value.trim();
@@ -296,6 +305,7 @@
 
       localStorage.setItem('ragetech_session', JSON.stringify({ user: currentDev, token: `tok_${currentDev.handle}` }));
       document.getElementById('devName').textContent = currentDev.name;
+      document.getElementById('devHandle').textContent = `@${currentDev.handle}`;
       if (currentDev.avatar_url) document.getElementById('devAvatar').src = currentDev.avatar_url;
       window.RagetechSync?.broadcast({ type: 'DEVELOPER_SAVED', handle: currentDev.handle, data: currentDev });
       alert('Your dossier profile and photo have been updated and synchronized with Cloudflare D1!');

@@ -38,11 +38,56 @@
 
     // Real-time synchronization across tabs and windows
     if (window.RagetechSync) {
-      window.RagetechSync.subscribe(async () => {
-        await fetchPlatformData();
-        renderHeroMetrics();
-        renderRepositoryShowcase();
-        renderBuildersGrid();
+      window.RagetechSync.subscribe(async (msg) => {
+        if (msg && msg.type === 'PROJECTS_REORDERED' && Array.isArray(msg.order)) {
+          // Zero-latency in-memory orientation sync for repository showcase
+          const map = new Map(state.projects.map(p => [String(p.id || p.slug), p]));
+          const reordered = [];
+          msg.order.forEach(key => {
+            const strKey = String(key);
+            const p = map.get(strKey) || state.projects.find(x => String(x.slug) === strKey || String(x.id) === strKey);
+            if (p && !reordered.includes(p)) reordered.push(p);
+          });
+          state.projects.forEach(p => {
+            if (!reordered.includes(p)) reordered.push(p);
+          });
+          state.projects = reordered;
+          if (!state.projects.some(p => p.slug === state.activeProjectSlug)) {
+            state.activeProjectSlug = state.projects[0]?.slug || null;
+          }
+          renderHeroMetrics();
+          renderRepositoryShowcase();
+          // Reconcile with edge in background
+          fetchPlatformData().then(() => {
+            renderHeroMetrics();
+            renderRepositoryShowcase();
+          });
+        } else if (msg && msg.type === 'DEVELOPERS_REORDERED' && Array.isArray(msg.order)) {
+          // Zero-latency in-memory orientation sync for developer collective grid
+          const map = new Map(state.developers.map(d => [String(d.id || d.handle), d]));
+          const reordered = [];
+          msg.order.forEach(key => {
+            const strKey = String(key);
+            const d = map.get(strKey) || state.developers.find(x => String(x.handle) === strKey || String(x.id) === strKey);
+            if (d && !reordered.includes(d)) reordered.push(d);
+          });
+          state.developers.forEach(d => {
+            if (!reordered.includes(d)) reordered.push(d);
+          });
+          state.developers = reordered;
+          renderHeroMetrics();
+          renderBuildersGrid();
+          // Reconcile with edge in background
+          fetchPlatformData().then(() => {
+            renderHeroMetrics();
+            renderBuildersGrid();
+          });
+        } else {
+          await fetchPlatformData();
+          renderHeroMetrics();
+          renderRepositoryShowcase();
+          renderBuildersGrid();
+        }
       });
     }
 
@@ -77,6 +122,12 @@
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
           state.projects = json.data;
+          // Sort strictly by featured_order to maintain admin layout orientation
+          state.projects.sort((a, b) => {
+            const ordA = (a.featured_order !== undefined && a.featured_order !== null) ? Number(a.featured_order) : 999;
+            const ordB = (b.featured_order !== undefined && b.featured_order !== null) ? Number(b.featured_order) : 999;
+            return ordA - ordB;
+          });
           if (!state.activeProjectSlug || !state.projects.some(p => p.slug === state.activeProjectSlug)) {
             state.activeProjectSlug = state.projects[0]?.slug || null;
           }
@@ -92,6 +143,12 @@
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
           state.developers = json.data;
+          // Sort strictly by sort_order to maintain admin layout orientation
+          state.developers.sort((a, b) => {
+            const ordA = (a.sort_order !== undefined && a.sort_order !== null) ? Number(a.sort_order) : 999;
+            const ordB = (b.sort_order !== undefined && b.sort_order !== null) ? Number(b.sort_order) : 999;
+            return ordA - ordB;
+          });
         }
       }
     } catch (e) {
