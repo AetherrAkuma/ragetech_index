@@ -1755,8 +1755,6 @@ Existing alternatives required significant hardware resources and heavy runtimes
 
       // 1. D1 Edge API call
       try {
-      // 1. D1 Edge API call
-      try {
         const res = await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || json.success === false) {
