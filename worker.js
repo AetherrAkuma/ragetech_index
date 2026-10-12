@@ -452,7 +452,9 @@ export default {
         if (env.DB) {
           const existing = await env.DB.prepare('SELECT id, password_hash FROM developers WHERE id = ? OR handle = ?').bind(id, handle).first();
           let passHash = existing ? existing.password_hash : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
-          if (password) {
+          if (body.password_hash) {
+            passHash = body.password_hash;
+          } else if (password) {
             passHash = await sha256Hex(password);
           }
 

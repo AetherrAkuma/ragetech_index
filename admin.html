@@ -678,6 +678,27 @@
       renderCurrentView();
     }
 
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+
+    function setPresetPassword(inputId, val) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.value = val;
+      input.type = 'text';
+      const btn = input.nextElementSibling;
+      if (btn && btn.tagName === 'BUTTON') btn.textContent = 'Hide';
+    }
+
     // Fully Customizable Developer Profile Editor Modal
     function openDeveloperModal(handle) {
       const dev = handle ? developersData.find(d => d.handle === handle) : null;
@@ -730,9 +751,16 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="dPassword">Login Password / Passphrase</label>
-              <input type="password" id="dPassword" class="form-input" placeholder="${dev ? 'Leave blank to keep existing password' : 'Enter strong password (will be SHA-256 hashed)'}">
-              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">Passwords are securely hashed using SHA-256 before storing.</div>
+              <label class="form-label" for="dPassword">Reset Developer Access Key / Password</label>
+              <div style="font-size: 0.74rem; color: var(--accent-cyan); margin-bottom: 6px;">Admin Override: Reset this developer's login credentials if forgotten or lost.</div>
+              <div style="position: relative; display: flex; align-items: center;">
+                <input type="password" id="dPassword" class="form-input" style="padding-right: 80px;" placeholder="${dev ? 'Leave blank to keep existing password' : 'Enter new password (min. 6 characters)'}">
+                <button type="button" onclick="togglePasswordVisibility('dPassword', this)" class="btn-secondary" style="position: absolute; right: 6px; padding: 4px 10px; font-size: 0.72rem; height: 30px;">Show</button>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+                <span style="font-size: 0.72rem; color: var(--text-muted);">Passwords are securely hashed using SHA-256 before storing.</span>
+                <button type="button" onclick="setPresetPassword('dPassword', 'admin123')" class="btn-secondary" style="font-size: 0.7rem; padding: 2px 8px;">Reset to "admin123"</button>
+              </div>
             </div>
           </div>
 
@@ -916,12 +944,26 @@
 
       // If new password provided, calculate SHA-256 hash
       if (passVal) {
+        if (passVal.length < 6) {
+          alert('Password must be at least 6 characters long.');
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `<span>Save Developer Profile</span>`;
+          }
+          return;
+        }
         try {
           const msgUint8 = new TextEncoder().encode(passVal);
           const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
           const hashArray = Array.from(new Uint8Array(hashBuffer));
           payload.password_hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         } catch (e) {}
+      } else {
+        // Preserve existing password_hash if developer had one
+        const existingDev = developersData.find(d => d.id === payload.id || d.handle === payload.handle);
+        if (existingDev && existingDev.password_hash) {
+          payload.password_hash = existingDev.password_hash;
+        }
       }
 
       // 1. Send to Cloudflare D1
@@ -948,13 +990,30 @@
         localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
       } catch (err) {}
 
-      // 3. Update In-Memory Developers
+      // 3. Update In-Memory Developers and active session
       const devIdx = developersData.findIndex(d => d.id === payload.id || d.handle === payload.handle);
       if (devIdx !== -1) {
         developersData[devIdx] = { ...developersData[devIdx], ...payload };
       } else {
         developersData.push(payload);
       }
+
+      if (window.RAGETECH_DEVELOPERS) {
+        const memIdx = window.RAGETECH_DEVELOPERS.findIndex(d => d.id === payload.id || d.handle === payload.handle);
+        if (memIdx >= 0) window.RAGETECH_DEVELOPERS[memIdx] = { ...window.RAGETECH_DEVELOPERS[memIdx], ...payload };
+        else window.RAGETECH_DEVELOPERS.push(payload);
+      }
+
+      // If updating currently logged in admin session, keep session in sync
+      try {
+        const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || 'null');
+        if (savedSession && savedSession.user && (savedSession.user.id === payload.id || savedSession.user.handle === payload.handle)) {
+          savedSession.user = { ...savedSession.user, ...payload };
+          localStorage.setItem('ragetech_session', JSON.stringify(savedSession));
+          if (document.getElementById('adminName')) document.getElementById('adminName').textContent = payload.name;
+          if (payload.avatar_url && document.getElementById('adminAvatar')) document.getElementById('adminAvatar').src = payload.avatar_url;
+        }
+      } catch (e) {}
 
       // 4. Update Projects Maintainers List Dynamically
       projectsData.forEach(p => {
@@ -986,6 +1045,10 @@
 
       closeCrudModal();
       renderCurrentView();
+
+      if (passVal) {
+        alert(`Access key for @${payload.handle} has been successfully updated and hashed with SHA-256! They can now log in using this access key.`);
+      }
     }
 
     // Delete Developer (Cloudflare D1 + LocalStorage Sync)
