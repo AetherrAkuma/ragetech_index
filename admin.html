@@ -1054,6 +1054,8 @@
     let allAuditLogs = [];
     let currentAuditSearch = '';
     let currentAuditEventFilter = 'ALL';
+    let currentAuditPage = 1;
+    const AUDIT_PAGE_SIZE = 10;
 
     // Helper: Resolve Actor Full Name, Handle & Avatar
     function getActorInfo(rawActor) {
@@ -1267,6 +1269,7 @@
 
       currentAuditSearch = '';
       currentAuditEventFilter = 'ALL';
+      currentAuditPage = 1;
 
       main.innerHTML = `
         <div class="dash-header-row">
@@ -1331,6 +1334,9 @@
             </tbody>
           </table>
         </div>
+
+        <!-- 10 Items Per Page Pagination Container -->
+        <div id="auditPagination" style="display: none; align-items: center; justify-content: space-between; margin-top: 16px; flex-wrap: wrap; gap: 12px; padding: 12px 16px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);"></div>
       `;
 
       try {
@@ -1346,6 +1352,7 @@
 
     function handleAuditSearch(val) {
       currentAuditSearch = (val || '').trim().toLowerCase();
+      currentAuditPage = 1;
       const clearBtn = document.getElementById('clearAuditSearchBtn');
       if (clearBtn) clearBtn.style.display = currentAuditSearch ? 'block' : 'none';
       filterAndRenderAuditLogs();
@@ -1355,6 +1362,7 @@
       const input = document.getElementById('auditSearchInput');
       if (input) input.value = '';
       currentAuditSearch = '';
+      currentAuditPage = 1;
       const clearBtn = document.getElementById('clearAuditSearchBtn');
       if (clearBtn) clearBtn.style.display = 'none';
       filterAndRenderAuditLogs();
@@ -1362,17 +1370,32 @@
 
     function handleAuditEventFilter(filterVal) {
       currentAuditEventFilter = filterVal || 'ALL';
+      currentAuditPage = 1;
       filterAndRenderAuditLogs();
+    }
+
+    function changeAuditPage(newPage) {
+      currentAuditPage = newPage;
+      filterAndRenderAuditLogs();
+      const tableContainer = document.querySelector('.data-table-container');
+      if (tableContainer) {
+        tableContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function filterAndRenderAuditLogs() {
       const tbody = document.getElementById('auditTableBody');
       const countBadge = document.getElementById('auditCountBadge');
+      const paginationEl = document.getElementById('auditPagination');
       if (!tbody) return;
 
       if (!allAuditLogs || allAuditLogs.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">No activity logged yet. Platform events will appear here in real time.</td></tr>`;
         if (countBadge) countBadge.textContent = '0 events';
+        if (paginationEl) {
+          paginationEl.innerHTML = '';
+          paginationEl.style.display = 'none';
+        }
         return;
       }
 
@@ -1422,16 +1445,24 @@
         });
       }
 
+      const totalFiltered = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(totalFiltered / AUDIT_PAGE_SIZE));
+      if (currentAuditPage > totalPages) currentAuditPage = totalPages;
+      if (currentAuditPage < 1) currentAuditPage = 1;
+
+      const startIndex = (currentAuditPage - 1) * AUDIT_PAGE_SIZE;
+      const endIndex = Math.min(startIndex + AUDIT_PAGE_SIZE, totalFiltered);
+
       // Update count badge
       if (countBadge) {
         if (currentAuditSearch || currentAuditEventFilter !== 'ALL') {
-          countBadge.textContent = `Showing ${filtered.length} of ${allAuditLogs.length} events`;
+          countBadge.textContent = `Showing ${totalFiltered} of ${allAuditLogs.length} events`;
         } else {
           countBadge.textContent = `${allAuditLogs.length} events logged`;
         }
       }
 
-      if (filtered.length === 0) {
+      if (totalFiltered === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 36px 16px;">
@@ -1441,10 +1472,17 @@
             </td>
           </tr>
         `;
+        if (paginationEl) {
+          paginationEl.innerHTML = '';
+          paginationEl.style.display = 'none';
+        }
         return;
       }
 
-      tbody.innerHTML = filtered.map(item => {
+      // Slice strictly AUDIT_PAGE_SIZE (10) logs for the current page
+      const pageLogs = filtered.slice(startIndex, endIndex);
+
+      tbody.innerHTML = pageLogs.map(item => {
         return `
           <tr>
             <td>
@@ -1479,6 +1517,85 @@
           </tr>
         `;
       }).join('');
+
+      // Render Pagination Controls & Indicators
+      if (paginationEl) {
+        paginationEl.style.display = 'flex';
+
+        // Compute page numbers list with smart windowing
+        const pageButtons = [];
+        if (totalPages <= 7) {
+          for (let p = 1; p <= totalPages; p++) {
+            pageButtons.push(p);
+          }
+        } else {
+          pageButtons.push(1);
+          if (currentAuditPage > 3) pageButtons.push('...');
+          const start = Math.max(2, currentAuditPage - 1);
+          const end = Math.min(totalPages - 1, currentAuditPage + 1);
+          for (let p = start; p <= end; p++) {
+            if (!pageButtons.includes(p)) pageButtons.push(p);
+          }
+          if (currentAuditPage < totalPages - 2) pageButtons.push('...');
+          if (!pageButtons.includes(totalPages)) pageButtons.push(totalPages);
+        }
+
+        const pagesHtml = pageButtons.map(p => {
+          if (p === '...') {
+            return `<span style="color: var(--text-muted); padding: 0 4px; font-size: 0.85rem; user-select: none;">…</span>`;
+          }
+          const isActive = p === currentAuditPage;
+          return `
+            <button type="button" 
+                    onclick="changeAuditPage(${p})" 
+                    style="min-width: 32px; height: 32px; padding: 0 8px; font-size: 0.8rem; font-weight: ${isActive ? '700' : '500'}; border-radius: var(--radius-sm); border: 1px solid ${isActive ? 'var(--accent-cyan)' : 'var(--border-subtle)'}; background: ${isActive ? 'var(--accent-cyan)' : 'rgba(255, 255, 255, 0.04)'}; color: ${isActive ? '#000' : 'var(--text-secondary)'}; cursor: ${isActive ? 'default' : 'pointer'}; transition: all 0.15s ease;"
+                    ${isActive ? 'aria-current="page"' : ''}>
+              ${p}
+            </button>
+          `;
+        }).join('');
+
+        paginationEl.innerHTML = `
+          <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span>Showing <strong style="color: var(--text-primary); font-family: var(--font-mono);">${startIndex + 1}–${endIndex}</strong> of <strong style="color: var(--text-primary); font-family: var(--font-mono);">${totalFiltered}</strong> logs</span>
+            <span style="opacity: 0.4;">•</span>
+            <span>Page <strong style="color: var(--accent-cyan); font-family: var(--font-mono);">${currentAuditPage}</strong> of <strong style="font-family: var(--font-mono);">${totalPages}</strong></span>
+            <span class="stack-pill" style="font-size: 0.68rem; padding: 1px 6px; margin-left: 4px; color: var(--text-muted); border-color: var(--border-subtle);">10 per page</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <button type="button" 
+                    onclick="changeAuditPage(1)" 
+                    ${currentAuditPage <= 1 ? 'disabled style="opacity: 0.35; cursor: not-allowed; pointer-events: none; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); color: var(--text-muted);"' : 'style="cursor: pointer; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.04); color: var(--text-secondary); transition: all 0.15s ease;"'}
+                    title="First page">
+              « First
+            </button>
+            <button type="button" 
+                    onclick="changeAuditPage(${currentAuditPage - 1})" 
+                    ${currentAuditPage <= 1 ? 'disabled style="opacity: 0.35; cursor: not-allowed; pointer-events: none; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); color: var(--text-muted);"' : 'style="cursor: pointer; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.04); color: var(--text-secondary); transition: all 0.15s ease;"'}
+                    title="Previous page">
+              ‹ Prev
+            </button>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              ${pagesHtml}
+            </div>
+
+            <button type="button" 
+                    onclick="changeAuditPage(${currentAuditPage + 1})" 
+                    ${currentAuditPage >= totalPages ? 'disabled style="opacity: 0.35; cursor: not-allowed; pointer-events: none; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); color: var(--text-muted);"' : 'style="cursor: pointer; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.04); color: var(--text-secondary); transition: all 0.15s ease;"'}
+                    title="Next page">
+              Next ›
+            </button>
+            <button type="button" 
+                    onclick="changeAuditPage(${totalPages})" 
+                    ${currentAuditPage >= totalPages ? 'disabled style="opacity: 0.35; cursor: not-allowed; pointer-events: none; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); color: var(--text-muted);"' : 'style="cursor: pointer; font-size: 0.76rem; padding: 5px 10px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.04); color: var(--text-secondary); transition: all 0.15s ease;"'}
+                    title="Last page">
+              Last »
+            </button>
+          </div>
+        `;
+      }
     }
 
     async function handleClearAuditLogs() {
