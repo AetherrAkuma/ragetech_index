@@ -833,6 +833,15 @@
 
   function openLoginModal() {
     const modal = document.getElementById('loginModal');
+    const form = document.getElementById('loginForm');
+    if (form) form.reset();
+    const handleInput = document.getElementById('loginHandle');
+    const passInput = document.getElementById('loginPassword');
+    if (passInput) passInput.value = '';
+    if (handleInput) {
+      handleInput.value = '';
+      setTimeout(() => handleInput.focus(), 60);
+    }
     if (modal) {
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
@@ -841,6 +850,12 @@
 
   function closeLoginModal() {
     const modal = document.getElementById('loginModal');
+    const form = document.getElementById('loginForm');
+    if (form) form.reset();
+    const handleInput = document.getElementById('loginHandle');
+    const passInput = document.getElementById('loginPassword');
+    if (passInput) passInput.value = '';
+    if (handleInput) handleInput.value = '';
     if (modal) {
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
@@ -861,6 +876,14 @@
 
     const identifier = handleInput ? handleInput.value.trim().toLowerCase() : '';
     const password = passInput ? passInput.value.trim() : '';
+
+    // Security: Immediately zero out password input from DOM
+    if (passInput) passInput.value = '';
+
+    if (!identifier || !password) {
+      alert('Please provide both username/email and access key.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -896,7 +919,6 @@
           email: 'reymartchua@ragetech.dev',
           role: 'Founding Lead & Systems Architect',
           account_role: 'admin',
-          squad: 'systems',
           avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80'
         };
 
@@ -918,7 +940,7 @@
           name: 'Sora Takahashi',
           role: 'Founding Systems Architect',
           account_role: 'admin',
-          squad: 'systems'
+          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80'
         };
 
         state.currentUser = dev;
@@ -931,12 +953,21 @@
       }
     }
 
+    // Failed authentication: ensure form is completely scrubbed
+    closeLoginModal();
     alert('Invalid builder credentials. Please verify your access key.');
   }
 
   function handleLogout() {
     state.currentUser = null;
+    state.sessionToken = null;
     localStorage.removeItem('ragetech_session');
+    const form = document.getElementById('loginForm');
+    if (form) form.reset();
+    const handleInput = document.getElementById('loginHandle');
+    const passInput = document.getElementById('loginPassword');
+    if (passInput) passInput.value = '';
+    if (handleInput) handleInput.value = '';
     updateHeaderAuthUI();
   }
 

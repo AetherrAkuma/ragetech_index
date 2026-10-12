@@ -501,8 +501,12 @@
     // Modal Handlers
     function closeCrudModal() {
       const modal = document.getElementById('crudModal');
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
+      const content = document.getElementById('crudModalContent');
+      if (content) content.innerHTML = '';
+      if (modal) {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
     }
 
     // Delete Project (Syncs D1 + LocalStorage)
@@ -740,13 +744,16 @@
 
       const rawHandle = document.getElementById('dHandle').value.trim().replace(/^@/, '');
       const assigned_projects = Array.from(document.querySelectorAll('input[name="builderAssignedRepo"]:checked')).map(cb => cb.value);
+      const passEl = document.getElementById('dPassword');
+      const passVal = passEl ? passEl.value : undefined;
+      if (passEl) passEl.value = '';
       
       const payload = {
         id: id || `dev-${Date.now()}`,
         name: document.getElementById('dName').value.trim(),
         handle: rawHandle,
         email: document.getElementById('dEmail').value.trim(),
-        password: document.getElementById('dPassword').value || undefined,
+        password: passVal || undefined,
         account_role: document.getElementById('dAccountRole').value,
         role: document.getElementById('dRole').value.trim(),
         assigned_projects,

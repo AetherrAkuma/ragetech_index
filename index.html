@@ -269,7 +269,7 @@
   </div>
 
   <!-- Builder Login Modal -->
-  <div id="loginModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+  <div id="loginModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" onclick="if (event.target === this) window.RagetechApp.closeLoginModal()">
     <div class="modal-dialog" style="max-width: 440px;">
       <button class="modal-close-btn" onclick="window.RagetechApp.closeLoginModal()" aria-label="Close modal">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -284,17 +284,17 @@
           </svg>
         </div>
         <h3 style="font-size: 1.35rem; font-weight: 800;">Builder Authentication</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Sign in with your collective credentials or demo as admin</p>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Sign in with your collective credentials</p>
       </div>
 
-      <form id="loginForm" onsubmit="window.RagetechApp.handleLogin(event)">
+      <form id="loginForm" onsubmit="window.RagetechApp.handleLogin(event)" autocomplete="off">
         <div class="form-group">
           <label class="form-label" for="loginHandle">Builder Handle or Email</label>
-          <input type="text" id="loginHandle" class="form-input" placeholder="reymartchua@ragetech.dev" value="reymartchua@ragetech.dev" required>
+          <input type="text" id="loginHandle" class="form-input" placeholder="handle or email@ragetech.dev" autocomplete="username" required>
         </div>
         <div class="form-group">
-          <label class="form-label" for="loginPassword">Access Key (SHA-256)</label>
-          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" value="yuichirokanade" required>
+          <label class="form-label" for="loginPassword">Access Key (Password)</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" autocomplete="current-password" required>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 24px;">
           <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
@@ -302,7 +302,7 @@
           </button>
         </div>
         <p style="font-size: 0.76rem; color: var(--text-muted); text-align: center; margin-top: 14px;">
-          SHA-256 encrypted authentication. Admin credential configured for <code>reymartchua@ragetech.dev</code>.
+          Protected by SHA-256 cryptographic verification.
         </p>
       </form>
     </div>

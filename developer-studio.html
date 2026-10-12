@@ -341,8 +341,14 @@
 
     async function handleUpdatePassword(e) {
       e.preventDefault();
-      const p1 = document.getElementById('newPassInput').value;
-      const p2 = document.getElementById('confirmPassInput').value;
+      const newPassEl = document.getElementById('newPassInput');
+      const confPassEl = document.getElementById('confirmPassInput');
+      const p1 = newPassEl ? newPassEl.value : '';
+      const p2 = confPassEl ? confPassEl.value : '';
+
+      // Security: immediately scrub inputs from DOM
+      if (newPassEl) newPassEl.value = '';
+      if (confPassEl) confPassEl.value = '';
 
       if (p1 !== p2) {
         alert('Passwords do not match!');
