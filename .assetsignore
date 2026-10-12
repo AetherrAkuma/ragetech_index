@@ -1,0 +1,13 @@
+node_modules/
+.git/
+.wrangler/
+.env*
+*.md
+package.json
+package-lock.json
+bun.lock
+bun.lockb
+wrangler.jsonc
+wrangler.toml
+schema.sql
+seed.sql
