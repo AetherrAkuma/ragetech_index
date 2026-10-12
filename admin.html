@@ -178,9 +178,9 @@
               <h1 class="dash-title">Repositories Management</h1>
               <p class="dash-subtitle">Create, configure, update live URLs, and remove collective repositories.</p>
             </div>
-            <button class="btn-primary" onclick="openProjectModal()">
+            <a href="repository_editor.html" class="btn-primary">
               <span>+ Add Repository</span>
-            </button>
+            </a>
           </div>
 
           <div class="data-table-container">
@@ -210,8 +210,8 @@
                     <td><span class="verified-icon-chip">${p.status.toUpperCase()}</span></td>
                     <td>
                       <div class="table-actions">
-                        <button class="btn-icon-action" onclick="openProjectModal('${p.slug}')">Edit</button>
-                        <a href="project.html?id=${p.slug}" class="btn-icon-action">Preview</a>
+                        <a href="repository_editor.html?id=${p.slug}" class="btn-icon-action">Edit</a>
+                        <a href="repository.html?id=${p.slug}" class="btn-icon-action">Preview</a>
                         <button class="btn-icon-action danger" onclick="deleteProject('${p.id || p.slug}')">Delete</button>
                       </div>
                     </td>
@@ -378,90 +378,11 @@
     }
 
     function openProjectModal(slug) {
-      const proj = slug ? projectsData.find(p => p.slug === slug) : null;
-      const content = document.getElementById('crudModalContent');
-      content.innerHTML = `
-        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">${proj ? 'Edit Repository' : 'Add New Repository'}</h3>
-        <form onsubmit="handleSaveProject(event, '${proj ? proj.id : ''}')">
-          <div class="form-group">
-            <label class="form-label">Repository Name</label>
-            <input type="text" id="pName" class="form-input" required value="${proj ? proj.name : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Slug</label>
-            <input type="text" id="pSlug" class="form-input" required value="${proj ? proj.slug : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select id="pCategory" class="form-select">
-              <option value="Distributed Runtimes" ${proj && proj.category === 'Distributed Runtimes' ? 'selected' : ''}>Distributed Runtimes</option>
-              <option value="Compilers" ${proj && proj.category === 'Compilers' ? 'selected' : ''}>Compilers</option>
-              <option value="Kernel & Systems" ${proj && proj.category === 'Kernel & Systems' ? 'selected' : ''}>Kernel & Systems</option>
-              <option value="Cryptography" ${proj && proj.category === 'Cryptography' ? 'selected' : ''}>Cryptography</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tagline</label>
-            <input type="text" id="pTagline" class="form-input" required value="${proj ? proj.tagline : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Description</label>
-            <textarea id="pDesc" class="form-textarea" rows="3" required>${proj ? proj.description : ''}</textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Live Website URL</label>
-            <input type="url" id="pLiveUrl" class="form-input" placeholder="https://..." value="${proj ? proj.live_url || '' : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">GitHub Repository URL</label>
-            <input type="url" id="pGithubUrl" class="form-input" placeholder="https://github.com/..." value="${proj ? proj.github_url || '' : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tech Stack (comma-separated)</label>
-            <input type="text" id="pStack" class="form-input" value="${proj ? proj.tech_stack || '' : ''}">
-          </div>
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
-            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
-            <button type="submit" class="btn-primary">Save Repository</button>
-          </div>
-        </form>
-      `;
-      const modal = document.getElementById('crudModal');
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-    }
-
-    async function handleSaveProject(e, id) {
-      e.preventDefault();
-      const payload = {
-        id: id || `proj-${Date.now()}`,
-        name: document.getElementById('pName').value,
-        slug: document.getElementById('pSlug').value,
-        category: document.getElementById('pCategory').value,
-        tagline: document.getElementById('pTagline').value,
-        description: document.getElementById('pDesc').value,
-        live_url: document.getElementById('pLiveUrl').value,
-        github_url: document.getElementById('pGithubUrl').value,
-        tech_stack: document.getElementById('pStack').value,
-        status: 'active'
-      };
-
-      try {
-        await fetch('/api/manage/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (err) {}
-
-      const idx = projectsData.findIndex(p => p.id === id || p.slug === payload.slug);
-      if (idx !== -1) {
-        projectsData[idx] = { ...projectsData[idx], ...payload };
+      if (slug) {
+        window.location.href = `repository_editor.html?id=${slug}`;
       } else {
-        projectsData.push(payload);
+        window.location.href = 'repository_editor.html';
       }
-      closeCrudModal();
-      renderCurrentView();
     }
 
     async function deleteProject(id) {

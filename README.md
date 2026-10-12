@@ -26,25 +26,32 @@ A human-crafted, sovereign edge platform and engineering collective website buil
    * Responsive grid of 29 developer cards with squad badges, roles, and verified cryptographic chips.
    * Card click opens the **Developer Modal Dossier** featuring their bio, GPG fingerprint, and assigned repositories linking to project pages.
 
-5. **Templated Custom Repository Page (`project.html`)**:
+5. **Templated Repository Dossier Renderer (`repository.html`)**:
    * Modeled after **Tailark Quartz Blog Article** (`blog-article/one`).
-   * Clean technical whitepaper layout with category badge, read time, and monumental title.
-   * **Primary Top Action Bar**: `Visit Live Project Website` (external link) & `Source Repository` (GitHub).
-   * Dynamically queries Cloudflare D1 with automatic offline fallback.
-   * Dedicated **Assigned Maintainers** block at the bottom styled with Tailark Quartz team cards.
+   * Clean technical whitepaper layout with category badge, lifecycle status, read time, and monumental title.
+   * **Assignable Primary Action Bar**: Configurable button for any purpose (default: `Visit Site`) with dynamic URL, plus `Source Code` (GitHub).
+   * **Visuals & Diagrams**: High-resolution architectural diagram / cover visual frame.
+   * **Rich Markdown Engine**: Headings, lists, code blocks, blockquotes, tables, and images.
+   * Dedicated **Assigned Maintainers** block at the bottom styled with Tailark Quartz team cards (`quartz/team`).
 
-6. **Dedicated Developer Dossier (`developer.html`)**:
+6. **Dedicated Repository Dossier Studio (`repository_editor.html`)**:
+   * Full-page management studio with side-by-side split screen and real-time live preview.
+   * Form controls for metadata, assignable action button (label & URL), cover diagram, markdown editor with formatting toolbar, and maintainer checkboxes.
+   * Live preview on the right renders identically to `repository.html` with zero keystroke lag.
+   * Saves directly to Cloudflare D1 with offline fallback parity.
+
+7. **Dedicated Developer Dossier (`developer.html`)**:
    * Individual developer profile with verified status badge, bio, and squad focus.
    * Cryptographic **GPG Public Key Widget** with one-click fingerprint copy.
    * Showcase of all repositories assigned to the engineer.
    * Direct links to personal website and GitHub.
 
-7. **Global Command Palette (`Cmd + K` / `Ctrl + K`)**:
+8. **Global Command Palette (`Cmd + K` / `Ctrl + K`)**:
    * Instant search overlay across all 6 repositories, 29 builders, and quick actions with keyboard navigation (`↑`, `↓`, `Enter`, `Esc`).
 
-8. **Dedicated Role Dashboards & Portals**:
-   * **Admin Console (`admin.html`)**: Complete CRUD portal for administrators (`reymartchua@ragetech.dev`). Allows adding/modifying/deleting repositories, links, builders, assignments, and inspecting audit trails.
-   * **Project Lead Portal (`lead.html`)**: Tailored workspace for project leads to govern assigned blueprints, update live website links, manage whitepaper specifications, and organize maintainer teams.
+9. **Dedicated Role Dashboards & Portals**:
+   * **Admin Console (`admin.html`)**: Complete CRUD portal for administrators (`reymartchua@ragetech.dev`). Links directly to `repository_editor.html` for repo authoring, builders CRUD, and audit trail.
+   * **Project Lead Portal (`lead.html`)**: Tailored workspace for project leads to govern assigned blueprints, access `repository_editor.html`, and coordinate maintainer teams.
    * **Developer Studio (`developer-studio.html`)**: Developer self-service studio to manage public dossiers, bios, external website & GitHub coordinates, GPG keys, and SHA-256 access keys.
 
 9. **Security & Authentication**:

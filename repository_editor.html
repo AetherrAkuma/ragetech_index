@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repository Dossier Studio — Ragetech Collective</title>
+  <meta name="description" content="Dedicated studio editor and real-time live preview for Ragetech repository dossiers and engineering whitepapers.">
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="editor-page-container">
+
+  <!-- ======================================================================
+       Studio Top Navigation Bar
+       ====================================================================== -->
+  <header class="editor-top-nav">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <a href="admin.html" class="brand-mark" style="text-decoration: none;">
+        <div class="brand-icon" style="width: 28px; height: 28px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <span class="brand-name" style="font-size: 0.95rem;">RAGETECH</span>
+      </a>
+
+      <span style="color: var(--border-strong);">/</span>
+      <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);" id="studioModeTitle">
+        New Repository Studio
+      </span>
+      <span class="brand-badge" id="studioStatusBadge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.25);">
+        DRAFT BLUEPRINT
+      </span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <a href="admin.html" class="btn-secondary" style="padding: 7px 14px; font-size: 0.82rem;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Admin</span>
+      </a>
+
+      <button id="openLiveRenderBtn" class="btn-secondary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="viewLiveRenderer()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        <span>View on repository.html</span>
+      </button>
+
+      <button id="saveRepoBtn" class="btn-primary" style="padding: 7px 18px; font-size: 0.82rem;" onclick="handleSaveRepository()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <span>Save to Cloudflare D1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       Split Workspace: Left (Editor Form) | Right (Real-time Live Preview)
+       ====================================================================== -->
+  <div class="editor-grid-workspace">
+
+    <!-- LEFT PANE: Editor Controls -->
+    <div class="editor-pane-scroll">
+
+      <!-- Step 1: Core Repository Metadata -->
+      <div class="editor-section-card">
+        <div class="editor-section-title">
+          <span class="step-pill">1</span>
+          <span>Core Repository Identification</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="editName">Repository Name</label>
+            <input type="text" id="editName" class="form-input" placeholder="e.g. Chronos Runtime" oninput="onMetadataChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editSlug">Repository Slug</label>
+            <input type="text" id="editSlug" class="form-input" placeholder="chronos-runtime" oninput="onMetadataChange()">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="editCategory">Category Classification</label>
+            <select id="editCategory" class="form-select" onchange="onMetadataChange()">
+              <option value="Distributed Runtimes">Distributed Runtimes</option>
+              <option value="Compilers">Compilers</option>
+              <option value="Kernel & Systems">Kernel & Systems</option>
+              <option value="Cryptography">Cryptography</option>
+              <option value="Sovereign Databases">Sovereign Databases</option>
+              <option value="Edge Networks">Edge Networks</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editStatus">Lifecycle Status</label>
+            <select id="editStatus" class="form-select" onchange="onMetadataChange()">
+              <option value="active">Active (Production)</option>
+              <option value="beta">Beta (Release Candidate)</option>
+              <option value="alpha">Alpha (Kernel Laboratory)</option>
+              <option value="research">Research Whitepaper</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editTagline">Technical Tagline</label>
+          <input type="text" id="editTagline" class="form-input" placeholder="Deterministic zero-overhead execution sandbox at the edge" oninput="onMetadataChange()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editTechStack">Tech Stack (comma-separated tags)</label>
+          <input type="text" id="editTechStack" class="form-input" placeholder="Rust, WebAssembly, Cranelift, io_uring" oninput="onMetadataChange()">
+        </div>
+      </div>
+
+      <!-- Step 2: Assignable Action Button Configuration -->
+      <div class="editor-section-card">
+        <div class="editor-section-title">
+          <span class="step-pill">2</span>
+          <span>Assignable Action Button (Default: "Visit Site")</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+          Configure the primary call-to-action button rendered on <code>repository.html</code>. Default is <strong>"Visit Site"</strong>, but you can assign it for any purpose (e.g., "Read Documentation", "Launch Sandbox", "Join Discord", "Request Access").
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="editActionButtonLabel">Action Button Label</label>
+            <input type="text" id="editActionButtonLabel" class="form-input" placeholder="Visit Site" value="Visit Site" oninput="onMetadataChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editActionButtonUrl">Target Action URL</label>
+            <input type="url" id="editActionButtonUrl" class="form-input" placeholder="https://example.ragetech.dev" oninput="onMetadataChange()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editGithubUrl">GitHub Source Code URL</label>
+          <input type="url" id="editGithubUrl" class="form-input" placeholder="https://github.com/ragetech/repository-name" oninput="onMetadataChange()">
+        </div>
+      </div>
+
+      <!-- Step 3: Architectural Cover Visual & Media -->
+      <div class="editor-section-card">
+        <div class="editor-section-title">
+          <span class="step-pill">3</span>
+          <span>Architectural Cover Visual & Diagrams</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editCoverUrl">Cover / Technical Diagram Image URL</label>
+          <input type="url" id="editCoverUrl" class="form-input" placeholder="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80" oninput="onMetadataChange()">
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('server')">Sample: Edge Cluster</button>
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('network')">Sample: Mesh Network</button>
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('circuit')">Sample: Kernel Silicon</button>
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="clearCover()">Clear Image</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Markdown Technical Specification -->
+      <div class="editor-section-card">
+        <div class="editor-section-title">
+          <span class="step-pill">4</span>
+          <span>Technical Dossier Markdown Specification</span>
+        </div>
+
+        <!-- Markdown Toolbar -->
+        <div class="md-toolbar">
+          <button type="button" class="md-btn" onclick="insertMd('**', '**')" title="Bold"><strong>B</strong></button>
+          <button type="button" class="md-btn" onclick="insertMd('*', '*')" title="Italic"><em>I</em></button>
+          <button type="button" class="md-btn" onclick="insertMd('## ')" title="Heading 2">H2</button>
+          <button type="button" class="md-btn" onclick="insertMd('### ')" title="Heading 3">H3</button>
+          <button type="button" class="md-btn" onclick="insertMd('> ')" title="Blockquote">Quote</button>
+          <button type="button" class="md-btn" onclick="insertMd('`', '`')" title="Inline Code">Code</button>
+          <button type="button" class="md-btn" onclick="insertCodeBlock()" title="Code Block">``` Lang</button>
+          <button type="button" class="md-btn" onclick="insertTable()" title="Table">Table</button>
+          <button type="button" class="md-btn" onclick="insertLink()" title="Link">Link</button>
+          <button type="button" class="md-btn" onclick="insertImage()" title="Image">Image</button>
+          <span style="margin-left: auto;"></span>
+          <button type="button" class="md-btn" onclick="insertSampleBlueprint()" style="color: var(--accent-cyan);">+ Load Blueprint Template</button>
+        </div>
+
+        <!-- Markdown Textarea -->
+        <textarea id="editMarkdown" class="md-textarea" placeholder="Write rich Markdown specifications here. Supports # Headings, **bold**, lists, > quotes, ```code blocks```, and ![images](url)..." oninput="onMarkdownInput()"></textarea>
+      </div>
+
+      <!-- Step 5: Engineering Maintainers Assignment -->
+      <div class="editor-section-card">
+        <div class="editor-section-title">
+          <span class="step-pill">5</span>
+          <span>Assigned Engineering Maintainers (Quartz Team)</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+          Select collective engineers assigned to maintain, audit, and sign releases for this repository.
+        </p>
+
+        <div class="maintainer-checkbox-grid" id="maintainersPicker">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: Synchronized Live Preview of repository.html -->
+    <div class="preview-pane-scroll" id="livePreviewPane">
+      
+      <!-- Top Sticky Preview HUD -->
+      <div class="preview-badge-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="hud-dot"></span>
+          <span>LIVE PREVIEW — EXACT repository.html RENDERING</span>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--text-muted);" id="previewWordCount">0 words • 0 min read</div>
+      </div>
+
+      <!-- Preview Dossier Container -->
+      <div class="article-page-wrap" style="padding: 0; max-width: 100%;">
+
+        <!-- Breadcrumbs -->
+        <nav class="article-breadcrumbs" style="margin-bottom: 24px;">
+          <span>Ragetech</span>
+          <span>/</span>
+          <span>Repositories</span>
+          <span>/</span>
+          <span id="prevBreadcrumb" style="color: var(--text-primary);">Aether Runtime</span>
+        </nav>
+
+        <!-- Header -->
+        <header class="article-header" style="margin-bottom: 28px;">
+          <div class="article-meta-bar" style="margin-bottom: 14px;">
+            <span class="article-category-badge" id="prevCategory">DISTRIBUTED RUNTIMES</span>
+            <span class="article-read-time" id="prevLicense">Apache-2.0 License</span>
+            <span style="color: var(--text-faint);">•</span>
+            <span class="article-read-time" id="prevStatus">STATUS: ACTIVE</span>
+            <span style="color: var(--text-faint);">•</span>
+            <span class="article-read-time" id="prevReadTime">5 min read</span>
+          </div>
+
+          <h1 class="article-title" id="prevTitle" style="font-size: 2.4rem;">Aether Runtime</h1>
+          <p class="article-subtitle" id="prevTagline" style="font-size: 1.1rem;">Deterministic zero-overhead WebAssembly execution sandbox at the edge</p>
+        </header>
+
+        <!-- Primary Action Bar (Assignable Button with Default "Visit Site") -->
+        <div class="article-action-bar" style="margin-bottom: 32px;">
+          <a href="#" class="btn-visit-site" id="prevActionButton">
+            <span id="prevActionButtonText">Visit Site</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+
+          <a href="#" class="btn-secondary" id="prevGithubLink">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg>
+            <span>Source Code</span>
+          </a>
+
+          <div style="margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap;" id="prevTechStack">
+            <!-- Tech stack pills -->
+          </div>
+        </div>
+
+        <!-- Cover Image Visual -->
+        <div id="prevCoverFrame" class="repo-cover-frame" style="display: none;">
+          <img id="prevCoverImg" src="" alt="Architecture Cover" class="repo-cover-img">
+        </div>
+
+        <!-- Rendered Markdown Body -->
+        <article class="markdown-render" id="prevMarkdownBody">
+          <!-- Live rendered markdown here -->
+        </article>
+
+        <!-- Assigned Maintainers (@tailark/blocks/quartz/team) -->
+        <section class="article-team-box" style="margin-top: 48px; padding: 24px;">
+          <h3 class="article-team-title" style="font-size: 1.1rem; margin-bottom: 6px;">Assigned Engineering Maintainers</h3>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 20px;">
+            The collective systems engineers who architect, maintain, and cryptographically sign releases for this repository.
+          </p>
+
+          <div class="team-cards-grid" id="prevMaintainersGrid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+            <!-- Team cards rendered dynamically -->
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="studioToast" style="position: fixed; bottom: 24px; right: 24px; z-index: 200; background: #09090b; border: 1px solid var(--accent-emerald); border-radius: var(--radius-md); padding: 14px 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 12px; transform: translateY(120%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <div style="font-size: 0.88rem; color: #f4f4f5;" id="studioToastMsg">Repository updated successfully.</div>
+  </div>
+
+  <!-- Data Scripts -->
+  <script src="data/developers.js"></script>
+  <script src="data/projects.js"></script>
+
+  <!-- Studio Script -->
+  <script>
+    let currentProject = null;
+    let selectedMaintainers = new Set();
+    const allDevelopers = window.RAGETECH_DEVELOPERS || [];
+
+    // Client-side Markdown Parser
+    function parseMarkdown(md) {
+      if (!md) return '';
+      let html = md;
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      // Code blocks
+      html = html.replace(/```([a-zA-Z0-9_\-\+]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        return `<pre><code class="language-${lang}">${code.trim()}</code></pre>`;
+      });
+
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Headings
+      html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+      html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      // Blockquotes
+      html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+      // Images
+      html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
+
+      // Bold & Italic
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+      // Tables
+      html = html.replace(/^\|(.+)\|$/gim, function(match, row) {
+        if (/^[\s|:-]+$/.test(row)) return '';
+        const cells = row.split('|').map(c => c.trim()).filter(c => c.length > 0);
+        return `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+      });
+      html = html.replace(/(<tr>[\s\S]*?<\/tr>)/g, '<table>$1</table>');
+
+      // Lists
+      html = html.replace(/^[\s]*[-\*]\s+(.*$)/gim, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>');
+
+      // Paragraphs
+      const paragraphs = html.split(/\n{2,}/);
+      html = paragraphs.map(p => {
+        p = p.trim();
+        if (!p) return '';
+        if (p.startsWith('<h') || p.startsWith('<pre') || p.startsWith('<blockquote') || p.startsWith('<ul>') || p.startsWith('<table>') || p.startsWith('<img')) {
+          return p;
+        }
+        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+      }).join('\n');
+
+      return html;
+    }
+
+    // Initialize Studio Editor
+    (async function initStudio() {
+      renderMaintainersPicker();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const slug = urlParams.get('id') || urlParams.get('slug');
+
+      if (slug) {
+        // Load existing project
+        document.getElementById('studioModeTitle').textContent = `Editing: ${slug}`;
+        document.getElementById('studioStatusBadge').textContent = 'PUBLISHED SPEC';
+
+        // Check local storage or dataset
+        let found = null;
+        try {
+          const saved = localStorage.getItem(`ragetech_project_${slug}`);
+          if (saved) found = JSON.parse(saved);
+        } catch(e){}
+
+        if (!found && window.RAGETECH_PROJECTS) {
+          found = window.RAGETECH_PROJECTS.find(p => p.slug === slug);
+        }
+
+        if (found) {
+          populateForm(found);
+        }
+      } else {
+        // Default new template
+        insertSampleBlueprint();
+        selectedMaintainers.add('sora');
+        selectedMaintainers.add('ananya');
+        updateMaintainerCheckboxes();
+        updateLivePreview();
+      }
+
+      // Keyboard Shortcut Ctrl+S / Cmd+S to Save
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          handleSaveRepository();
+        }
+      });
+    })();
+
+    function renderMaintainersPicker() {
+      const container = document.getElementById('maintainersPicker');
+      container.innerHTML = allDevelopers.map(dev => `
+        <label class="maintainer-check-card" id="card_dev_${dev.handle}">
+          <input type="checkbox" value="${dev.handle}" onchange="toggleMaintainer('${dev.handle}', this.checked)">
+          <img src="${dev.avatar_url}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+          <div style="font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <div style="font-weight: 600; color: var(--text-primary);">${dev.name}</div>
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);">@${dev.handle}</div>
+          </div>
+        </label>
+      `).join('');
+    }
+
+    function toggleMaintainer(handle, isChecked) {
+      if (isChecked) {
+        selectedMaintainers.add(handle);
+      } else {
+        selectedMaintainers.delete(handle);
+      }
+      updateMaintainerCheckboxes();
+      updateLivePreview();
+    }
+
+    function updateMaintainerCheckboxes() {
+      allDevelopers.forEach(dev => {
+        const card = document.getElementById(`card_dev_${dev.handle}`);
+        if (card) {
+          const input = card.querySelector('input');
+          const isSelected = selectedMaintainers.has(dev.handle);
+          input.checked = isSelected;
+          card.classList.toggle('selected', isSelected);
+        }
+      });
+    }
+
+    function populateForm(proj) {
+      currentProject = proj;
+      document.getElementById('editName').value = proj.name || '';
+      document.getElementById('editSlug').value = proj.slug || '';
+      document.getElementById('editCategory').value = proj.category || 'Distributed Runtimes';
+      document.getElementById('editStatus').value = proj.status || 'active';
+      document.getElementById('editTagline').value = proj.tagline || '';
+      document.getElementById('editTechStack').value = proj.tech_stack || '';
+      document.getElementById('editActionButtonLabel').value = proj.action_button_label || 'Visit Site';
+      document.getElementById('editActionButtonUrl').value = proj.action_button_url || proj.live_url || '';
+      document.getElementById('editGithubUrl').value = proj.github_url || '';
+      document.getElementById('editCoverUrl').value = proj.cover_image_url || '';
+
+      if (proj.markdown_content) {
+        document.getElementById('editMarkdown').value = proj.markdown_content;
+      } else if (proj.sections && proj.sections.length > 0) {
+        document.getElementById('editMarkdown').value = proj.sections.map(s => `## ${s.title}\n\n${s.content}\n`).join('\n');
+      }
+
+      selectedMaintainers.clear();
+      const handles = proj.maintainer_handles || (proj.maintainers ? proj.maintainers.map(m => m.handle) : []);
+      handles.forEach(h => selectedMaintainers.add(h));
+      updateMaintainerCheckboxes();
+
+      updateLivePreview();
+    }
+
+    function onMetadataChange() {
+      updateLivePreview();
+    }
+
+    function onMarkdownInput() {
+      updateLivePreview();
+    }
+
+    function updateLivePreview() {
+      const name = document.getElementById('editName').value || 'Untitled Repository';
+      const slug = document.getElementById('editSlug').value || 'untitled-repo';
+      const category = document.getElementById('editCategory').value;
+      const status = document.getElementById('editStatus').value;
+      const tagline = document.getElementById('editTagline').value || 'Technical specifications and architectural blueprint.';
+      const techStack = document.getElementById('editTechStack').value;
+      const btnLabel = document.getElementById('editActionButtonLabel').value || 'Visit Site';
+      const btnUrl = document.getElementById('editActionButtonUrl').value;
+      const ghUrl = document.getElementById('editGithubUrl').value;
+      const coverUrl = document.getElementById('editCoverUrl').value;
+      const md = document.getElementById('editMarkdown').value;
+
+      // Update Right Preview Pane
+      document.getElementById('prevBreadcrumb').textContent = name;
+      document.getElementById('prevTitle').textContent = name;
+      document.getElementById('prevTagline').textContent = tagline;
+      document.getElementById('prevCategory').textContent = category.toUpperCase();
+      document.getElementById('prevStatus').textContent = `STATUS: ${status.toUpperCase()}`;
+
+      // Action button
+      const actBtn = document.getElementById('prevActionButton');
+      document.getElementById('prevActionButtonText').textContent = btnLabel;
+      actBtn.href = btnUrl || '#';
+
+      // GitHub
+      const ghBtn = document.getElementById('prevGithubLink');
+      if (ghUrl) {
+        ghBtn.href = ghUrl;
+        ghBtn.style.display = 'inline-flex';
+      } else {
+        ghBtn.style.display = 'none';
+      }
+
+      // Tech Stack
+      const stackContainer = document.getElementById('prevTechStack');
+      if (techStack) {
+        stackContainer.innerHTML = techStack.split(',').map(s => `<span class="stack-pill">${s.trim()}</span>`).join('');
+      } else {
+        stackContainer.innerHTML = '';
+      }
+
+      // Cover Image
+      const coverFrame = document.getElementById('prevCoverFrame');
+      const coverImg = document.getElementById('prevCoverImg');
+      if (coverUrl) {
+        coverImg.src = coverUrl;
+        coverFrame.style.display = 'block';
+      } else {
+        coverFrame.style.display = 'none';
+      }
+
+      // Markdown
+      document.getElementById('prevMarkdownBody').innerHTML = parseMarkdown(md);
+
+      // Reading stats
+      const words = md.trim().split(/\s+/).filter(w => w.length > 0).length;
+      const readMins = Math.max(1, Math.ceil(words / 200));
+      document.getElementById('previewWordCount').textContent = `${words} words • ${readMins} min read`;
+      document.getElementById('prevReadTime').textContent = `${readMins} min read`;
+
+      // Maintainers Preview
+      const maintainersContainer = document.getElementById('prevMaintainersGrid');
+      const assigned = allDevelopers.filter(d => selectedMaintainers.has(d.handle));
+      if (assigned.length > 0) {
+        maintainersContainer.innerHTML = assigned.map(dev => `
+          <div class="spotlight-card builder-card" style="padding: 14px;">
+            <div class="spotlight-card-content">
+              <div class="builder-card-header" style="margin-bottom: 10px;">
+                <img src="${dev.avatar_url}" class="builder-avatar" style="width: 38px; height: 38px;">
+                <div class="builder-name-wrap">
+                  <div class="builder-name" style="font-size: 0.9rem;">${dev.name}</div>
+                  <div class="builder-handle" style="font-size: 0.74rem;">@${dev.handle}</div>
+                </div>
+              </div>
+              <div class="builder-role" style="font-size: 0.78rem;">${dev.role}</div>
+              <div class="builder-meta-row" style="margin-top: 8px;">
+                <span class="squad-badge ${dev.squad}" style="font-size: 0.68rem;">${dev.squad}</span>
+                <span class="verified-icon-chip" style="font-size: 0.68rem;">
+                  <span>Verified</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        maintainersContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Select maintainers in the left panel to assign engineers.</p>`;
+      }
+    }
+
+    // Markdown Formatting Insert Helpers
+    function insertMd(prefix, suffix = '') {
+      const ta = document.getElementById('editMarkdown');
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const text = ta.value;
+      const selected = text.substring(start, end);
+
+      ta.value = text.substring(0, start) + prefix + selected + suffix + text.substring(end);
+      ta.focus();
+      ta.setSelectionRange(start + prefix.length, end + prefix.length);
+      onMarkdownInput();
+    }
+
+    function insertCodeBlock() {
+      insertMd('```rust\n', '\n```\n');
+    }
+
+    function insertTable() {
+      insertMd('\n| Metric | Baseline | Ragetech Target |\n| :--- | :--- | :--- |\n| **Cold Start** | 120ms | **0.18ms** |\n| **Memory** | 4MB | **28KB** |\n\n');
+    }
+
+    function insertLink() {
+      insertMd('[Link Description](', ')');
+    }
+
+    function insertImage() {
+      insertMd('![Architectural Diagram](', ')');
+    }
+
+    function setSampleCover(type) {
+      const ta = document.getElementById('editCoverUrl');
+      if (type === 'server') ta.value = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80';
+      if (type === 'network') ta.value = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1200&q=80';
+      if (type === 'circuit') ta.value = 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80';
+      updateLivePreview();
+    }
+
+    function clearCover() {
+      document.getElementById('editCoverUrl').value = '';
+      updateLivePreview();
+    }
+
+    function insertSampleBlueprint() {
+      const template = `## 1. Abstract & System Motivation
+
+Distributed systems require predictable low-latency bounds, cryptographic verifiable execution, and minimal operational overhead. This repository implements an ultra-compact edge kernel with zero-copy memory transfers and verified consensus.
+
+> "By eliminating OS virtualization penalties, execution modules initialize in sub-millisecond windows with linear memory safety guarantees."
+
+## 2. Kernel Memory Architecture
+
+Each isolated module is assigned an explicit memory arena protected with guard boundaries:
+
+\`\`\`rust
+// Zero-allocation arena descriptor
+pub struct CoreExecutionArena {
+    linear_buffer: MmapMemoryPool,
+    epoch_timer: Arc<AtomicU64>,
+}
+
+impl CoreExecutionArena {
+    pub fn initialize_tenant() -> Result<Self, MemoryError> {
+        let pool = MmapMemoryPool::new(64 * 1024)?;
+        Ok(Self { linear_buffer: pool, epoch_timer: Arc::new(AtomicU64::new(0)) })
+    }
+}
+\`\`\`
+
+## 3. Performance Metrics
+
+| Performance Metric | Traditional Architecture | Ragetech Edge Architecture |
+| :--- | :--- | :--- |
+| **Median Cold Start** | 240ms | **0.22ms** |
+| **RSS Memory Overhead** | 32MB | **34KB** |
+| **Throughput (req/sec)** | 45,000 | **1,850,000** |
+| **Cryptographic Sign** | Dilithium-3 | **Dilithium-5 Verified** |
+`;
+      document.getElementById('editMarkdown').value = template;
+      updateLivePreview();
+    }
+
+    // Save Repository to Cloudflare D1
+    async function handleSaveRepository() {
+      const name = document.getElementById('editName').value.trim();
+      let slug = document.getElementById('editSlug').value.trim();
+      const category = document.getElementById('editCategory').value;
+      const status = document.getElementById('editStatus').value;
+      const tagline = document.getElementById('editTagline').value.trim();
+      const tech_stack = document.getElementById('editTechStack').value.trim();
+      const action_button_label = document.getElementById('editActionButtonLabel').value.trim() || 'Visit Site';
+      const action_button_url = document.getElementById('editActionButtonUrl').value.trim();
+      const github_url = document.getElementById('editGithubUrl').value.trim();
+      const cover_image_url = document.getElementById('editCoverUrl').value.trim();
+      const markdown_content = document.getElementById('editMarkdown').value;
+
+      if (!name) {
+        alert('Please enter a Repository Name.');
+        document.getElementById('editName').focus();
+        return;
+      }
+
+      if (!slug) {
+        slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        document.getElementById('editSlug').value = slug;
+      }
+
+      const saveBtn = document.getElementById('saveRepoBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span>Saving to D1...</span>`;
+
+      const payload = {
+        id: currentProject ? currentProject.id : `proj-${Date.now()}`,
+        slug,
+        name,
+        tagline: tagline || name,
+        description: tagline || name,
+        category,
+        status,
+        action_button_label,
+        action_button_url: action_button_url || null,
+        live_url: action_button_url || null,
+        github_url: github_url || null,
+        cover_image_url: cover_image_url || null,
+        tech_stack: tech_stack || 'Rust, WebAssembly',
+        markdown_content,
+        maintainer_handles: Array.from(selectedMaintainers)
+      };
+
+      // 1. Save to LocalStorage for instant preview parity
+      localStorage.setItem(`ragetech_project_${slug}`, JSON.stringify(payload));
+
+      // 2. Transmit to Cloudflare Worker D1 API
+      try {
+        const res = await fetch('/api/manage/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showToast(`Repository "${name}" saved to Cloudflare D1 edge database!`);
+        } else {
+          showToast(`Repository saved locally (Edge API offline mode)`);
+        }
+      } catch (e) {
+        showToast(`Repository saved locally (Offline mode active)`);
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>Saved Successfully</span>
+      `;
+
+      setTimeout(() => {
+        saveBtn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          <span>Save to Cloudflare D1</span>
+        `;
+      }, 2500);
+    }
+
+    function viewLiveRenderer() {
+      const slug = document.getElementById('editSlug').value || 'aether-runtime';
+      window.open(`repository.html?id=${slug}`, '_blank');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('studioToast');
+      document.getElementById('studioToastMsg').textContent = msg;
+      toast.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        toast.style.transform = 'translateY(120%)';
+      }, 3500);
+    }
+  </script>
+</body>
+</html>

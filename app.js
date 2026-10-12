@@ -17,7 +17,6 @@
     activeDeveloperModal: null,
     currentUser: null,
     sessionToken: null,
-    drawerTab: 'projects',
     cmdKSelectedIndex: 0,
     cmdKFilteredItems: []
   };
@@ -220,7 +219,7 @@
 
       <!-- Actions -->
       <div class="preview-actions-row">
-        <a href="project.html?id=${activeProj.slug}" class="btn-primary">
+        <a href="repository.html?id=${activeProj.slug}" class="btn-primary">
           <span>Read Full Whitepaper</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
@@ -346,7 +345,7 @@
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           ${matchedProjects.length > 0 ? matchedProjects.map(p => `
-            <a href="project.html?id=${p.slug}" class="maintainer-avatar-chip" style="padding: 6px 12px;">
+            <a href="repository.html?id=${p.slug}" class="maintainer-avatar-chip" style="padding: 6px 12px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
               <span>${p.name}</span>
             </a>
@@ -484,7 +483,7 @@
           type: 'repository',
           title: p.name,
           subtitle: p.category,
-          action: () => { window.location.href = `project.html?id=${p.slug}`; }
+          action: () => { window.location.href = `repository.html?id=${p.slug}`; }
         });
       }
     });
@@ -624,8 +623,8 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
             <span>Dashboard [${roleBadge}]</span>
           </a>
-          <button class="btn-icon-action" onclick="window.RagetechApp.openDrawer()" title="Quick Studio Drawer">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          <button class="btn-icon-action" onclick="window.RagetechApp.handleLogout()" title="Sign Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           </button>
         </div>
       `;
@@ -745,186 +744,10 @@
     alert('Invalid builder credentials. Please verify your access key.');
   }
 
-  function openDrawer() {
-    const drawer = document.getElementById('rbacDrawer');
-    if (!drawer) return;
-
-    const userBadge = document.getElementById('drawerUserBadge');
-    if (userBadge && state.currentUser) {
-      userBadge.textContent = `Authenticated: @${state.currentUser.handle} [${(state.currentUser.account_role || 'ADMIN').toUpperCase()}]`;
-    }
-
-    drawer.classList.add('open');
-    renderDrawerContent();
-  }
-
-  function closeDrawer() {
-    const drawer = document.getElementById('rbacDrawer');
-    if (drawer) drawer.classList.remove('open');
-  }
-
-  function switchDrawerTab(tab) {
-    state.drawerTab = tab;
-    document.querySelectorAll('.drawer-tab').forEach(t => {
-      t.classList.toggle('active', t.getAttribute('data-tab') === tab);
-    });
-    renderDrawerContent();
-  }
-
-  function renderDrawerContent() {
-    const bodyEl = document.getElementById('drawerBody');
-    if (!bodyEl) return;
-
-    if (state.drawerTab === 'projects') {
-      bodyEl.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h4 style="font-size: 1rem; font-weight: 700;">Managed Repositories</h4>
-          <button class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="window.RagetechApp.showNewProjectForm()">
-            + New Repository
-          </button>
-        </div>
-
-        <div id="drawerProjectFormWrap" style="display: none; margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-          <h5 style="margin-bottom: 12px; font-size: 0.9rem;">Add / Edit Repository</h5>
-          <form onsubmit="window.RagetechApp.saveProject(event)">
-            <div class="form-group">
-              <label class="form-label">Project Name</label>
-              <input type="text" id="editProjName" class="form-input" required placeholder="e.g. Chronos Runtime">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Slug</label>
-              <input type="text" id="editProjSlug" class="form-input" required placeholder="chronos-runtime">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Category</label>
-              <select id="editProjCategory" class="form-select">
-                <option value="Distributed Runtimes">Distributed Runtimes</option>
-                <option value="Compilers">Compilers</option>
-                <option value="Kernel & Systems">Kernel & Systems</option>
-                <option value="Cryptography">Cryptography</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tagline</label>
-              <input type="text" id="editProjTagline" class="form-input" required placeholder="Short technical summary">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Live Website URL</label>
-              <input type="url" id="editProjLiveUrl" class="form-input" placeholder="https://chronos.ragetech.dev">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tech Stack</label>
-              <input type="text" id="editProjStack" class="form-input" placeholder="Rust, WASM, io_uring">
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button type="submit" class="btn-primary" style="padding: 8px 16px; font-size: 0.84rem;">Save to D1</button>
-              <button type="button" class="btn-secondary" style="padding: 8px 16px; font-size: 0.84rem;" onclick="document.getElementById('drawerProjectFormWrap').style.display='none'">Cancel</button>
-            </div>
-          </form>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${state.projects.map(p => `
-            <div class="spotlight-card" style="padding: 14px 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <div style="font-weight: 700; color: var(--text-primary);">${p.name}</div>
-                  <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${p.slug} • ${p.category}</div>
-                </div>
-                <div style="display: flex; gap: 6px;">
-                  <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 4px 8px; font-size: 0.74rem;">View Page</a>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (state.drawerTab === 'builders') {
-      bodyEl.innerHTML = `
-        <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 16px;">29 Collective Builders</h4>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${state.developers.map(d => `
-            <div class="spotlight-card" style="padding: 12px 14px;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <img src="${d.avatar_url}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-                  <div>
-                    <div style="font-weight: 600; font-size: 0.88rem;">${d.name}</div>
-                    <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">@${d.handle} • ${d.squad}</div>
-                  </div>
-                </div>
-                <a href="developer.html?id=${d.handle}" class="btn-secondary" style="padding: 3px 8px; font-size: 0.72rem;">Dossier</a>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (state.drawerTab === 'audit') {
-      bodyEl.innerHTML = `
-        <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 16px;">System Audit Trail</h4>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div class="spotlight-card" style="padding: 12px 14px; font-family: var(--font-mono); font-size: 0.76rem;">
-            <div style="color: var(--accent-emerald);">[PUBLISH] proj-01 (Aether Runtime)</div>
-            <div style="color: var(--text-muted); margin-top: 2px;">Actor: @sora • 2026-10-10 08:30:00 UTC</div>
-          </div>
-          <div class="spotlight-card" style="padding: 12px 14px; font-family: var(--font-mono); font-size: 0.76rem;">
-            <div style="color: var(--accent-cyan);">[UPDATE] proj-02 (Vortex DB)</div>
-            <div style="color: var(--text-muted); margin-top: 2px;">Actor: @marcus • 2026-10-11 12:15:00 UTC</div>
-          </div>
-          <div class="spotlight-card" style="padding: 12px 14px; font-family: var(--font-mono); font-size: 0.76rem;">
-            <div style="color: var(--accent-emerald);">[PUBLISH] proj-03 (Prism Compiler)</div>
-            <div style="color: var(--text-muted); margin-top: 2px;">Actor: @elena • 2026-10-11 16:45:00 UTC</div>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  function showNewProjectForm() {
-    const wrap = document.getElementById('drawerProjectFormWrap');
-    if (wrap) {
-      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
-    }
-  }
-
-  async function saveProject(e) {
-    e.preventDefault();
-    const name = document.getElementById('editProjName').value;
-    const slug = document.getElementById('editProjSlug').value;
-    const category = document.getElementById('editProjCategory').value;
-    const tagline = document.getElementById('editProjTagline').value;
-    const live_url = document.getElementById('editProjLiveUrl').value;
-    const tech_stack = document.getElementById('editProjStack').value;
-
-    const newProj = {
-      id: `proj-${Date.now()}`,
-      slug,
-      name,
-      tagline,
-      description: tagline,
-      category,
-      status: 'active',
-      live_url,
-      github_url: `https://github.com/ragetech/${slug}`,
-      tech_stack: tech_stack || 'Rust, WebAssembly',
-      stats: { stars: 10, latency: '0.2ms' },
-      maintainer_handles: [state.currentUser ? state.currentUser.handle : 'sora']
-    };
-
-    // Try API POST
-    try {
-      await fetch('/api/manage/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProj)
-      });
-    } catch (err) {}
-
-    // Add to in-memory state
-    state.projects.unshift(newProj);
-    state.activeProjectSlug = slug;
-    renderRepositoryShowcase();
-    renderDrawerContent();
+  function handleLogout() {
+    state.currentUser = null;
+    localStorage.removeItem('ragetech_session');
+    updateHeaderAuthUI();
   }
 
   // --------------------------------------------------------------------------
@@ -946,11 +769,7 @@
     openLoginModal,
     closeLoginModal,
     handleLogin,
-    openDrawer,
-    closeDrawer,
-    switchDrawerTab,
-    showNewProjectForm,
-    saveProject
+    handleLogout
   };
 
   // Run on DOM ready

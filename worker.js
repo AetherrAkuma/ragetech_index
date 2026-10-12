@@ -266,24 +266,64 @@ export default {
     if (pathname === '/api/manage/projects' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { id, slug, name, tagline, description, category, status, live_url, github_url, tech_stack } = body;
+        const { 
+          id, slug, name, tagline, description, category, status, 
+          live_url, github_url, tech_stack,
+          action_button_label, action_button_url, cover_image_url, 
+          markdown_content, maintainer_handles 
+        } = body;
+
+        const effectiveBtnLabel = action_button_label || 'Visit Site';
+        const effectiveBtnUrl = action_button_url || live_url;
+        const targetId = id || `proj-${Date.now()}`;
 
         if (env.DB) {
-          const existing = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(id, slug).first();
+          const existing = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(id || '', slug).first();
           if (existing) {
             await env.DB.prepare(`
               UPDATE projects 
-              SET name = ?, tagline = ?, description = ?, category = ?, status = ?, live_url = ?, github_url = ?, tech_stack = ?, updated_at = CURRENT_TIMESTAMP
+              SET name = ?, tagline = ?, description = ?, category = ?, status = ?, 
+                  live_url = ?, github_url = ?, tech_stack = ?, 
+                  action_button_label = ?, action_button_url = ?, cover_image_url = ?, markdown_content = ?,
+                  updated_at = CURRENT_TIMESTAMP
               WHERE id = ?
-            `).bind(name, tagline, description, category, status, live_url, github_url, tech_stack, existing.id).run();
+            `).bind(
+              name, tagline, description, category, status || 'active', 
+              live_url, github_url, tech_stack, 
+              effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null, 
+              existing.id
+            ).run();
           } else {
             await env.DB.prepare(`
-              INSERT INTO projects (id, slug, name, tagline, description, category, status, live_url, github_url, tech_stack)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(id || `proj-${Date.now()}`, slug, name, tagline, description, category, status || 'active', live_url, github_url, tech_stack).run();
+              INSERT INTO projects (
+                id, slug, name, tagline, description, category, status, 
+                live_url, github_url, tech_stack, 
+                action_button_label, action_button_url, cover_image_url, markdown_content
+              )
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              targetId, slug, name, tagline, description, category, status || 'active', 
+              live_url, github_url, tech_stack, 
+              effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null
+            ).run();
           }
 
-          return jsonResponse({ success: true, message: 'Project saved successfully' }, corsHeaders);
+          // Update Maintainer Assignments
+          if (Array.isArray(maintainer_handles)) {
+            const actualProjId = existing ? existing.id : targetId;
+            await env.DB.prepare('DELETE FROM project_assignments WHERE project_id = ?').bind(actualProjId).run();
+            for (const handle of maintainer_handles) {
+              const dev = await env.DB.prepare('SELECT id FROM developers WHERE handle = ?').bind(handle).first();
+              if (dev) {
+                await env.DB.prepare(`
+                  INSERT OR IGNORE INTO project_assignments (id, project_id, developer_id, contribution_role)
+                  VALUES (?, ?, ?, 'Maintainer')
+                `).bind(`pa-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, actualProjId, dev.id).run();
+              }
+            }
+          }
+
+          return jsonResponse({ success: true, message: 'Project saved successfully to Cloudflare D1' }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Updated (offline mode)' }, corsHeaders);
       } catch (err) {
@@ -407,10 +447,17 @@ export default {
     // ------------------------------------------------------------------------
 
     // Friendly URL Rewrites:
-    // /p/:slug -> /project.html?id=:slug
-    if (pathname.startsWith('/p/')) {
-      const slug = pathname.replace('/p/', '');
-      const redirectUrl = new URL(`/project.html?id=${slug}`, request.url);
+    // /r/:slug, /repository/:slug, /p/:slug -> /repository.html?id=:slug
+    if (pathname.startsWith('/r/') || pathname.startsWith('/repository/') || pathname.startsWith('/p/')) {
+      const slug = pathname.replace('/repository/', '').replace('/r/', '').replace('/p/', '');
+      const redirectUrl = new URL(`/repository.html?id=${slug}`, request.url);
+      return env.ASSETS.fetch(new Request(redirectUrl, request));
+    }
+
+    // /edit/:slug -> /repository_editor.html?id=:slug
+    if (pathname.startsWith('/edit/')) {
+      const slug = pathname.replace('/edit/', '');
+      const redirectUrl = new URL(`/repository_editor.html?id=${slug}`, request.url);
       return env.ASSETS.fetch(new Request(redirectUrl, request));
     }
 

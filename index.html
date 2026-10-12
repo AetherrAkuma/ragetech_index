@@ -241,7 +241,7 @@
   </footer>
 
   <!-- ======================================================================
-       7. Interactive Overlays (Modal, Command Palette, RBAC Drawer)
+       7. Interactive Overlays (Modal, Command Palette, Builder Login)
        ====================================================================== -->
 
   <!-- Developer Modal Dossier -->
@@ -316,35 +316,6 @@
     </div>
   </div>
 
-  <!-- Dynamic RBAC Management Studio Drawer -->
-  <aside id="rbacDrawer" class="rbac-drawer" aria-label="RBAC Management Studio">
-    <div class="drawer-header">
-      <div>
-        <h3 class="drawer-title">RBAC Studio Dashboard</h3>
-        <div id="drawerUserBadge" style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan); margin-top: 2px;">
-          Logged in as: @sora [ADMIN]
-        </div>
-      </div>
-      <button class="modal-close-btn" onclick="window.RagetechApp.closeDrawer()" aria-label="Close drawer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Drawer Navigation Tabs -->
-    <div class="drawer-tabs">
-      <div class="drawer-tab active" data-tab="projects" onclick="window.RagetechApp.switchDrawerTab('projects')">Repositories</div>
-      <div class="drawer-tab" data-tab="builders" onclick="window.RagetechApp.switchDrawerTab('builders')">Builders Directory</div>
-      <div class="drawer-tab" data-tab="audit" onclick="window.RagetechApp.switchDrawerTab('audit')">Audit Log</div>
-    </div>
-
-    <!-- Drawer Body -->
-    <div class="drawer-body" id="drawerBody">
-      <!-- In-place CRUD Forms rendered dynamically by app.js -->
-    </div>
-  </aside>
 
   <!-- GSAP Animation Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
