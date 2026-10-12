@@ -107,9 +107,8 @@
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    tl.from('.hero-pill-badge', { opacity: 0, y: -16, duration: 0.6 })
-      .from('.hero-title', { opacity: 0, y: 24, duration: 0.8 }, '-=0.3')
-      .from('.hero-subtitle', { opacity: 0, y: 18, duration: 0.7 }, '-=0.5')
+    tl.from('.hero-title', { opacity: 0, y: 24, duration: 0.8 })
+      .from('.hero-subtitle', { opacity: 0, y: 18, duration: 0.7 }, '-=0.4')
       .from('.hero-actions .btn-primary, .hero-actions .btn-secondary', {
         opacity: 0,
         y: 14,
@@ -139,37 +138,51 @@
   }
 
   // --------------------------------------------------------------------------
-  // 4. Hero Metrics Counter
+  // 4. Hero Metrics Counter (Live Real D1 Platform Counts)
   // --------------------------------------------------------------------------
   function renderHeroMetrics() {
-    const buildersEl = document.getElementById('metricBuilders');
-    if (buildersEl) {
-      buildersEl.innerHTML = `${state.developers.length}<span> active</span>`;
+    // 1. Live Cataloged Projects & Theses
+    const projectsEl = document.getElementById('metricProjects');
+    if (projectsEl) {
+      projectsEl.innerHTML = `${state.projects.length}<span> repos</span>`;
     }
 
+    // 2. Active Verified Developers
+    const devsEl = document.getElementById('metricDevelopers');
+    if (devsEl) {
+      const activeDevs = state.developers.filter(d => (d.status || 'Active').toLowerCase() === 'active');
+      const count = activeDevs.length > 0 ? activeDevs.length : state.developers.length;
+      devsEl.innerHTML = `${count}<span> active</span>`;
+    }
+
+    // 3. Research & Tech Domains
+    const domainsEl = document.getElementById('metricDomains');
+    if (domainsEl) {
+      const categories = new Set(state.projects.map(p => p.category).filter(Boolean));
+      const count = categories.size > 0 ? categories.size : 3;
+      domainsEl.innerHTML = `${count}<span> domains</span>`;
+    }
+
+    // Navigation Counts
     const navReposLink = document.getElementById('navReposLink');
     if (navReposLink) {
       navReposLink.textContent = `Repositories [${state.projects.length}]`;
     }
 
-    const navBuildersLink = document.getElementById('navBuildersLink');
-    if (navBuildersLink) {
-      navBuildersLink.textContent = `Builders [${state.developers.length}]`;
+    const navDevelopersLink = document.getElementById('navBuildersLink');
+    if (navDevelopersLink) {
+      navDevelopersLink.textContent = `Developers [${state.developers.length}]`;
     }
 
-    const heroBadge = document.getElementById('heroPillBadgeText');
-    if (heroBadge) {
-      heroBadge.textContent = `Sovereign Systems & Engineering Portfolio • ${state.developers.length} Verified Maintainers`;
-    }
-
+    // Dynamic Taglines & Subtitle matching FAQs
     const heroSubtitle = document.getElementById('heroSubtitleText');
     if (heroSubtitle) {
-      heroSubtitle.textContent = `Ragetech is an independent guild of ${state.developers.length} engineers and creators building software systems, theses, and open-source infrastructure.`;
+      heroSubtitle.textContent = `Ragetech is the primary hub indexing ${state.projects.length} academic theses, AI & computer vision models, and enterprise systems by ${state.developers.length} verified developers.`;
     }
 
     const collectiveTitle = document.getElementById('collectiveSectionTitle');
     if (collectiveTitle) {
-      collectiveTitle.textContent = state.developers.length > 0 ? `The ${state.developers.length} Engineers` : 'The Engineering Collective';
+      collectiveTitle.textContent = state.developers.length > 0 ? `The ${state.developers.length} Developers` : 'The Developer Collective';
     }
   }
 
@@ -831,23 +844,33 @@
     const latEl = document.getElementById('hudLatency');
     const protoEl = document.getElementById('hudProtocol');
     const d1El = document.getElementById('hudD1Status');
+    const heroLatEl = document.getElementById('metricLatency');
+
+    const t0 = performance.now();
+    let measuredPing = 12;
 
     if (window.location.protocol.startsWith('http')) {
       try {
         const res = await fetch('/api/telemetry');
+        measuredPing = Math.max(Math.round(performance.now() - t0), 1);
         if (res.ok) {
           const data = await res.json();
+          const latency = data.edgeLatencyMs || measuredPing;
           if (coloEl) coloEl.textContent = `EDGE: ${data.colo || 'SJC'}`;
-          if (latEl) latEl.textContent = `${data.edgeLatencyMs || 12}ms`;
+          if (latEl) latEl.textContent = `${latency}ms`;
+          if (heroLatEl) heroLatEl.innerHTML = `${latency}<span>ms</span>`;
           if (protoEl) protoEl.textContent = data.httpProtocol || 'HTTP/3 QUIC';
           if (d1El && data.d1Status === 'healthy') d1El.textContent = `D1: ${data.d1QueryLatencyMs || 4}ms`;
           return;
         }
-      } catch (e) {}
+      } catch (e) {
+        measuredPing = Math.max(Math.round(performance.now() - t0), 8);
+      }
     }
 
+    if (heroLatEl) heroLatEl.innerHTML = `${measuredPing}<span>ms</span>`;
     if (coloEl) coloEl.textContent = 'EDGE: SJC';
-    if (latEl) latEl.textContent = '12ms';
+    if (latEl) latEl.textContent = `${measuredPing}ms`;
     if (protoEl) protoEl.textContent = 'HTTP/3 QUIC';
     if (d1El) d1El.textContent = 'D1: SYNCED';
   }
