@@ -292,13 +292,7 @@ export default {
 
             if (isValid) {
               const { password_hash, ...safeUser } = dev;
-              try {
-                await env.DB.prepare(`
-                  INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-                  VALUES (?, ?, 'AUTH_LOGIN', 'session', ?, ?)
-                `).bind(`aud-${Date.now()}`, dev.handle, dev.id, `User @${dev.handle} signed in with role [${dev.account_role}]`).run();
-              } catch (e) {}
-
+              // Zero-write login: authentication remains read-only to strictly preserve D1 100k daily write budget
               return jsonResponse({
                 success: true,
                 token: `tok_${dev.handle}_${Date.now()}`,
@@ -400,12 +394,13 @@ export default {
             } catch (e) {}
           }
 
-          try {
-            await env.DB.prepare(`
-              INSERT INTO audit_logs (id, actor_handle, action_type, target_entity, entity_id, details)
-              VALUES (?, ?, 'PASSWORD_CHANGE', 'developer', ?, 'Access key updated and hashed via SHA-256')
-            `).bind(`aud-${Date.now()}`, dev.handle, dev.id).run();
-          } catch (e) {}
+          await recordAuditLog(env, {
+            actor_handle: dev.handle,
+            action: 'PASSWORD_CHANGE',
+            target_type: 'developer',
+            target_id: dev.id,
+            details: 'Access key updated and hashed via SHA-256'
+          });
 
           return jsonResponse({ success: true, message: 'Access key securely hashed and saved in Cloudflare D1.' }, corsHeaders);
         }
@@ -517,19 +512,14 @@ export default {
             }
           }
 
-          // Record audit log
-          try {
-            await env.DB.prepare(`
-              INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-              VALUES (?, ?, ?, 'project', ?, ?)
-            `).bind(
-              `aud-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-              body.created_by || 'system',
-              existing ? 'PROJECT_UPDATE' : 'PROJECT_CREATE',
-              existing ? existing.id : targetId,
-              `Repository ${effectiveName} (${effectiveSlug}) written to D1 database`
-            ).run();
-          } catch (e) {}
+          // Record audit log with deduplication and write throttling
+          await recordAuditLog(env, {
+            actor_handle: body.created_by || 'admin',
+            action: existing ? 'PROJECT_UPDATE' : 'PROJECT_CREATE',
+            target_type: 'project',
+            target_id: existing ? existing.id : targetId,
+            details: `Repository ${effectiveName} (${effectiveSlug}) saved to D1 database`
+          });
 
           return jsonResponse({ success: true, message: 'Project saved successfully to Cloudflare D1', id: existing ? existing.id : targetId, slug: effectiveSlug }, corsHeaders);
         }
@@ -575,12 +565,13 @@ export default {
             env.DB.prepare('DELETE FROM projects WHERE id = ? OR slug = ? OR lower(id) = lower(?) OR lower(slug) = lower(?)').bind(targetId, targetSlug, targetId, targetSlug)
           ]);
 
-          try {
-            await env.DB.prepare(`
-              INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-              VALUES (?, 'admin', 'PROJECT_DELETE', 'project', ?, ?)
-            `).bind(`aud-${Date.now()}`, targetId, `Project ${proj?.name || idOrSlug} deleted from D1`).run();
-          } catch (e) {}
+          await recordAuditLog(env, {
+            actor_handle: 'admin',
+            action: 'PROJECT_DELETE',
+            target_type: 'project',
+            target_id: targetId,
+            details: `Project ${proj?.name || idOrSlug} deleted from D1`
+          });
 
           // Invalidate edge cache
           if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
@@ -675,17 +666,13 @@ export default {
             }
           }
 
-          try {
-            await env.DB.prepare(`
-              INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-              VALUES (?, 'admin', ?, 'developer', ?, ?)
-            `).bind(
-              `aud-${Date.now()}`,
-              existing ? 'DEVELOPER_UPDATE' : 'DEVELOPER_CREATE',
-              devId,
-              `Developer @${cleanHandle} profile saved to D1`
-            ).run();
-          } catch (e) {}
+          await recordAuditLog(env, {
+            actor_handle: 'admin',
+            action: existing ? 'DEVELOPER_UPDATE' : 'DEVELOPER_CREATE',
+            target_type: 'developer',
+            target_id: devId,
+            details: `Developer @${cleanHandle} profile saved to D1`
+          });
 
           // Invalidate edge cache for developers
           if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
@@ -737,12 +724,13 @@ export default {
             env.DB.prepare('DELETE FROM developers WHERE id = ? OR lower(handle) = lower(?) OR lower(id) = lower(?)').bind(targetId, targetHandle, targetId)
           ]);
 
-          try {
-            await env.DB.prepare(`
-              INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-              VALUES (?, 'admin', 'DEVELOPER_DELETE', 'developer', ?, ?)
-            `).bind(`aud-${Date.now()}`, targetId, `Developer @${targetHandle} removed from D1`).run();
-          } catch (e) {}
+          await recordAuditLog(env, {
+            actor_handle: 'admin',
+            action: 'DEVELOPER_DELETE',
+            target_type: 'developer',
+            target_id: targetId,
+            details: `Developer @${targetHandle} removed from D1`
+          });
 
           // Invalidate edge cache
           if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
@@ -823,18 +811,8 @@ export default {
         const body = await request.json();
         const { actor_handle, action, target_type, target_id, details } = body;
         if (env.DB) {
-          await env.DB.prepare(`
-            INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).bind(
-            `aud-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-            actor_handle || 'system',
-            action || 'EVENT',
-            target_type || 'system',
-            target_id || '',
-            details || ''
-          ).run();
-          return jsonResponse({ success: true, message: 'Audit event logged' }, corsHeaders);
+          await recordAuditLog(env, { actor_handle, action, target_type, target_id, details });
+          return jsonResponse({ success: true, message: 'Audit event processed' }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Logged (offline)' }, corsHeaders);
       } catch (err) {
@@ -905,4 +883,60 @@ async function sha256Hex(message) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ============================================================================
+// Write-Frugal Audit Logging Engine (D1 100k writes/day protection)
+// ============================================================================
+const recentAuditDedupe = new Map();
+const AUDIT_DEDUPE_WINDOW_MS = 60 * 1000; // 60-second window throttles rapid duplicate saves
+
+async function recordAuditLog(env, { actor_handle, action, target_type, target_id, details }) {
+  if (!env || !env.DB) return;
+
+  const actor = (actor_handle || 'system').trim();
+  const act = (action || 'EVENT').trim();
+  const tType = (target_type || 'system').trim();
+  const tId = (target_id || '').trim();
+  const det = (details || '').trim();
+
+  // Deduplication check: Suppress identical events for the same target within 60s
+  const dedupeKey = `${act}:${tId}`;
+  const now = Date.now();
+  const lastLogged = recentAuditDedupe.get(dedupeKey);
+  if (lastLogged && (now - lastLogged) < AUDIT_DEDUPE_WINDOW_MS) {
+    return; // Duplicate event skipped: conserved D1 write!
+  }
+  recentAuditDedupe.set(dedupeKey, now);
+
+  // Keep in-memory dedupe map lean
+  if (recentAuditDedupe.size > 200) {
+    for (const [k, time] of recentAuditDedupe.entries()) {
+      if (now - time > AUDIT_DEDUPE_WINDOW_MS) {
+        recentAuditDedupe.delete(k);
+      }
+    }
+  }
+
+  try {
+    const id = `aud-${now}-${Math.random().toString(36).substr(2, 4)}`;
+    await env.DB.prepare(`
+      INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(id, actor, act, tType, tId, det).run();
+
+    // Zero-overhead log retention:
+    // Only prune table periodically (2% probability) to strictly avoid issuing
+    // a DELETE query on every insert (which would double D1 write consumption).
+    if (Math.random() < 0.02) {
+      await env.DB.prepare(`
+        DELETE FROM audit_logs 
+        WHERE id NOT IN (
+          SELECT id FROM audit_logs ORDER BY timestamp DESC LIMIT 150
+        )
+      `).run().catch(() => {});
+    }
+  } catch (e) {
+    // Non-blocking: audit failure never impacts main application flow
+  }
 }
