@@ -3,515 +3,226 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Developer Profile — Ragetech Collective</title>
-  <meta name="description" content="Collective builder dossier, flagship repository, and low-level systems engineering.">
+  <title>Builder Dossier — Ragetech Collective</title>
+  <meta name="description" content="Verified builder dossier and cryptographic coordinates from the Ragetech sovereign systems collective.">
   
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="page-developer">
-  <!-- Ambient background glow -->
-  <div class="bg-mesh" aria-hidden="true"></div>
+<body>
 
-  <!-- Header -->
+  <!-- Ambient Background Overlays -->
+  <div class="ambient-mesh-glow" aria-hidden="true"></div>
+  <div class="bg-dot-grid" aria-hidden="true"></div>
+
+  <!-- Header Navigation -->
   <header class="site-header">
-    <div class="header-inner">
-      <div class="header-left">
-        <a href="/" class="brand-link">
-          <span class="brand-badge">R</span>
-          <span class="brand-text">ragetech<span class="brand-dot">.</span>dev</span>
+    <div class="header-glass-bar">
+      <div class="brand-wrapper">
+        <a href="index.html" class="brand-mark" aria-label="Ragetech Home">
+          <div class="brand-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <span class="brand-name">RAGETECH</span>
         </a>
-        <div class="header-tagline">
-          <span class="status-indicator"></span>
-          <span>Builder Dossier</span>
-        </div>
+        <span class="brand-badge">Builder Dossier</span>
       </div>
 
-      <nav class="header-nav">
-        <a href="/" class="nav-item">← Collective Index</a>
-        <a href="/#developers" class="nav-item">All Builders</a>
-        <a href="/#projects" class="nav-item">Projects</a>
-        <button id="devEditBtn" class="btn-clean btn-ghost" style="display:none;" onclick="openProfileEditModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          <span>Edit Profile</span>
-        </button>
+      <nav class="site-nav">
+        <a href="index.html#repositories" class="nav-link">Repositories</a>
+        <a href="index.html#collective" class="nav-link">The 29 Builders</a>
+        <a href="index.html#manifesto" class="nav-link">Manifesto</a>
       </nav>
+
+      <div class="header-actions">
+        <a href="index.html#collective" class="btn-secondary" style="padding: 7px 16px; font-size: 0.84rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>All 29 Builders</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="developer-page-container">
-    <div id="devLoadingState" class="page-loading-state">
-      <div class="spinner"></div>
-      <p>Loading builder dossier...</p>
-    </div>
+  <!-- Developer Dossier Layout -->
+  <main class="developer-page-wrap">
+    <!-- Breadcrumbs -->
+    <nav class="article-breadcrumbs" aria-label="Breadcrumb">
+      <a href="index.html">Ragetech</a>
+      <span>/</span>
+      <a href="index.html#collective">The 29 Builders</a>
+      <span>/</span>
+      <span id="breadcrumbDevName" style="color: var(--text-primary);">Loading Profile...</span>
+    </nav>
 
-    <div id="devNotFoundState" class="page-error-state" style="display: none;">
-      <h2>Developer Not Found</h2>
-      <p>The requested collective builder could not be located in our registry.</p>
-      <a href="/#developers" class="btn-clean btn-primary">Browse Builders</a>
-    </div>
-
-    <!-- Loaded Content -->
-    <article id="devContent" class="dev-view" style="display: none;">
-      <!-- Developer Dossier Card -->
-      <section class="dev-profile-header">
+    <!-- Profile Header Card -->
+    <div class="spotlight-card dev-profile-header">
+      <div class="spotlight-card-content">
         <div class="dev-profile-top">
-          <div class="dev-avatar-wrap">
-            <img id="devAvatar" src="" alt="Avatar" class="dev-main-avatar">
-            <span class="dev-verified-badge" title="Verified Collective Builder">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </span>
-          </div>
-
-          <div class="dev-header-meta">
-            <div class="dev-badge-row">
-              <span id="devSquadBadge" class="squad-pill squad-systems">SYSTEMS SQUAD</span>
-              <span id="devLocation" class="dev-location-pill">Stockholm, SE</span>
+          <img src="" alt="" id="devAvatar" class="dev-profile-avatar">
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <h1 class="dev-profile-name" id="devName">Loading Builder...</h1>
+              <span class="verified-icon-chip" style="font-size: 0.8rem; padding: 3px 8px; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-full); border: 1px solid rgba(16, 185, 129, 0.25);">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Verified Maintainer</span>
+              </span>
             </div>
-            <h1 id="devName" class="dev-full-name">Developer Name</h1>
-            <div class="dev-handle-row">
-              <span id="devHandle" class="dev-handle-text">@handle</span>
-              <span class="dev-dot-sep">•</span>
-              <span id="devRole" class="dev-role-text">Lead Architect</span>
-            </div>
+            <div class="dev-profile-handle" id="devHandle">@handle</div>
+            <div class="dev-profile-role" id="devRole">Systems Engineering Lead</div>
           </div>
-
-          <!-- Socials & Links -->
-          <div class="dev-social-actions" id="devSocialActions">
-            <!-- Rendered dynamically -->
+          <div>
+            <span class="squad-badge systems" id="devSquadBadge" style="font-size: 0.82rem; padding: 4px 12px;">SYSTEMS SQUAD</span>
           </div>
         </div>
 
-        <!-- Bio & Live Status -->
-        <div class="dev-bio-section">
-          <p id="devBio" class="dev-bio-text">Systems engineer crafting high-throughput protocols.</p>
-          <div id="devStatusWrap" class="dev-status-card">
-            <span class="status-pulse-dot"></span>
-            <span class="status-lead">Active Focus:</span>
-            <span id="devStatus" class="status-msg">SIMD ring buffers in Hyperion</span>
+        <p class="dev-bio-text" id="devBio">Loading biographical overview from Cloudflare D1...</p>
+
+        <!-- Coordinates Bar -->
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;">
+          <a href="#" target="_blank" rel="noreferrer" class="btn-primary" id="devWebsiteBtn" style="padding: 8px 18px; font-size: 0.85rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <span>Personal Website</span>
+          </a>
+          <a href="#" target="_blank" rel="noreferrer" class="btn-secondary" id="devGithubBtn" style="padding: 8px 18px; font-size: 0.85rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            <span>GitHub Profile</span>
+          </a>
+        </div>
+
+        <!-- Cryptographic GPG Public Key Widget -->
+        <div class="gpg-key-widget">
+          <div class="gpg-widget-header">
+            <span>CRYPTOGRAPHIC GPG FINGERPRINT</span>
+            <button class="btn-secondary" id="copyGpgBtn" onclick="copyGpgFingerprint()" style="padding: 3px 10px; font-size: 0.72rem;">
+              <span>Copy Fingerprint</span>
+            </button>
           </div>
+          <div class="gpg-fingerprint" id="devFingerprint">8F4A 2B19 E03C 41FA 98E1</div>
         </div>
+      </div>
+    </div>
 
-        <!-- Security / GPG Key -->
-        <div id="devGpgWrap" class="dev-gpg-strip">
-          <span class="gpg-label">GPG Key ID:</span>
-          <code id="devGpgKey" class="gpg-key-code">4A8B 91F0 C128 7E53</code>
-        </div>
-      </section>
+    <!-- Assigned Sovereign Repositories Section -->
+    <section style="margin-top: 48px;">
+      <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Assigned Collective Repositories</h2>
+      <div class="repo-nav-list" id="assignedProjectsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
 
-      <!-- Flagship Repository Showcase (Flex Card) -->
-      <section class="dev-flagship-section">
-        <div class="section-heading">
-          <span class="section-label">FLAGSHIP REPOSITORY</span>
-          <h2 class="section-title">Open-Source Core Contribution</h2>
-          <p class="section-subtitle">Primary engineering work, public benchmarks, and architecture.</p>
-        </div>
-
-        <div id="devFlagshipCard" class="flagship-repo-card">
-          <!-- Rendered dynamically -->
-        </div>
-      </section>
-
-      <!-- Associated Collective Projects -->
-      <section class="dev-projects-section" id="devProjectsSection">
-        <div class="section-heading">
-          <span class="section-label">INCUBATED PROJECTS</span>
-          <h2 class="section-title">Ragetech Collective Systems Maintained</h2>
-        </div>
-        <div id="devProjectsGrid" class="dev-projects-grid">
-          <!-- Rendered dynamically -->
-        </div>
-      </section>
-
-      <!-- Secondary Repositories Grid -->
-      <section class="dev-secondary-section" id="devSecondarySection">
-        <div class="section-heading">
-          <span class="section-label">SECONDARY REPOSITORIES</span>
-          <h2 class="section-title">Libraries, Tooling & Micro-Benchmarks</h2>
-        </div>
-        <div id="devSecondaryGrid" class="dev-secondary-grid">
-          <!-- Rendered dynamically -->
-        </div>
-      </section>
-    </article>
+    <!-- Navigation Rail -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 60px; padding-top: 30px; border-top: 1px solid var(--border-subtle);">
+      <a href="index.html#collective" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Back to All Builders</span>
+      </a>
+      <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="btn-secondary">
+        <span>Back to Top</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+      </button>
+    </div>
   </main>
 
-  <!-- Edit Profile Modal -->
-  <div id="profileModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeProfileEditModal()">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Edit Builder Profile</h3>
-        <button class="modal-close-btn" onclick="closeProfileEditModal()">&times;</button>
-      </div>
-      <form id="profileEditForm" onsubmit="saveProfileEdits(event)">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="editDevName" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label>Role / Specialization</label>
-          <input type="text" id="editDevRole" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label>Squad Focus</label>
-          <select id="editDevSquad" class="form-input">
-            <option value="systems">Systems & Runtimes</option>
-            <option value="ai">AI & Tensor Pipelines</option>
-            <option value="security">Security & Hardening</option>
-            <option value="frontend">Interface Engineering</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Bio</label>
-          <textarea id="editDevBio" class="form-input form-textarea" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Current Status / Working On</label>
-          <input type="text" id="editDevStatus" class="form-input" placeholder="e.g. ⚡ SIMD ring buffers">
-        </div>
-        <div class="form-group">
-          <label>Location & Timezone</label>
-          <input type="text" id="editDevLocation" class="form-input" placeholder="Stockholm, SE (UTC+1)">
-        </div>
-        <div class="form-group">
-          <label>GPG Key</label>
-          <input type="text" id="editDevGpg" class="form-input" placeholder="4A8B 91F0 C128 7E53">
-        </div>
-        <div class="form-group">
-          <label>Website URL</label>
-          <input type="url" id="editDevWebsite" class="form-input" placeholder="https://...">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-clean btn-ghost" onclick="closeProfileEditModal()">Cancel</button>
-          <button type="submit" class="btn-clean btn-primary" id="saveProfileBtn">Save Profile</button>
-        </div>
-      </form>
+  <footer class="site-footer">
+    <div class="app-container footer-row">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">© 2026 Sovereign Systems Engineering Collective</span>
+      <span style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--accent-emerald);">● VERIFIED CRYPTOGRAPHIC DOSSIER</span>
     </div>
-  </div>
+  </footer>
 
-  <!-- Fallback Scripts in case running offline -->
-  <script src="/data/developers.js"></script>
-  <script src="/data/projects.js"></script>
-
-  <!-- Developer Loader Logic -->
+  <!-- Scripts -->
+  <script src="data/developers.js"></script>
+  <script src="data/projects.js"></script>
   <script>
-    let currentDeveloper = null;
-    let currentUser = null;
+    let currentFingerprint = "";
 
-    function getDeveloperHandle() {
-      const path = window.location.pathname;
-      if (path.startsWith('/d/')) {
-        const handle = path.replace('/d/', '').replace(/\/$/, '');
-        if (handle) return handle;
-      }
-      if (path.startsWith('/@')) {
-        const handle = path.replace('/@', '').replace(/\/$/, '');
-        if (handle) return handle;
-      }
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('handle')) return params.get('handle');
-      if (window.location.hash.startsWith('#/developer/')) {
-        return window.location.hash.replace('#/developer/', '').trim();
-      }
-      return 'alexv'; // Default fallback
-    }
-
-    async function checkAuth() {
-      try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated) {
-            currentUser = data.user;
-          }
-        }
-      } catch (e) {
-        console.warn('Auth check skipped:', e);
+    function copyGpgFingerprint() {
+      if (currentFingerprint) {
+        navigator.clipboard.writeText(currentFingerprint);
+        const btn = document.getElementById('copyGpgBtn');
+        btn.querySelector('span').textContent = 'Copied!';
+        setTimeout(() => { btn.querySelector('span').textContent = 'Copy Fingerprint'; }, 2000);
       }
     }
 
-    async function loadDeveloper() {
-      const handle = getDeveloperHandle();
-      document.getElementById('devLoadingState').style.display = 'flex';
-      document.getElementById('devContent').style.display = 'none';
-      document.getElementById('devNotFoundState').style.display = 'none';
+    (async function initDeveloperPage() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const handle = urlParams.get('id') || urlParams.get('handle') || 'sora';
 
-      await checkAuth();
+      let dev = null;
 
+      // 1. D1 API query
       try {
         const res = await fetch(`/api/developers/${handle}`);
         if (res.ok) {
-          const data = await res.json();
-          if (data.developer) {
-            renderDeveloper(data.developer);
-            return;
+          const json = await res.json();
+          if (json.success && json.data) {
+            dev = json.data;
           }
         }
-      } catch (err) {
-        console.warn('API fetch failed, falling back to local dataset:', err);
+      } catch (e) {
+        // Fall through
       }
 
-      // Local fallback
-      const fallback = (window.DEVELOPERS || []).find(d => d.handle.toLowerCase() === handle.toLowerCase());
-      if (fallback) {
-        const associatedProjects = (window.PROJECTS || []).filter(p => (p.assignees || []).includes(fallback.handle));
-        renderDeveloper({
-          ...fallback,
-          avatar_url: fallback.avatarUrl,
-          gpg_key: fallback.gpgKey,
-          github_url: fallback.socials?.github,
-          x_url: fallback.socials?.x,
-          website: fallback.socials?.website,
-          projects: associatedProjects.map(p => ({
-            slug: p.id,
-            name: p.name,
-            badge: p.badge,
-            summary: p.summary,
-            stars: p.stars,
-            language: p.language,
-            language_color: p.languageColor
-          }))
-        });
-      } else {
-        document.getElementById('devLoadingState').style.display = 'none';
-        document.getElementById('devNotFoundState').style.display = 'block';
-      }
-    }
-
-    function renderDeveloper(d) {
-      currentDeveloper = d;
-      document.title = `${d.name} (@${d.handle}) — Ragetech Builder`;
-
-      document.getElementById('devName').textContent = d.name;
-      document.getElementById('devHandle').textContent = `@${d.handle}`;
-      document.getElementById('devRole').textContent = d.role;
-      document.getElementById('devBio').textContent = d.bio || 'Collective systems engineer.';
-      document.getElementById('devLocation').textContent = d.location || 'Global';
-      document.getElementById('devAvatar').src = d.avatar_url || d.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${d.handle}`;
-
-      // Squad badge styling
-      const squadBadge = document.getElementById('devSquadBadge');
-      squadBadge.textContent = `${(d.squad || 'systems').toUpperCase()} SQUAD`;
-      squadBadge.className = `squad-pill squad-${d.squad || 'systems'}`;
-
-      // Live status
-      const statusWrap = document.getElementById('devStatusWrap');
-      if (d.status) {
-        document.getElementById('devStatus').textContent = d.status;
-        statusWrap.style.display = 'flex';
-      } else {
-        statusWrap.style.display = 'none';
+      // 2. Offline dataset fallback
+      if (!dev && window.RAGETECH_DEVELOPERS) {
+        dev = window.RAGETECH_DEVELOPERS.find(d => d.handle === handle) || window.RAGETECH_DEVELOPERS[0];
       }
 
-      // GPG
-      const gpgWrap = document.getElementById('devGpgWrap');
-      if (d.gpg_key || d.gpgKey) {
-        document.getElementById('devGpgKey').textContent = d.gpg_key || d.gpgKey;
-        gpgWrap.style.display = 'flex';
-      } else {
-        gpgWrap.style.display = 'none';
-      }
+      if (!dev) return;
 
-      // Social actions
-      const socialContainer = document.getElementById('devSocialActions');
-      socialContainer.innerHTML = '';
-      const gh = d.github_url || d.socials?.github;
-      if (gh) {
-        socialContainer.innerHTML += `
-          <a href="${escapeHtml(gh)}" target="_blank" rel="noopener" class="btn-clean btn-secondary" title="GitHub">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-            <span>GitHub</span>
-          </a>
-        `;
-      }
-      const x = d.x_url || d.socials?.x;
-      if (x) {
-        socialContainer.innerHTML += `
-          <a href="${escapeHtml(x)}" target="_blank" rel="noopener" class="btn-clean btn-ghost" title="X / Twitter">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            <span>@${escapeHtml(d.handle)}</span>
-          </a>
-        `;
-      }
-      const site = d.website || d.socials?.website;
-      if (site) {
-        socialContainer.innerHTML += `
-          <a href="${escapeHtml(site)}" target="_blank" rel="noopener" class="btn-clean btn-ghost" title="Personal Website">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <span>Website</span>
-          </a>
-        `;
-      }
+      document.title = `${dev.name} (@${dev.handle}) — Builder Dossier | Ragetech`;
+      document.getElementById('breadcrumbDevName').textContent = `@${dev.handle}`;
+      document.getElementById('devName').textContent = dev.name;
+      document.getElementById('devHandle').textContent = `@${dev.handle}`;
+      document.getElementById('devRole').textContent = dev.role;
+      document.getElementById('devBio').textContent = dev.bio;
+      document.getElementById('devAvatar').src = dev.avatar_url;
+      document.getElementById('devAvatar').alt = dev.name;
+      
+      const badge = document.getElementById('devSquadBadge');
+      badge.textContent = `${dev.squad.toUpperCase()} SQUAD`;
+      badge.className = `squad-badge ${dev.squad}`;
 
-      // Flagship repo
-      const fContainer = document.getElementById('devFlagshipCard');
-      const f = d.featuredRepo;
-      if (f) {
-        fContainer.style.display = 'block';
-        fContainer.innerHTML = `
-          <div class="flagship-top">
-            <div class="flagship-title-wrap">
-              <span class="flagship-repo-name">${escapeHtml(f.name)}</span>
-              <span class="lang-pill"><span class="lang-dot" style="background:${f.languageColor || '#dea584'}"></span>${escapeHtml(f.language || 'Rust')}</span>
-            </div>
-            <div class="flagship-stats">
-              <span class="stat-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>${(f.stars || 0).toLocaleString()}</span>
-              ${f.forks ? `<span class="stat-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M7 6a3 3 0 1 0-3 3c.64 0 1.22-.2 1.7-.55l3.3 3.3a3.5 3.5 0 0 0 0 .5l-3.3 3.3A2.99 2.99 0 1 0 7 18v-2a1 1 0 0 1 1-1h.5a1 1 0 0 1 1 1v1a3 3 0 1 0 3-3c-.64 0-1.22.2-1.7.55l-3.3-3.3a3.5 3.5 0 0 0 0-.5l3.3-3.3A2.99 2.99 0 1 0 14 6v2a1 1 0 0 1-1 1h-.5a1 1 0 0 1-1-1V7a3 3 0 0 0-4.5-2.6z"/></svg>${f.forks}</span>` : ''}
+      currentFingerprint = dev.gpg_fingerprint || "8F4A 2B19 E03C 41FA 98E1";
+      document.getElementById('devFingerprint').textContent = currentFingerprint;
+
+      const webBtn = document.getElementById('devWebsiteBtn');
+      if (dev.website_url) { webBtn.href = dev.website_url; } else { webBtn.style.display = 'none'; }
+
+      const ghBtn = document.getElementById('devGithubBtn');
+      if (dev.github_url) { ghBtn.href = dev.github_url; } else { ghBtn.style.display = 'none'; }
+
+      // Assigned Projects List
+      const assignedList = document.getElementById('assignedProjectsList');
+      const allProjects = window.RAGETECH_PROJECTS || [];
+      const assignedSlugs = dev.assigned_projects || [];
+      const matchedProjects = allProjects.filter(p => assignedSlugs.includes(p.slug));
+
+      if (matchedProjects.length > 0) {
+        assignedList.innerHTML = matchedProjects.map(p => `
+          <div class="spotlight-card repo-nav-card" onclick="window.location.href='project.html?id=${p.slug}'">
+            <div class="spotlight-card-content">
+              <div class="repo-card-top">
+                <span class="repo-name">${p.name}</span>
+                <span class="repo-status-badge">${p.category}</span>
+              </div>
+              <p class="repo-tagline">${p.tagline}</p>
+              <div class="repo-stack-pills">
+                ${p.tech_stack.split(',').map(t => `<span class="stack-pill">${t.trim()}</span>`).join('')}
+              </div>
             </div>
           </div>
-          <p class="flagship-tagline">${escapeHtml(f.tagline || '')}</p>
-          ${f.cloneUrl ? `
-            <div class="flagship-clone-box" onclick="navigator.clipboard.writeText('${escapeHtml(f.cloneUrl)}');alert('Cloned command copied!');">
-              <span class="clone-prefix">$</span>
-              <code>${escapeHtml(f.cloneUrl)}</code>
-              <span class="clone-click-hint">Click to copy</span>
-            </div>
-          ` : ''}
-          ${f.topics && f.topics.length ? `
-            <div class="repo-topics-row">
-              ${f.topics.map(t => `<span class="repo-topic-pill">${escapeHtml(t)}</span>`).join('')}
-            </div>
-          ` : ''}
-          <div class="flagship-footer">
-            <a href="${escapeHtml(f.url || '#')}" target="_blank" rel="noopener" class="btn-clean btn-primary">Inspect Source on GitHub →</a>
-          </div>
-        `;
+        `).join('');
       } else {
-        fContainer.style.display = 'none';
+        assignedList.innerHTML = `<p style="color: var(--text-muted);">Assigned to collective core infrastructure.</p>`;
       }
-
-      // Incubated Projects
-      const projContainer = document.getElementById('devProjectsGrid');
-      const projSection = document.getElementById('devProjectsSection');
-      projContainer.innerHTML = '';
-      const projects = d.projects || [];
-      if (projects.length > 0) {
-        projSection.style.display = 'block';
-        projects.forEach(p => {
-          const card = document.createElement('a');
-          card.href = `/p/${p.slug || p.id}`;
-          card.className = 'dev-project-card';
-          card.innerHTML = `
-            <div class="proj-card-top">
-              <span class="proj-card-name">${escapeHtml(p.name)}</span>
-              <span class="version-badge">${escapeHtml(p.badge || 'v0.1.0')}</span>
-            </div>
-            <p class="proj-card-desc">${escapeHtml(p.summary)}</p>
-            <div class="proj-card-bottom">
-              <span class="lang-pill"><span class="lang-dot" style="background:${p.language_color || p.languageColor || '#dea584'}"></span>${escapeHtml(p.language)}</span>
-              <span class="proj-card-link">View Blueprint →</span>
-            </div>
-          `;
-          projContainer.appendChild(card);
-        });
-      } else {
-        projSection.style.display = 'none';
-      }
-
-      // Secondary Repos
-      const secContainer = document.getElementById('devSecondaryGrid');
-      const secSection = document.getElementById('devSecondarySection');
-      secContainer.innerHTML = '';
-      const secondary = d.secondaryRepos || [];
-      if (secondary.length > 0) {
-        secSection.style.display = 'block';
-        secondary.forEach(r => {
-          const card = document.createElement('a');
-          card.href = r.url || '#';
-          card.target = '_blank';
-          card.rel = 'noopener';
-          card.className = 'dev-repo-card';
-          card.innerHTML = `
-            <div class="repo-card-top">
-              <span class="repo-name">${escapeHtml(r.name)}</span>
-              <span class="repo-stars">★ ${(r.stars || 0).toLocaleString()}</span>
-            </div>
-            <div class="repo-lang-row">
-              <span class="lang-dot" style="background:${r.languageColor || '#dea584'}"></span>
-              <span class="repo-lang-name">${escapeHtml(r.language || 'Code')}</span>
-            </div>
-          `;
-          secContainer.appendChild(card);
-        });
-      } else {
-        secSection.style.display = 'none';
-      }
-
-      // Show edit button if current logged in user matches this developer
-      const editBtn = document.getElementById('devEditBtn');
-      if (currentUser && currentUser.handle.toLowerCase() === d.handle.toLowerCase()) {
-        editBtn.style.display = 'inline-flex';
-      }
-
-      document.getElementById('devLoadingState').style.display = 'none';
-      document.getElementById('devContent').style.display = 'block';
-    }
-
-    function openProfileEditModal() {
-      if (!currentDeveloper) return;
-      document.getElementById('editDevName').value = currentDeveloper.name || '';
-      document.getElementById('editDevRole').value = currentDeveloper.role || '';
-      document.getElementById('editDevSquad').value = currentDeveloper.squad || 'systems';
-      document.getElementById('editDevBio').value = currentDeveloper.bio || '';
-      document.getElementById('editDevStatus').value = currentDeveloper.status || '';
-      document.getElementById('editDevLocation').value = currentDeveloper.location || '';
-      document.getElementById('editDevGpg').value = currentDeveloper.gpg_key || currentDeveloper.gpgKey || '';
-      document.getElementById('editDevWebsite').value = currentDeveloper.website || currentDeveloper.socials?.website || '';
-      document.getElementById('profileModal').style.display = 'flex';
-    }
-
-    function closeProfileEditModal() {
-      document.getElementById('profileModal').style.display = 'none';
-    }
-
-    async function saveProfileEdits(e) {
-      e.preventDefault();
-      const saveBtn = document.getElementById('saveProfileBtn');
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving...';
-
-      const updated = {
-        name: document.getElementById('editDevName').value,
-        role: document.getElementById('editDevRole').value,
-        squad: document.getElementById('editDevSquad').value,
-        bio: document.getElementById('editDevBio').value,
-        status: document.getElementById('editDevStatus').value,
-        location: document.getElementById('editDevLocation').value,
-        gpgKey: document.getElementById('editDevGpg').value,
-        website: document.getElementById('editDevWebsite').value
-      };
-
-      try {
-        const res = await fetch(`/api/developers/${currentDeveloper.handle}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated)
-        });
-        if (res.ok) {
-          closeProfileEditModal();
-          loadDeveloper();
-        } else {
-          const err = await res.json();
-          alert('Error: ' + (err.error || 'Failed to update profile'));
-        }
-      } catch (err) {
-        alert('Request failed: ' + err.message);
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Profile';
-      }
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    }
-
-    window.addEventListener('DOMContentLoaded', loadDeveloper);
+    })();
   </script>
 </body>
 </html>

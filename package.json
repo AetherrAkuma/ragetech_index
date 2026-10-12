@@ -1,20 +1,27 @@
 {
-  "name": "ragetech-index",
-  "version": "1.0.0",
-  "description": "Ragetech engineering collective hub with Cloudflare D1 & edge runtime",
+  "name": "ragetech-platform",
+  "version": "2.0.0",
+  "description": "Ragetech — Sovereign Systems Engineering Collective",
   "main": "worker.js",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev",
-    "start": "npx serve .",
-    "db:build-seed": "node scripts/build_seed.js",
-    "db:migrate:local": "wrangler d1 execute ragetech_database --local --file=schema.sql",
-    "db:seed:local": "wrangler d1 execute ragetech_database --local --file=seed.sql",
-    "db:migrate:remote": "wrangler d1 execute ragetech_database --remote --file=schema.sql",
-    "db:seed:remote": "wrangler d1 execute ragetech_database --remote --file=seed.sql"
+    "start": "npx serve -s . -l 3000",
+    "db:migrate:local": "wrangler d1 execute ragetech_db --local --file=./schema.sql",
+    "db:seed:local": "wrangler d1 execute ragetech_db --local --file=./seed.sql",
+    "db:migrate:remote": "wrangler d1 execute ragetech_db --remote --file=./schema.sql",
+    "db:seed:remote": "wrangler d1 execute ragetech_db --remote --file=./seed.sql",
+    "deploy": "wrangler deploy"
   },
+  "keywords": [
+    "ragetech",
+    "systems-engineering",
+    "cloudflare-workers",
+    "cloudflare-d1",
+    "edge-computing"
+  ],
+  "author": "Ragetech Collective",
+  "license": "MIT",
   "devDependencies": {
-    "wrangler": "^4.149.0"
+    "wrangler": "^3.109.2"
   }
 }

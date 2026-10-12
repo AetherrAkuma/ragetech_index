@@ -3,388 +3,357 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ragetech — Engineering Collective | ragetech.dev</title>
-  <meta name="description" content="ragetech.dev is an independent collective of 29 systems engineers, compiler authors, and interface designers building edge infrastructure.">
+  <title>Ragetech — Sovereign Systems Engineering Collective</title>
+  <meta name="description" content="Independent collective of 29 systems engineers building low-latency edge infrastructure, compilers, and distributed runtimes.">
   
   <!-- Open Graph -->
-  <meta property="og:title" content="Ragetech — Engineering Collective">
-  <meta property="og:description" content="Independent collective of 29 systems engineers building edge infrastructure.">
+  <meta property="og:title" content="Ragetech — Systems Engineering Collective">
+  <meta property="og:description" content="29 builders crafting sovereign edge infrastructure, WebAssembly micro-kernels, and distributed databases.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ragetech.dev">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23141418'/><path d='M10 9l12 7-12 7z' fill='%23f4f4f5'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
 
-  <!-- Inter & JetBrains Mono Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- Background Grid -->
-  <div class="bg-grid-overlay" aria-hidden="true"></div>
+  <!-- Ambient Lighting Overlays -->
+  <div class="ambient-mesh-glow" aria-hidden="true"></div>
+  <div class="bg-dot-grid" aria-hidden="true"></div>
 
-  <!-- Site Navigation -->
-  <header class="site-header" id="main-header">
-    <div class="container header-row">
+  <!-- ======================================================================
+       1. Tailark Header-2 (@tailark/header-2)
+       ====================================================================== -->
+  <header class="site-header">
+    <div class="header-glass-bar">
       <div class="brand-wrapper">
         <a href="#hero" class="brand-mark" aria-label="Ragetech Home">
-          <div class="brand-icon-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f4f4f5" stroke-width="2.5">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          <div class="brand-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
             </svg>
           </div>
-          <span class="brand-title">RAGETECH</span>
+          <span class="brand-name">RAGETECH</span>
         </a>
-        <span class="domain-badge">ragetech.dev</span>
+        <span class="brand-badge">ragetech.dev</span>
       </div>
 
-      <nav>
-        <ul class="nav-menu">
-          <li><a href="#/projects" class="nav-item-link">Repositories [6]</a></li>
-          <li><a href="#/developers" class="nav-item-link">The 29 Builders</a></li>
-        </ul>
+      <nav class="site-nav" aria-label="Main Navigation">
+        <a href="#repositories" class="nav-link">Repositories [6]</a>
+        <a href="#collective" class="nav-link">The 29 Builders</a>
+        <a href="#manifesto" class="nav-link">Manifesto</a>
+        <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="nav-link">GitHub</a>
       </nav>
 
       <div class="header-actions">
-        <div id="authHeaderWidget" class="auth-header-widget">
-          <button id="openLoginBtn" class="btn btn-secondary nav-login-btn" onclick="openLoginModal()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <!-- Command Palette Trigger Button -->
+        <button id="cmdKTriggerBtn" class="cmd-k-trigger" title="Open Command Palette (Cmd + K)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Search</span>
+          <span class="cmd-k-kbd">⌘K</span>
+        </button>
+
+        <!-- Dynamic RBAC Auth Trigger -->
+        <div id="authHeaderWidget">
+          <button id="openLoginBtn" class="btn-auth" onclick="window.RagetechApp.openLoginModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
             <span>Builder Login</span>
           </button>
         </div>
-        <button class="btn btn-secondary js-copy-domain" title="Copy domain to clipboard">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-          <span>ragetech.dev</span>
-        </button>
       </div>
     </div>
   </header>
 
-  <main id="app-main">
-    <!-- VIEW 1: LANDING PAGE -->
-    <div id="view-landing" class="spa-view active">
-      <!-- Hero Section (Clean, Confident, Dusk-Aligned) -->
-      <section class="hero-clean" id="hero">
-        <div class="container">
-          <div class="hero-tag-pill">
-            <span class="live-indicator-dot"></span>
-            <span>ragetech.dev / engineering collective</span>
-          </div>
+  <!-- ======================================================================
+       2. Tailark Hero-2 (@tailark/hero-section-2 — Clean Typography & Metrics)
+       ====================================================================== -->
+  <main>
+    <section id="hero" class="hero-section app-container">
+      <div class="hero-pill-badge">
+        <span class="hero-pill-dot" aria-hidden="true"></span>
+        <span>Sovereign Systems & Edge Infrastructure • 29 Collective Builders</span>
+      </div>
 
-          <h1 class="hero-heading">
-            An independent collective building foundational infrastructure.
-          </h1>
+      <h1 class="hero-title">
+        High-performance edge runtimes for the <span class="hero-title-gradient">sovereign internet.</span>
+      </h1>
 
-          <p class="hero-subheading">
-            29 systems architects, compiler authors, and interface engineers building
-            low-latency event streaming, edge consensus databases, and local-first runtimes.
-          </p>
+      <p class="hero-subtitle">
+        Ragetech is an independent guild of 29 kernel hackers, compiler authors, and distributed systems architects engineering sub-millisecond edge runtimes and peer-to-peer protocols.
+      </p>
 
-          <div class="hero-cta-group">
-            <a href="#/projects" class="btn btn-primary">
-              View Repositories [6]
-            </a>
-            <a href="#/developers" class="btn btn-secondary">
-              The 29 Builders
-            </a>
-            <a href="#/studio" class="btn btn-secondary">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              <span>Developer Studio</span>
-            </a>
-          </div>
+      <div class="hero-actions">
+        <a href="#repositories" class="btn-primary">
+          <span>Explore Repositories</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+        <a href="#collective" class="btn-secondary">
+          <span>Meet the Collective</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Edge Telemetry Metrics Ribbon -->
+      <div class="edge-metrics-ribbon">
+        <div class="metric-card">
+          <div class="metric-val" id="metricLatency">0.18<span>ms</span></div>
+          <div class="metric-label">WASM Cold-Start Latency</div>
         </div>
-      </section>
-
-    <!-- Metrics Strip -->
-    <section class="metrics-strip">
-      <div class="container">
-        <div class="metrics-strip-grid">
-          <div class="metric-unit">
-            <span class="metric-unit-num mono">29</span>
-            <span class="metric-unit-label">Active Builders</span>
-          </div>
-          <div class="metric-unit">
-            <span class="metric-unit-num mono">06</span>
-            <span class="metric-unit-label">Core Repositories</span>
-          </div>
-          <div class="metric-unit">
-            <span class="metric-unit-num mono">&lt; 0.3ms</span>
-            <span class="metric-unit-label">p99 Event Latency</span>
-          </div>
-          <div class="metric-unit">
-            <span class="metric-unit-num mono">100%</span>
-            <span class="metric-unit-label">Native & Zero-Copy</span>
-          </div>
+        <div class="metric-card">
+          <div class="metric-val" id="metricThroughput">2.4<span>M</span></div>
+          <div class="metric-label">Peak Edge Requests / Sec</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="metricBuilders">29<span>/29</span></div>
+          <div class="metric-label">Active Sovereign Maintainers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="metricEdgePops">330<span>+</span></div>
+          <div class="metric-label">Global Edge Point-of-Presence</div>
         </div>
       </div>
     </section>
 
-    <!-- Projects Sticky Scroll Section (Tailark Dusk Features 5 Pattern) -->
-    <section class="projects-section" id="repositories">
-      <div class="container">
-        <div class="section-lead">
-          <span class="section-kicker">Incubated Systems</span>
-          <h2 class="section-h2">Built for systems engineers.</h2>
-          <p class="section-p">
-            Each repository addresses bottlenecks in modern distributed applications.
-            Scroll through each system below to inspect architectural parameters.
-          </p>
-        </div>
-
-        <div class="scroll-layout-grid">
-          <!-- Sticky Left Index -->
-          <aside class="sticky-sidebar-nav" aria-label="Repository Index">
-            <div class="sidebar-section-title">Repositories</div>
-            <div id="sticky-project-nav">
-              <!-- Rendered by app.js -->
-            </div>
-          </aside>
-
-          <!-- Main Scrollable Projects Stack -->
-          <div class="projects-stack" id="projects-stack">
-            <!-- Rendered by app.js with scroll highlight observer -->
-          </div>
-        </div>
+    <!-- ======================================================================
+         3. Tailark Expandable-Features-8 (@tailark/expandable-features-8)
+         ====================================================================== -->
+    <section id="repositories" class="app-container" style="padding: 72px 0;">
+      <div class="section-header">
+        <span class="section-tag">// OPEN-SOURCE BLUEPRINTS</span>
+        <h2 class="section-title">The Sovereign Repositories</h2>
+        <p class="section-desc">Six mission-critical edge components developed in open collaboration with cryptographic verification and zero telemetry backdoors.</p>
       </div>
-    </section>
 
-    <!-- The 29 Builders Showcase & Repository Flex Section -->
-    <section class="builders-section-clean" id="directory">
-      <div class="container">
-        <div class="section-lead" style="margin-bottom: 24px;">
-          <div class="roster-badge-strip">
-            <span class="section-kicker">COLLECTIVE ROSTER & REPO SHOWCASE</span>
-            <div class="roster-live-indicator">
-              <span class="live-dot-pulse"></span>
-              <span>29 BUILDERS ACTIVE</span>
-            </div>
-          </div>
-          <h2 class="section-h2">The 29 Builders</h2>
-          <p class="section-p">
-            Systems engineers, kernel authors, and runtime architects building sovereign infrastructure.
-            Explore each member's flagship repository, active stack, and architectural contributions.
-          </p>
+      <!-- Category Filter Tabs -->
+      <div class="filter-tabs-bar" id="repoFilterBar">
+        <button class="filter-tab-btn active" data-filter="all">All Domains [6]</button>
+        <button class="filter-tab-btn" data-filter="Distributed Runtimes">Distributed Runtimes [2]</button>
+        <button class="filter-tab-btn" data-filter="Compilers">Compilers [1]</button>
+        <button class="filter-tab-btn" data-filter="Kernel & Systems">Kernel & Systems [2]</button>
+        <button class="filter-tab-btn" data-filter="Cryptography">Cryptography [1]</button>
+      </div>
 
-          <!-- Roster Stats Telemetry Bar -->
-          <div class="roster-metrics-strip">
-            <div class="roster-stat-pill">
-              <span class="stat-num mono">29</span>
-              <span class="stat-lbl">Engineers</span>
-            </div>
-            <div class="roster-stat-divider">/</div>
-            <div class="roster-stat-pill">
-              <span class="stat-num mono">42+</span>
-              <span class="stat-lbl">Open Repositories</span>
-            </div>
-            <div class="roster-stat-divider">/</div>
-            <div class="roster-stat-pill">
-              <span class="stat-num mono">47.8k</span>
-              <span class="stat-lbl">Total Stars</span>
-            </div>
-            <div class="roster-stat-divider">/</div>
-            <div class="roster-stat-pill">
-              <span class="stat-num mono">100%</span>
-              <span class="stat-lbl">Zero-Telemetry Code</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Directory Controls & Filters -->
-        <div class="builders-controls-panel">
-          <!-- Top Row: Squad Filters & Search -->
-          <div class="builders-toolbar">
-            <div class="squad-filters-group" id="squad-filters-container">
-              <button class="squad-filter-btn active" data-squad="all">All [29]</button>
-              <button class="squad-filter-btn" data-squad="systems">Systems & Kernels [13]</button>
-              <button class="squad-filter-btn" data-squad="ai">AI & Inference [5]</button>
-              <button class="squad-filter-btn" data-squad="security">Security & MicroVMs [5]</button>
-              <button class="squad-filter-btn" data-squad="frontend">Interface & Tools [6]</button>
-            </div>
-
-            <div class="builders-right-controls">
-              <!-- Search Box -->
-              <div class="search-box-clean">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" id="builder-search-input" placeholder="Search handle, repo, stack... (press /)" aria-label="Search builders">
-                <span class="search-kbd-hint">/</span>
-              </div>
-
-              <!-- Sort Dropdown -->
-              <div class="sort-select-wrap">
-                <select id="builder-sort-select" class="sort-select-input" aria-label="Sort builders">
-                  <option value="featured">Sort: Featured</option>
-                  <option value="stars">Sort: Most Stars ⭐</option>
-                  <option value="index">Sort: Member # (01-29)</option>
-                  <option value="name">Sort: Name (A-Z)</option>
-                </select>
-              </div>
-
-              <!-- View Mode Switcher -->
-              <div class="view-toggle-group" title="Switch layout mode">
-                <button class="view-btn active" id="view-showcase-btn" title="Repo Flex Cards View" aria-label="Repo Flex View">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="1.5"/><rect width="8" height="8" x="13" y="3" rx="1.5"/><rect width="8" height="8" x="3" y="13" rx="1.5"/><rect width="8" height="8" x="13" y="13" rx="1.5"/></svg>
-                </button>
-                <button class="view-btn" id="view-compact-btn" title="Compact Roster Grid" aria-label="Compact Grid View">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/></svg>
-                </button>
-                <button class="view-btn" id="view-terminal-btn" title="Terminal Matrix Table" aria-label="Terminal Table View">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bottom Row: Stack Tag Quick Filters -->
-          <div class="stack-filters-row">
-            <span class="stack-filters-label">Stack Quick-Filter:</span>
-            <div class="stack-chips-scroll" id="stack-chips-container">
-              <button class="stack-tag-pill active" data-stack="all">All</button>
-              <button class="stack-tag-pill" data-stack="Rust">Rust</button>
-              <button class="stack-tag-pill" data-stack="Go">Go</button>
-              <button class="stack-tag-pill" data-stack="TypeScript">TypeScript</button>
-              <button class="stack-tag-pill" data-stack="eBPF">eBPF</button>
-              <button class="stack-tag-pill" data-stack="CUDA">CUDA</button>
-              <button class="stack-tag-pill" data-stack="WASM">WASM</button>
-              <button class="stack-tag-pill" data-stack="C++">C++</button>
-              <button class="stack-tag-pill" data-stack="Python">Python</button>
-            </div>
-            <div class="builders-count-label mono" id="builders-count-badge">
-              Showing 29 of 29
-            </div>
-          </div>
-        </div>
-
-        <!-- View 1: Flagship Repo Showcase View (Default) -->
-        <div class="builders-showcase-grid" id="builders-showcase-view">
+      <!-- Interactive Split-Pane Layout with Equal Spotlight -->
+      <div class="expandable-features-grid">
+        <!-- Left: Interactive Repository Selector Cards -->
+        <div class="repo-nav-list" id="repoNavList">
           <!-- Rendered dynamically by app.js -->
         </div>
 
-        <!-- View 2: High-Density Compact Roster View -->
-        <div class="builders-compact-grid" id="builders-compact-view" style="display: none;">
-          <!-- Rendered dynamically by app.js -->
-        </div>
-
-        <!-- View 3: Terminal Matrix Table View -->
-        <div class="builders-terminal-wrap" id="builders-terminal-view" style="display: none;">
-          <!-- Rendered dynamically by app.js -->
-        </div>
-
-        <!-- Dynamic Modular Contribution Callout -->
-        <div class="builder-contribute-card">
-          <div class="contribute-card-content">
-            <div class="contribute-card-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-            </div>
-            <div>
-              <div class="contribute-card-title">Flex your own repository in ragetech.dev</div>
-              <p class="contribute-card-desc">
-                Contributing to ragetech core or adjacent edge tools? Add your profile and pinned repo to <code class="mono">data/developers.js</code>. No build step required — merge and deploy directly.
-              </p>
-            </div>
+        <!-- Right: Active Feature Preview Showcase Pane -->
+        <div class="feature-preview-panel spotlight-card" id="featurePreviewPanel">
+          <div class="spotlight-card-content" id="previewContentWrap">
+            <!-- Rendered dynamically by app.js -->
           </div>
-          <button class="btn btn-secondary js-open-pr-guide" style="white-space: nowrap;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 9v12"/><path d="M18 9a9 9 0 0 0-9 9"/></svg>
-            <span>PR Template Guide</span>
-          </button>
         </div>
       </div>
     </section>
 
-    <!-- Clean Launchpad Section -->
-    <section class="launchpad-section" id="about">
-      <div class="container">
-        <div class="launchpad-box">
-          <div class="launchpad-info">
-            <h3>Initial development for ragetech.dev</h3>
-            <p>Our repositories enter public test phases over the coming cycle. Check back for benchmarks and RFC access.</p>
+    <!-- ======================================================================
+         4. Tailark Quartz Team Section (@tailark/blocks/quartz/team)
+         ====================================================================== -->
+    <section id="collective" class="team-grid-section app-container">
+      <div class="section-header">
+        <span class="section-tag">// THE BUILDERS GUILD</span>
+        <h2 class="section-title">The 29 Engineers</h2>
+        <p class="section-desc">Every line of code is human-crafted, formally verified, and cryptographically signed. Click any maintainer to inspect their verified dossier.</p>
+      </div>
+
+      <!-- Responsive Grid for 29 Builders -->
+      <div class="team-cards-grid" id="teamCardsGrid">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         5. Engineering Manifesto Section
+         ====================================================================== -->
+    <section id="manifesto" class="app-container" style="padding: 80px 0 40px;">
+      <div class="spotlight-card" style="padding: 48px; border-radius: var(--radius-xl); text-align: center;">
+        <div class="spotlight-card-content" style="max-width: 720px; margin: 0 auto;">
+          <span class="section-tag" style="display: block; margin-bottom: 12px;">// SOVEREIGN CHARTER</span>
+          <h2 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 18px; letter-spacing: -0.02em;">We engineer tools for sovereign operators.</h2>
+          <p style="font-size: 1.05rem; color: var(--text-secondary); line-height: 1.8; margin-bottom: 32px;">
+            We reject closed-source silos, algorithmic tracking, and runtime lock-in. Ragetech builds open, deterministic systems where every binary can be audited, every network packet verified, and every byte owned by the developer.
+          </p>
+          <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+            <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+              <span>Fork on GitHub</span>
+            </a>
+            <button class="btn-secondary" onclick="window.RagetechApp.openCommandPalette()">
+              <span>Search System (⌘K)</span>
+            </button>
           </div>
-          <button class="btn btn-primary js-copy-domain">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span>ragetech.dev</span>
-          </button>
         </div>
       </div>
     </section>
-    </div> <!-- END #view-landing -->
-
-    <!-- VIEW 2: DEDICATED PROJECT DETAIL PAGE -->
-    <div id="view-project-detail" class="spa-view" style="display:none;">
-      <!-- Dynamically populated by app.js -->
-    </div>
-
-    <!-- VIEW 3: DEDICATED DEVELOPER PROFILE PAGE -->
-    <div id="view-developer-detail" class="spa-view" style="display:none;">
-      <!-- Dynamically populated by app.js -->
-    </div>
   </main>
 
-  <!-- Clean Minimalist Footer -->
-  <footer class="site-footer-clean">
-    <div class="container footer-row-clean">
-      <div>
-        © 2026 ragetech.dev — Independent Engineering Collective
+  <!-- ======================================================================
+       6. Edge Telemetry HUD Footer
+       ====================================================================== -->
+  <footer class="site-footer">
+    <div class="app-container footer-row">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-weight: 700; letter-spacing: 0.05em; font-size: 0.9rem;">RAGETECH</span>
+        <span style="color: var(--text-faint);">|</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">© 2026 Sovereign Systems Engineering Collective</span>
       </div>
-      <div class="mono" style="font-size: 0.75rem; color: var(--text-faint);">
-        29 BUILDERS ACTIVE • ZERO TRACKING
+
+      <!-- Real-Time Telemetry Bar -->
+      <div class="telemetry-hud-bar" id="telemetryHudBar">
+        <div class="hud-item">
+          <span class="hud-dot" aria-hidden="true"></span>
+          <span id="hudColo">EDGE: LOCAL-POP</span>
+        </div>
+        <div class="hud-item">
+          <span>PING:</span>
+          <span id="hudLatency" style="color: var(--text-primary);">12ms</span>
+        </div>
+        <div class="hud-item">
+          <span>D1:</span>
+          <span id="hudD1Status" style="color: var(--accent-emerald);">SYNCED</span>
+        </div>
+        <div class="hud-item">
+          <span id="hudProtocol">HTTP/3 QUIC</span>
+        </div>
       </div>
     </div>
   </footer>
 
-  <!-- Modal Dialog -->
-  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-card-clean" id="modal-card-container">
-      <button class="modal-close-icon" id="modal-close-btn" aria-label="Close dialog">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  <!-- ======================================================================
+       7. Interactive Overlays (Modal, Command Palette, RBAC Drawer)
+       ====================================================================== -->
+
+  <!-- Developer Modal Dossier -->
+  <div id="developerModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-dialog" id="modalDialogCard">
+      <button class="modal-close-btn" onclick="window.RagetechApp.closeModal()" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
-      <div id="modal-dynamic-content">
-        <!-- Rendered by app.js -->
+      <div id="modalDeveloperContent">
+        <!-- Rendered dynamically by app.js -->
       </div>
     </div>
   </div>
 
-  <!-- Secure Developer Authentication Modal -->
-  <div id="loginModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeLoginModal()">
-    <div class="modal-card auth-modal-card">
-      <div class="modal-header">
-        <div class="auth-modal-title-row">
-          <span class="auth-lock-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </span>
-          <h3 style="margin:0; font-size:1.15rem;">Builder Authentication</h3>
-        </div>
-        <button class="modal-close-btn" onclick="closeLoginModal()">&times;</button>
+  <!-- Global Command Palette (Cmd + K) -->
+  <div id="cmdKModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-dialog cmd-k-dialog">
+      <div class="cmd-k-input-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="cmdKInput" class="cmd-k-input" placeholder="Search repositories, 29 builders, or quick actions..." autocomplete="off">
+        <span class="cmd-k-kbd">ESC</span>
       </div>
-      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-        <div id="loginAlertBox" class="auth-alert" style="display:none;"></div>
+      <div class="cmd-k-results" id="cmdKResultsList">
+        <!-- Search results rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Builder Login Modal -->
+  <div id="loginModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <button class="modal-close-btn" onclick="window.RagetechApp.closeLoginModal()" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div class="brand-icon" style="margin: 0 auto 12px; width: 40px; height: 40px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <h3 style="font-size: 1.35rem; font-weight: 800;">Builder Authentication</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Sign in with your collective credentials or demo as admin</p>
+      </div>
+
+      <form id="loginForm" onsubmit="window.RagetechApp.handleLogin(event)">
         <div class="form-group">
-          <label for="loginHandle">Handle or Email</label>
-          <input type="text" id="loginHandle" class="form-input" placeholder="e.g. alexv" required autocomplete="username">
+          <label class="form-label" for="loginHandle">Builder Handle</label>
+          <input type="text" id="loginHandle" class="form-input" placeholder="e.g. sora, marcus, elena" value="sora" required>
         </div>
         <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+          <label class="form-label" for="loginPassword">Access Key</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" value="admin123" required>
         </div>
-        <div class="auth-info-hint">
-          <span>Seed builders default key: <code class="hint-code">ragetech2026</code></span>
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
+            <span>Authorize Session</span>
+          </button>
         </div>
-        <div class="modal-footer" style="padding-top:14px; margin-top:14px;">
-          <button type="button" class="btn-clean btn-ghost" onclick="closeLoginModal()">Cancel</button>
-          <button type="submit" id="loginSubmitBtn" class="btn-clean btn-primary">Authenticate →</button>
-        </div>
+        <p style="font-size: 0.76rem; color: var(--text-muted); text-align: center; margin-top: 14px;">
+          RBAC roles enabled: <code>admin</code> (full D1 CRUD), <code>lead</code> (project edit), <code>developer</code>.
+        </p>
       </form>
     </div>
   </div>
 
-  <!-- Toast Container -->
-  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+  <!-- Dynamic RBAC Management Studio Drawer -->
+  <aside id="rbacDrawer" class="rbac-drawer" aria-label="RBAC Management Studio">
+    <div class="drawer-header">
+      <div>
+        <h3 class="drawer-title">RBAC Studio Dashboard</h3>
+        <div id="drawerUserBadge" style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan); margin-top: 2px;">
+          Logged in as: @sora [ADMIN]
+        </div>
+      </div>
+      <button class="modal-close-btn" onclick="window.RagetechApp.closeDrawer()" aria-label="Close drawer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
 
-  <!-- Modular Data Registries & Application Core -->
-  <script src="data/projects.js"></script>
+    <!-- Drawer Navigation Tabs -->
+    <div class="drawer-tabs">
+      <div class="drawer-tab active" data-tab="projects" onclick="window.RagetechApp.switchDrawerTab('projects')">Repositories</div>
+      <div class="drawer-tab" data-tab="builders" onclick="window.RagetechApp.switchDrawerTab('builders')">Builders Directory</div>
+      <div class="drawer-tab" data-tab="audit" onclick="window.RagetechApp.switchDrawerTab('audit')">Audit Log</div>
+    </div>
+
+    <!-- Drawer Body -->
+    <div class="drawer-body" id="drawerBody">
+      <!-- In-place CRUD Forms rendered dynamically by app.js -->
+    </div>
+  </aside>
+
+  <!-- GSAP Animation Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  
+  <!-- Offline Fallback Datasets -->
   <script src="data/developers.js"></script>
+  <script src="data/projects.js"></script>
+
+  <!-- Application Logic -->
   <script src="app.js"></script>
 </body>
 </html>

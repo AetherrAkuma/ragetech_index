@@ -1,950 +1,475 @@
-/**
- * RAGETECH.DEV — The 29 Builders Registry
- * Modular developer directory and repository showcase.
- * 
- * HOW TO ADD OR EDIT YOUR PROFILE:
- * 1. Clone the repo: git clone https://github.com/AetherrAkuma/ragetech_index.git
- * 2. Edit or add your object in the DEVELOPERS array below.
- * 3. Add your featured repo and flex stats (stars, language, topics, cloneUrl).
- * 4. Submit a Pull Request. Your profile will deploy automatically!
- */
+// ========================================================================
+// Ragetech Collective — Offline Developers Dataset
+// ========================================================================
 
-window.DEVELOPERS = [
+const rootScope = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
+rootScope.RAGETECH_DEVELOPERS = [
   {
-    id: 1,
-    handle: 'alexv',
-    name: 'Alex Vance',
-    squad: 'systems',
-    role: 'Lead Systems Architect',
-    status: '⚡ SIMD ring buffers in Hyperion',
-    location: 'Stockholm, SE (UTC+1)',
-    bio: 'Lock-free systems author. Specializing in Linux io_uring, AVX-512 SIMD pipelines, and microsecond telemetry runtimes.',
-    stack: ['Rust', 'io_uring', 'SIMD', 'Linux'],
-    ragetechProject: 'hyperion',
-    featuredRepo: {
-      name: 'alexv/fast-ringbuf',
-      tagline: 'Lock-free SPMC memory ring buffer with cache-line padded atomics and zero allocations.',
-      stars: 1840,
-      forks: 142,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/hyperion',
-      cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
-      topics: ['rust', 'ringbuffer', 'concurrency', 'simd']
-    },
-    secondaryRepos: [
-      { name: 'alexv/iouring-bench', stars: 420, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/hyperion' },
-      { name: 'alexv/cacheline-pad', stars: 215, language: 'C++', languageColor: '#f34b7d', url: 'https://github.com/ragetech/hyperion' }
-    ],
-    socials: {
-      github: 'https://github.com/alexv',
-      x: 'https://x.com/alexv_dev',
-      website: 'https://alexvance.dev'
-    },
-    gpgKey: '4A8B 91F0 C128 7E53'
+    id: "dev-01",
+    handle: "sora",
+    name: "Sora Takahashi",
+    email: "sora@ragetech.dev",
+    role: "Founding Systems Architect",
+    account_role: "admin",
+    squad: "systems",
+    bio: "Kernel hacker and asynchronous runtime designer. Formerly low-latency distributed systems research lead.",
+    avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://sora.systems",
+    github_url: "https://github.com/soratakahashi",
+    gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...SORA...==\n-----END PGP PUBLIC KEY BLOCK-----",
+    gpg_fingerprint: "8F4A 2B19 E03C 41FA 98E1",
+    is_verified: 1,
+    assigned_projects: ["aether-runtime"]
   },
   {
-    id: 2,
-    handle: 'elena',
-    name: 'Elena Rostova',
-    squad: 'systems',
-    role: 'Distributed Systems Lead',
-    status: '🟢 Multi-Raft v2 edge quorum',
-    location: 'Helsinki, FI (UTC+2)',
-    bio: 'Distributed storage author and consensus protocol researcher. Former maintainer of edge persistence engines.',
-    stack: ['Go', 'Raft', 'eBPF', 'RocksDB'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'elena/raft-ebpf',
-      tagline: 'Zero-copy socket pass-through for Raft heartbeat packets using Linux eBPF filters.',
-      stars: 2190,
-      forks: 188,
-      language: 'Go',
-      languageColor: '#00ADD8',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['go', 'raft', 'ebpf', 'consensus']
-    },
-    secondaryRepos: [
-      { name: 'elena/jepsen-edge-runner', stars: 512, language: 'Clojure', languageColor: '#db5855', url: 'https://github.com/ragetech/pulseos' },
-      { name: 'elena/lsm-wal-compact', stars: 340, language: 'Go', languageColor: '#00ADD8', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/elena-rostova',
-      x: 'https://x.com/elena_systems',
-      website: 'https://rostova.tech'
-    },
-    gpgKey: '9F1C 33A2 8B40 E511'
+    id: "dev-02",
+    handle: "marcus",
+    name: "Marcus Vance",
+    email: "marcus@ragetech.dev",
+    role: "Distributed Consensus Lead",
+    account_role: "lead",
+    squad: "edge",
+    bio: "Building deterministic raft consensus engines on NVMe and edge flash storage. Rust & Zig advocate.",
+    avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://marcusvance.io",
+    github_url: "https://github.com/marcusvance",
+    gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...MARCUS...==\n-----END PGP PUBLIC KEY BLOCK-----",
+    gpg_fingerprint: "1B7D 908E F24A C301 774D",
+    is_verified: 1,
+    assigned_projects: ["vortex-db"]
   },
   {
-    id: 3,
-    handle: 'mchen',
-    name: 'Marcus Chen',
-    squad: 'ai',
-    role: 'AI Systems Architect',
-    status: '🔥 vLLM batching kernels',
-    location: 'San Francisco, US (UTC-7)',
-    bio: 'High-throughput inference batching and cognitive agent runtime architect. Optimizing tensor memory layouts.',
-    stack: ['Python', 'CUDA', 'PyTorch', 'C++'],
-    ragetechProject: 'chimera',
-    featuredRepo: {
-      name: 'mchen/chimera-vllm',
-      tagline: 'Deterministic DAG executor for distributed multi-agent workflows with memory checkpoint rollback.',
-      stars: 3410,
-      forks: 312,
-      language: 'Python',
-      languageColor: '#3572A5',
-      url: 'https://github.com/ragetech/chimera',
-      cloneUrl: 'git clone https://github.com/ragetech/chimera.git',
-      topics: ['python', 'llm', 'agents', 'cuda']
-    },
-    secondaryRepos: [
-      { name: 'mchen/flash-atten-fp8', stars: 890, language: 'C++', languageColor: '#f34b7d', url: 'https://github.com/ragetech/chimera' },
-      { name: 'mchen/quant-weight-streamer', stars: 440, language: 'Python', languageColor: '#3572A5', url: 'https://github.com/ragetech/chimera' }
-    ],
-    socials: {
-      github: 'https://github.com/mchen-ai',
-      x: 'https://x.com/marcuschen_ai',
-      website: 'https://mchen.io'
-    },
-    gpgKey: '18D3 74B2 99CE 45A1'
+    id: "dev-03",
+    handle: "elena",
+    name: "Dr. Elena Rostova",
+    email: "elena@ragetech.dev",
+    role: "Compiler Infrastructure Lead",
+    account_role: "admin",
+    squad: "compilers",
+    bio: "PhD in Type Theory & SSA optimizations. Creator of optimizing vectorizers for WebAssembly micro-kernels.",
+    avatar_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://rostova.dev",
+    github_url: "https://github.com/erostova",
+    gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ELENA...==\n-----END PGP PUBLIC KEY BLOCK-----",
+    gpg_fingerprint: "3C99 4410 AB82 12E0 5519",
+    is_verified: 1,
+    assigned_projects: ["prism-compiler"]
   },
   {
-    id: 4,
-    handle: 'slindqvist',
-    name: 'Sofia Lindqvist',
-    squad: 'frontend',
-    role: 'Principal Interface Engineer',
-    status: '💎 Zero-runtime tokens & APCA',
-    location: 'Stockholm, SE (UTC+1)',
-    bio: 'Developer ergonomics, accessibility craft, and sub-millisecond interaction design for engineering tools.',
-    stack: ['TypeScript', 'WebGL', 'CSS Architecture'],
-    ragetechProject: 'eclipse',
-    featuredRepo: {
-      name: 'slindqvist/eclipse-tokens',
-      tagline: 'High-density design token architecture and headless primitives for developer-facing telemetry consoles.',
-      stars: 1280,
-      forks: 94,
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      url: 'https://github.com/ragetech/eclipse-ui',
-      cloneUrl: 'git clone https://github.com/ragetech/eclipse-ui.git',
-      topics: ['typescript', 'design-tokens', 'a11y', 'ui']
-    },
-    secondaryRepos: [
-      { name: 'slindqvist/apca-contrast-calc', stars: 620, language: 'TypeScript', languageColor: '#3178c6', url: 'https://github.com/ragetech/eclipse-ui' },
-      { name: 'slindqvist/canvas-sparkline-60fps', stars: 395, language: 'JavaScript', languageColor: '#f1e05a', url: 'https://github.com/ragetech/eclipse-ui' }
-    ],
-    socials: {
-      github: 'https://github.com/slindqvist',
-      x: 'https://x.com/sofialindqvist',
-      website: 'https://lindqvist.design'
-    },
-    gpgKey: '82C4 51E0 3B99 71DF'
+    id: "dev-04",
+    handle: "kai",
+    name: "Kai Thorne",
+    email: "kai@ragetech.dev",
+    role: "Cryptography & Zero-Knowledge Eng",
+    account_role: "lead",
+    squad: "security",
+    bio: "Formal verification researcher working on lattice-based cryptography, post-quantum protocols, and constant-time math.",
+    avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://kaithorne.net",
+    github_url: "https://github.com/kaithorne",
+    gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...KAI...==\n-----END PGP PUBLIC KEY BLOCK-----",
+    gpg_fingerprint: "99E2 710F D415 67B9 AA33",
+    is_verified: 1,
+    assigned_projects: ["cipher-vault"]
   },
   {
-    id: 5,
-    handle: 'tariqm',
-    name: 'Tariq Al-Mansoor',
-    squad: 'systems',
-    role: 'Storage Engine Engineer',
-    status: '⚡ NVMe direct-I/O compactor',
-    location: 'Dubai, AE (UTC+4)',
-    bio: 'NVMe write optimization, LSM tree compactions, and memory-mapped persistence at the storage tier.',
-    stack: ['C++', 'Rust', 'RocksDB', 'NVMe'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'tariqm/lsm-nvme-flush',
-      tagline: 'High-throughput append-only log engine tuned for sub-millisecond NVMe SSD flushes.',
-      stars: 1140,
-      forks: 82,
-      language: 'C++',
-      languageColor: '#f34b7d',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['cpp', 'lsm-tree', 'nvme', 'storage']
-    },
-    secondaryRepos: [
-      { name: 'tariqm/direct-io-rust', stars: 280, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/tariq-mansoor',
-      x: 'https://x.com/tariq_systems',
-      website: 'https://almansoor.dev'
-    },
-    gpgKey: '67F1 2309 BA88 12C3'
+    id: "dev-05",
+    handle: "zara",
+    name: "Zara Chen",
+    email: "zara@ragetech.dev",
+    role: "Edge Transport Engineer",
+    account_role: "developer",
+    squad: "edge",
+    bio: "QUIC packet scheduler tuning and congestion control algorithms for multi-homed edge points of presence.",
+    avatar_url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://zarachen.dev",
+    github_url: "https://github.com/zarachen",
+    gpg_fingerprint: "A481 CE02 8139 F521 3C77",
+    is_verified: 1,
+    assigned_projects: ["nexus-protocol"]
   },
   {
-    id: 6,
-    handle: 'fhansen',
-    name: 'Freja Hansen',
-    squad: 'security',
-    role: 'Security & Cryptography Lead',
-    status: '🛡️ Curve25519 formal verification',
-    location: 'Copenhagen, DK (UTC+1)',
-    bio: 'Cryptographic guarantees, zero-knowledge proofs, and automated protocol fuzzing across core runtimes.',
-    stack: ['Rust', 'TLS', 'Formal Verification', 'WASM'],
-    ragetechProject: 'aether',
-    featuredRepo: {
-      name: 'fhansen/curve25519-wasm',
-      tagline: 'Formally verified Curve25519 ECDH implementation compiled to WebAssembly with constant-time guarantees.',
-      stars: 1620,
-      forks: 135,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/aether',
-      cloneUrl: 'git clone https://github.com/ragetech/aether.git',
-      topics: ['rust', 'cryptography', 'wasm', 'security']
-    },
-    secondaryRepos: [
-      { name: 'fhansen/fuzz-protocol-harness', stars: 410, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/aether' }
-    ],
-    socials: {
-      github: 'https://github.com/freja-hansen',
-      x: 'https://x.com/freja_sec',
-      website: 'https://frejahansen.io'
-    },
-    gpgKey: 'B489 01C2 FE78 923A'
+    id: "dev-06",
+    handle: "devon",
+    name: "Devon Miller",
+    email: "devon@ragetech.dev",
+    role: "Storage Engine Architect",
+    account_role: "developer",
+    squad: "systems",
+    bio: "LSM-tree compaction strategies and zero-copy io_uring pipelining across Linux and FreeBSD kernels.",
+    avatar_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://devonmiller.io",
+    github_url: "https://github.com/devonmiller",
+    gpg_fingerprint: "5510 8829 F41C 73B0 EA91",
+    is_verified: 1,
+    assigned_projects: ["vortex-db"]
   },
   {
-    id: 7,
-    handle: 'liamo',
-    name: "Liam O'Connor",
-    squad: 'systems',
-    role: 'Pipeline Engineer',
-    status: '⏱️ 10us timer wheel tick',
-    location: 'Dublin, IE (UTC+0)',
-    bio: 'Microsecond dispatchers, lock-free timer queues, and streaming pipelines with zero memory bloat.',
-    stack: ['Rust', 'Kafka', 'Tokio', 'WASM'],
-    ragetechProject: 'vortex',
-    featuredRepo: {
-      name: 'liamo/vortex-wheel',
-      tagline: 'Hierarchical timing wheels handling 10M concurrent timers with sub-millisecond precision.',
-      stars: 1560,
-      forks: 130,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/vortex',
-      cloneUrl: 'git clone https://github.com/ragetech/vortex.git',
-      topics: ['rust', 'timer-wheel', 'scheduler', 'tokio']
-    },
-    secondaryRepos: [
-      { name: 'liamo/tokio-priority-ring', stars: 380, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/vortex' }
-    ],
-    socials: {
-      github: 'https://github.com/liam-oconnor',
-      x: 'https://x.com/liam_pipeline',
-      website: 'https://oconnor.systems'
-    },
-    gpgKey: '298C D011 4452 BE98'
+    id: "dev-07",
+    handle: "ananya",
+    name: "Ananya Patel",
+    email: "ananya@ragetech.dev",
+    role: "WASM Runtime Specialist",
+    account_role: "developer",
+    squad: "compilers",
+    bio: "Wasmtime contributor and component model toolchain architect for embedded deterministic runtimes.",
+    avatar_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://ananyapatel.dev",
+    github_url: "https://github.com/ananyapatel",
+    gpg_fingerprint: "77D2 990A 1154 F399 CD04",
+    is_verified: 1,
+    assigned_projects: ["aether-runtime"]
   },
   {
-    id: 8,
-    handle: 'mpatel',
-    name: 'Maya Patel',
-    squad: 'systems',
-    role: 'Network Protocols Specialist',
-    status: '🌐 WebRTC hole punching mesh',
-    location: 'London, UK (UTC+0)',
-    bio: 'Peer-to-peer routing, hole punching, distributed hash tables, and symmetric NAT traversal.',
-    stack: ['Go', 'QUIC', 'libp2p', 'Rust'],
-    ragetechProject: 'aether',
-    featuredRepo: {
-      name: 'mpatel/quic-holepunch',
-      tagline: 'Universal STUN/TURN bypass daemon achieving 94% direct peer connection rates over restrictive NATs.',
-      stars: 2040,
-      forks: 165,
-      language: 'Go',
-      languageColor: '#00ADD8',
-      url: 'https://github.com/ragetech/aether',
-      cloneUrl: 'git clone https://github.com/ragetech/aether.git',
-      topics: ['go', 'p2p', 'quic', 'nat-traversal']
-    },
-    secondaryRepos: [
-      { name: 'mpatel/dht-kademlia-sim', stars: 490, language: 'Go', languageColor: '#00ADD8', url: 'https://github.com/ragetech/aether' }
-    ],
-    socials: {
-      github: 'https://github.com/maya-patel',
-      x: 'https://x.com/mayapatel_net',
-      website: 'https://mayapatel.dev'
-    },
-    gpgKey: '7D02 5591 E34C 9081'
+    id: "dev-08",
+    handle: "lucas",
+    name: "Lucas Lindqvist",
+    email: "lucas@ragetech.dev",
+    role: "P2P Overlay & Mesh Eng",
+    account_role: "developer",
+    squad: "edge",
+    bio: "Gossip protocols, Kademlia routing tables, and zero-trust WireGuard mesh overlays.",
+    avatar_url: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://lucasl.org",
+    github_url: "https://github.com/lucaslindqvist",
+    gpg_fingerprint: "22A1 65FE D091 8847 4410",
+    is_verified: 1,
+    assigned_projects: ["hyperion-mesh"]
   },
   {
-    id: 9,
-    handle: 'htanaka',
-    name: 'Hiroshi Tanaka',
-    squad: 'security',
-    role: 'Kernel & MicroVM Engineer',
-    status: '⚡ 12ms Firecracker boot',
-    location: 'Tokyo, JP (UTC+9)',
-    bio: 'Firecracker virtualization, KVM isolation, and secure seccomp containment for untrusted workloads.',
-    stack: ['C', 'Linux Kernel', 'KVM', 'Rust'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'htanaka/microvm-jail',
-      tagline: 'Lightweight microVM sandbox runner with 12ms cold boot times and locked down seccomp-BPF filters.',
-      stars: 1720,
-      forks: 140,
-      language: 'C',
-      languageColor: '#555555',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['c', 'kvm', 'firecracker', 'kernel']
-    },
-    secondaryRepos: [
-      { name: 'htanaka/vsock-bridge', stars: 360, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/htanaka-kernel',
-      x: 'https://x.com/tanaka_kernel',
-      website: 'https://htanaka.jp'
-    },
-    gpgKey: '55E9 4481 0A77 3D21'
+    id: "dev-09",
+    handle: "maya",
+    name: "Maya Lin",
+    email: "maya@ragetech.dev",
+    role: "Security Operations & Auditing",
+    account_role: "developer",
+    squad: "security",
+    bio: "Static analysis, fuzz testing with libFuzzer and AFL++, binary exploitation mitigation.",
+    avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://mayalin.security",
+    github_url: "https://github.com/mayalin-sec",
+    gpg_fingerprint: "8841 BC90 EF12 3014 9922",
+    is_verified: 1,
+    assigned_projects: ["cipher-vault"]
   },
   {
-    id: 10,
-    handle: 'cdubois',
-    name: 'Chloe Dubois',
-    squad: 'frontend',
-    role: 'Creative Technologist',
-    status: '🎨 GLSL compute & mesh shaders',
-    location: 'Paris, FR (UTC+1)',
-    bio: 'Bespoke dark-mode shaders, GPU-accelerated interface primitives, and high-frequency telemetry visualizers.',
-    stack: ['Three.js', 'GLSL', 'WebGPU', 'TypeScript'],
-    ragetechProject: 'eclipse',
-    featuredRepo: {
-      name: 'cdubois/glsl-telemetry-grid',
-      tagline: 'Zero-overhead WebGPU shader graph rendering 1,000,000 telemetry points at 120 FPS in browser.',
-      stars: 1390,
-      forks: 112,
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      url: 'https://github.com/ragetech/eclipse-ui',
-      cloneUrl: 'git clone https://github.com/ragetech/eclipse-ui.git',
-      topics: ['webgpu', 'glsl', 'telemetry', 'dataviz']
-    },
-    secondaryRepos: [
-      { name: 'cdubois/dusk-shader-materials', stars: 540, language: 'GLSL', languageColor: '#5686a5', url: 'https://github.com/ragetech/eclipse-ui' }
-    ],
-    socials: {
-      github: 'https://github.com/chloe-dubois',
-      x: 'https://x.com/chloedubois_fx',
-      website: 'https://dubois.art'
-    },
-    gpgKey: 'C104 99F2 331E 7B02'
+    id: "dev-10",
+    handle: "nikolai",
+    name: "Nikolai Volkov",
+    email: "nikolai@ragetech.dev",
+    role: "Low-level Networking Specialist",
+    account_role: "developer",
+    squad: "systems",
+    bio: "eBPF / XDP packet filtering at 100Gbps line rate. Kernel bypass with DPDK and AF_XDP.",
+    avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://nikolaiv.dev",
+    github_url: "https://github.com/nikolaiv",
+    gpg_fingerprint: "4410 77E2 1109 AA82 B501",
+    is_verified: 1,
+    assigned_projects: ["hyperion-mesh"]
   },
   {
-    id: 11,
-    handle: 'dkovacs',
-    name: 'David Kovacs',
-    squad: 'systems',
-    role: 'Low-Latency IPC Engineer',
-    status: '⚡ Zero-copy IPC bus',
-    location: 'Budapest, HU (UTC+1)',
-    bio: 'CPU cache line alignment, shared memory rings, and ultra-fast inter-process communication.',
-    stack: ['C++', 'Shared Memory', 'IPC', 'Linux'],
-    ragetechProject: 'hyperion',
-    featuredRepo: {
-      name: 'dkovacs/shm-bus-x86',
-      tagline: 'Sub-40-nanosecond inter-process message bus via shared POSIX memory and atomic futexes.',
-      stars: 1290,
-      forks: 98,
-      language: 'C++',
-      languageColor: '#f34b7d',
-      url: 'https://github.com/ragetech/hyperion',
-      cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
-      topics: ['cpp', 'ipc', 'shared-memory', 'perf']
-    },
-    secondaryRepos: [
-      { name: 'dkovacs/cache-bench-linux', stars: 310, language: 'C', languageColor: '#555555', url: 'https://github.com/ragetech/hyperion' }
-    ],
-    socials: {
-      github: 'https://github.com/david-kovacs',
-      x: 'https://x.com/kovacs_ipc',
-      website: 'https://kovacs.tech'
-    },
-    gpgKey: '7721 A098 C43E 15B9'
+    id: "dev-11",
+    handle: "chloe",
+    name: "Chloe Dupont",
+    email: "chloe@ragetech.dev",
+    role: "Interface Systems Designer",
+    account_role: "developer",
+    squad: "systems",
+    bio: "Human interface engineer crafting low-latency developer UX, terminal renderers, and design tokens.",
+    avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://chloedupont.design",
+    github_url: "https://github.com/chloedupont",
+    gpg_fingerprint: "9102 4477 3311 BB20 EE45",
+    is_verified: 1,
+    assigned_projects: ["nexus-protocol"]
   },
   {
-    id: 12,
-    handle: 'nnour',
-    name: 'Nadia Nour',
-    squad: 'systems',
-    role: 'Consensus Verification Specialist',
-    status: '🔍 TLA+ formal spec verified',
-    location: 'Cairo, EG (UTC+2)',
-    bio: 'Formal validation of edge consensus states under Byzantine network partitions and sporadic disconnects.',
-    stack: ['TLA+', 'Rust', 'Paxos', 'Raft'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'nnour/tla-edge-consensus',
-      tagline: 'Formal mathematical verification models for edge-partitioned state machines using TLA+ and TLC.',
-      stars: 980,
-      forks: 67,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['tla-plus', 'formal-verification', 'consensus', 'rust']
-    },
-    secondaryRepos: [
-      { name: 'nnour/paxos-edge-runner', stars: 270, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/nadia-nour',
-      x: 'https://x.com/nadianour_cs',
-      website: 'https://nadianour.com'
-    },
-    gpgKey: '603A E891 22FB 883D'
+    id: "dev-12",
+    handle: "tariq",
+    name: "Tariq Al-Mansoor",
+    email: "tariq@ragetech.dev",
+    role: "Database Internals Engineer",
+    account_role: "developer",
+    squad: "systems",
+    bio: "Write-ahead log replication, multi-version concurrency control (MVCC), and snapshot isolation.",
+    avatar_url: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://tariqmansoor.io",
+    github_url: "https://github.com/tariqmansoor",
+    gpg_fingerprint: "66E1 2290 88FA 1144 0092",
+    is_verified: 1,
+    assigned_projects: ["vortex-db"]
   },
   {
-    id: 13,
-    handle: 'lsilva',
-    name: 'Lucas Silva',
-    squad: 'ai',
-    role: 'Agent Runtime Developer',
-    status: '🤖 Asynchronous DAG scheduler',
-    location: 'São Paulo, BR (UTC-3)',
-    bio: 'Deterministic execution graphs, cognitive state checkpoints, and autonomous workflow routing.',
-    stack: ['Python', 'AsyncIO', 'Vector DB', 'gRPC'],
-    ragetechProject: 'chimera',
-    featuredRepo: {
-      name: 'lsilva/dag-flow-async',
-      tagline: 'Lightweight asynchronous execution graph kernel designed for stateful multi-agent workflows.',
-      stars: 1870,
-      forks: 154,
-      language: 'Python',
-      languageColor: '#3572A5',
-      url: 'https://github.com/ragetech/chimera',
-      cloneUrl: 'git clone https://github.com/ragetech/chimera.git',
-      topics: ['python', 'asyncio', 'dag', 'agents']
-    },
-    secondaryRepos: [
-      { name: 'lsilva/memory-embed-cache', stars: 520, language: 'Python', languageColor: '#3572A5', url: 'https://github.com/ragetech/chimera' }
-    ],
-    socials: {
-      github: 'https://github.com/lucas-silva',
-      x: 'https://x.com/lucassilvadev',
-      website: 'https://silva.codes'
-    },
-    gpgKey: '109B 44E2 C771 90A2'
+    id: "dev-13",
+    handle: "freja",
+    name: "Freja Nielsen",
+    email: "freja@ragetech.dev",
+    role: "JIT Engine Developer",
+    account_role: "developer",
+    squad: "compilers",
+    bio: "Instruction scheduling and tier-2 JIT optimizing compilers for arm64 and x86_64 targets.",
+    avatar_url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://frejanielsen.dk",
+    github_url: "https://github.com/frejanielsen",
+    gpg_fingerprint: "33B0 9944 7711 CC82 5501",
+    is_verified: 1,
+    assigned_projects: ["prism-compiler"]
   },
   {
-    id: 14,
-    handle: 'aivanova',
-    name: 'Anya Ivanova',
-    squad: 'security',
-    role: 'Compiler & Static Analysis Dev',
-    status: '🛡️ LLVM taint analysis passes',
-    location: 'Prague, CZ (UTC+1)',
-    bio: 'Taint analysis algorithms, custom LLVM compiler passes, and compile-time supply chain validation.',
-    stack: ['Rust', 'LLVM', 'AST Parsing', 'C++'],
-    ragetechProject: 'hyperion',
-    featuredRepo: {
-      name: 'aivanova/llvm-taint-flow',
-      tagline: 'Automated compile-time information flow control and buffer-overflow static analysis pass for LLVM.',
-      stars: 1450,
-      forks: 110,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/hyperion',
-      cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
-      topics: ['llvm', 'compiler', 'static-analysis', 'rust']
-    },
-    secondaryRepos: [
-      { name: 'aivanova/cargo-audit-deep', stars: 430, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/hyperion' }
-    ],
-    socials: {
-      github: 'https://github.com/anya-ivanova',
-      x: 'https://x.com/anya_compiler',
-      website: 'https://ivanova.io'
-    },
-    gpgKey: '8910 F722 00BC 3341'
+    id: "dev-14",
+    handle: "julian",
+    name: "Julian Ward",
+    email: "julian@ragetech.dev",
+    role: "Formal Methods Engineer",
+    account_role: "developer",
+    squad: "security",
+    bio: "TLA+ specifications and automated model checking for distributed edge consensus protocols.",
+    avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://julianward.tech",
+    github_url: "https://github.com/julianward",
+    gpg_fingerprint: "EE41 8820 1199 DD45 7710",
+    is_verified: 1,
+    assigned_projects: ["cipher-vault"]
   },
   {
-    id: 15,
-    handle: 'skim',
-    name: 'Samuel Kim',
-    squad: 'systems',
-    role: 'WebAssembly Specialist',
-    status: '⚡ WASI sandbox micro-tasks',
-    location: 'Seoul, KR (UTC+9)',
-    bio: 'Compiling edge tasks to isolated WebAssembly instances. Zero cold start, deterministic memory execution.',
-    stack: ['WASM', 'WASI', 'Rust', 'Wasmtime'],
-    ragetechProject: 'vortex',
-    featuredRepo: {
-      name: 'skim/wasm-cron-runtime',
-      tagline: 'Sub-millisecond Wasmtime execution runner hosting 1,000 isolated guest tasks per worker node.',
-      stars: 1670,
-      forks: 138,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/vortex',
-      cloneUrl: 'git clone https://github.com/ragetech/vortex.git',
-      topics: ['wasm', 'wasi', 'rust', 'wasmtime']
-    },
-    secondaryRepos: [
-      { name: 'skim/wasi-socket-shim', stars: 390, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/vortex' }
-    ],
-    socials: {
-      github: 'https://github.com/samuel-kim',
-      x: 'https://x.com/samuelkim_dev',
-      website: 'https://skim.kr'
-    },
-    gpgKey: '445A 90FE 23B8 6612'
+    id: "dev-15",
+    handle: "hana",
+    name: "Hana Kim",
+    email: "hana@ragetech.dev",
+    role: "Edge Observability Architect",
+    account_role: "developer",
+    squad: "edge",
+    bio: "High-cardinality distributed tracing, eBPF metrics collection, and OpenTelemetry instrumentation.",
+    avatar_url: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://hanakim.kr",
+    github_url: "https://github.com/hanakim-edge",
+    gpg_fingerprint: "7711 0022 44AA EE99 8831",
+    is_verified: 1,
+    assigned_projects: ["nexus-protocol"]
   },
   {
-    id: 16,
-    handle: 'zmorales',
-    name: 'Zara Morales',
-    squad: 'frontend',
-    role: 'CRDT & Sync Engineer',
-    status: '🔄 Automerge state convergence',
-    location: 'Barcelona, ES (UTC+1)',
-    bio: 'Local-first synchronization algorithms, offline CRDT conflict resolution, and real-time state trees.',
-    stack: ['TypeScript', 'Automerge', 'WebSockets', 'Rust'],
-    ragetechProject: 'aether',
-    featuredRepo: {
-      name: 'zmorales/automerge-webrtc',
-      tagline: 'Zero-cloud collaborative state engine combining Automerge CRDTs with peer-to-peer data channels.',
-      stars: 2110,
-      forks: 172,
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      url: 'https://github.com/ragetech/aether',
-      cloneUrl: 'git clone https://github.com/ragetech/aether.git',
-      topics: ['crdt', 'automerge', 'local-first', 'webrtc']
-    },
-    secondaryRepos: [
-      { name: 'zmorales/crdt-visualizer', stars: 610, language: 'TypeScript', languageColor: '#3178c6', url: 'https://github.com/ragetech/aether' }
-    ],
-    socials: {
-      github: 'https://github.com/zara-morales',
-      x: 'https://x.com/zaramorales_dev',
-      website: 'https://morales.tech'
-    },
-    gpgKey: 'D018 732B AA54 1109'
+    id: "dev-16",
+    handle: "mateo",
+    name: "Mateo Silva",
+    email: "mateo@ragetech.dev",
+    role: "Concurrent Memory Systems",
+    account_role: "developer",
+    squad: "systems",
+    bio: "Lock-free algorithms, hazard pointers, epoch-based reclamation, and cache-coherent ring buffers.",
+    avatar_url: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://mateosilva.dev",
+    github_url: "https://github.com/mateosilva",
+    gpg_fingerprint: "5522 9911 33CC 77EE 4400",
+    is_verified: 1,
+    assigned_projects: ["aether-runtime"]
   },
   {
-    id: 17,
-    handle: 'jbecker',
-    name: 'Julian Becker',
-    squad: 'security',
-    role: 'Infrastructure Automation Dev',
-    status: '📦 NixOS hermetic edge nodes',
-    location: 'Berlin, DE (UTC+1)',
-    bio: 'Reproducible hermetic deployments across bare-metal server fleets using NixOS and Terraform.',
-    stack: ['NixOS', 'Terraform', 'Bare-Metal', 'Rust'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'jbecker/nix-edge-fleet',
-      tagline: 'Hermetic, cryptographically verified NixOS declarative configurations for edge server clusters.',
-      stars: 1320,
-      forks: 104,
-      language: 'Nix',
-      languageColor: '#7e7eff',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['nix', 'nixos', 'devops', 'bare-metal']
-    },
-    secondaryRepos: [
-      { name: 'jbecker/wireguard-mesh-gen', stars: 450, language: 'Go', languageColor: '#00ADD8', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/julian-becker',
-      x: 'https://x.com/becker_infra',
-      website: 'https://jbecker.de'
-    },
-    gpgKey: '992C 114F BC80 54A0'
+    id: "dev-17",
+    handle: "inga",
+    name: "Inga Lindqvist",
+    email: "inga@ragetech.dev",
+    role: "Kernel VMM Engineer",
+    account_role: "developer",
+    squad: "systems",
+    bio: "MicroVM isolation via KVM and Cloud Hypervisor. Deterministic startup latency under 4ms.",
+    avatar_url: "https://images.unsplash.com/photo-1534751516642-a171edd26cb0?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://ingalind.se",
+    github_url: "https://github.com/ingalind",
+    gpg_fingerprint: "1100 4488 99FF 2211 EE33",
+    is_verified: 1,
+    assigned_projects: ["aether-runtime"]
   },
   {
-    id: 18,
-    handle: 'psharma',
-    name: 'Priya Sharma',
-    squad: 'ai',
-    role: 'GPU Acceleration Engineer',
-    status: '⚡ Custom FP8 TensorRT kernels',
-    location: 'Bangalore, IN (UTC+5:30)',
-    bio: 'Writing custom CUDA kernels to minimize transformer attention latency on edge NVIDIA GPUs.',
-    stack: ['CUDA', 'C++', 'TensorRT', 'PyTorch'],
-    ragetechProject: 'chimera',
-    featuredRepo: {
-      name: 'psharma/cuda-flash-fp8',
-      tagline: 'Hand-optimized CUDA kernels for quantized transformer attention operating on Tensor Core architectures.',
-      stars: 2890,
-      forks: 245,
-      language: 'CUDA',
-      languageColor: '#3B9C9C',
-      url: 'https://github.com/ragetech/chimera',
-      cloneUrl: 'git clone https://github.com/ragetech/chimera.git',
-      topics: ['cuda', 'gpu', 'deep-learning', 'tensorrt']
-    },
-    secondaryRepos: [
-      { name: 'psharma/warp-shuffle-primitives', stars: 740, language: 'C++', languageColor: '#f34b7d', url: 'https://github.com/ragetech/chimera' }
-    ],
-    socials: {
-      github: 'https://github.com/priya-sharma',
-      x: 'https://x.com/priya_cuda',
-      website: 'https://sharma.ai'
-    },
-    gpgKey: '66F3 44A1 89DE 0122'
+    id: "dev-18",
+    handle: "samir",
+    name: "Samir Kulkarni",
+    email: "samir@ragetech.dev",
+    role: "Distributed RPC Specialist",
+    account_role: "developer",
+    squad: "edge",
+    bio: "FlatBuffers schema evolution and zero-allocation binary serialization over stream sockets.",
+    avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://samirk.io",
+    github_url: "https://github.com/samirkulkarni",
+    gpg_fingerprint: "AA99 1100 5544 CC33 7722",
+    is_verified: 1,
+    assigned_projects: ["nexus-protocol"]
   },
   {
-    id: 19,
-    handle: 'owright',
-    name: 'Oliver Wright',
-    squad: 'systems',
-    role: 'Observability Specialist',
-    status: '📊 eBPF probe zero overhead',
-    location: 'Toronto, CA (UTC-4)',
-    bio: 'Low-overhead profiling hooks, kernel tracepoints, and real-time distributed tracing without bytecode rewrites.',
-    stack: ['eBPF', 'OpenTelemetry', 'Rust', 'Linux'],
-    ragetechProject: 'hyperion',
-    featuredRepo: {
-      name: 'owright/ebpf-trace-zero',
-      tagline: 'Kernel probe telemetry daemon sampling microsecond process transitions with under 0.1% CPU tax.',
-      stars: 1540,
-      forks: 118,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/hyperion',
-      cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
-      topics: ['ebpf', 'tracing', 'observability', 'rust']
-    },
-    secondaryRepos: [
-      { name: 'owright/otel-fast-exporter', stars: 390, language: 'Go', languageColor: '#00ADD8', url: 'https://github.com/ragetech/hyperion' }
-    ],
-    socials: {
-      github: 'https://github.com/oliver-wright',
-      x: 'https://x.com/oliver_ebpf',
-      website: 'https://owright.ca'
-    },
-    gpgKey: '5177 33D0 F189 CC45'
+    id: "dev-19",
+    handle: "astrid",
+    name: "Astrid Blom",
+    email: "astrid@ragetech.dev",
+    role: "SSA Optimizer Developer",
+    account_role: "developer",
+    squad: "compilers",
+    bio: "Loop invariant code motion, polyhedral loop transformations, and dead code elimination passes.",
+    avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://astridblom.dev",
+    github_url: "https://github.com/astridblom",
+    gpg_fingerprint: "CC77 4411 9900 22BB EE11",
+    is_verified: 1,
+    assigned_projects: ["prism-compiler"]
   },
   {
-    id: 20,
-    handle: 'mtakahashi',
-    name: 'Mia Takahashi',
-    squad: 'frontend',
-    role: 'Design Systems Architect',
-    status: '📐 Focus optics & WCAG AAA',
-    location: 'Kyoto, JP (UTC+9)',
-    bio: 'Micro-interactions, focus state optics, high-contrast dark modes, and developer tool ergonomics.',
-    stack: ['CSS Architecture', 'Figma', 'TypeScript', 'A11y'],
-    ragetechProject: 'eclipse',
-    featuredRepo: {
-      name: 'mtakahashi/focus-ring-optics',
-      tagline: 'Mathematical model and CSS engine for concentric, optically balanced focus states across nested surfaces.',
-      stars: 1120,
-      forks: 85,
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      url: 'https://github.com/ragetech/eclipse-ui',
-      cloneUrl: 'git clone https://github.com/ragetech/eclipse-ui.git',
-      topics: ['css', 'a11y', 'design-system', 'ui']
-    },
-    secondaryRepos: [
-      { name: 'mtakahashi/terminal-palette-gen', stars: 490, language: 'TypeScript', languageColor: '#3178c6', url: 'https://github.com/ragetech/eclipse-ui' }
-    ],
-    socials: {
-      github: 'https://github.com/mia-takahashi',
-      x: 'https://x.com/miatakahashi_ui',
-      website: 'https://takahashi.design'
-    },
-    gpgKey: '33A0 99DF 1150 48B1'
+    id: "dev-20",
+    handle: "darius",
+    name: "Darius Reed",
+    email: "darius@ragetech.dev",
+    role: "Key Exchange Protocol Eng",
+    account_role: "developer",
+    squad: "security",
+    bio: "Threshold signature schemes, BLS multi-signatures, and verifiable random functions (VRF).",
+    avatar_url: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://dariusreed.org",
+    github_url: "https://github.com/dariusreed",
+    gpg_fingerprint: "8833 2211 44EE 9900 11AA",
+    is_verified: 1,
+    assigned_projects: ["cipher-vault"]
   },
   {
-    id: 21,
-    handle: 'gsantos',
-    name: 'Gabriel Santos',
-    squad: 'systems',
-    role: 'Memory Internals Specialist',
-    status: '🧹 Eliminating GC pauses in Go',
-    location: 'Lisbon, PT (UTC+0)',
-    bio: 'Custom jemalloc allocators, zero-allocation Go routines, and eliminating garbage collection latency.',
-    stack: ['Go Runtime', 'jemalloc', 'C', 'Linux'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'gsantos/go-zero-alloc',
-      tagline: 'Static analysis and memory pool patterns to eliminate heap escapes in latency-critical Go services.',
-      stars: 1480,
-      forks: 122,
-      language: 'Go',
-      languageColor: '#00ADD8',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['go', 'memory', 'performance', 'allocator']
-    },
-    secondaryRepos: [
-      { name: 'gsantos/jemalloc-go-shim', stars: 320, language: 'C', languageColor: '#555555', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/gabriel-santos',
-      x: 'https://x.com/gsantos_systems',
-      website: 'https://santos.pt'
-    },
-    gpgKey: 'AA29 4410 E888 7721'
+    id: "dev-21",
+    handle: "clara",
+    name: "Clara Hoffmann",
+    email: "clara@ragetech.dev",
+    role: "Edge Storage Optimizer",
+    account_role: "developer",
+    squad: "edge",
+    bio: "CRDT implementations for multi-master SQLite databases and delta-state sync over WebSocket.",
+    avatar_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://clarahoffmann.de",
+    github_url: "https://github.com/clarahoffmann",
+    gpg_fingerprint: "33AA 7788 1122 FF44 9900",
+    is_verified: 1,
+    assigned_projects: ["vortex-db"]
   },
   {
-    id: 22,
-    handle: 'lhaddad',
-    name: 'Leila Haddad',
-    squad: 'security',
-    role: 'Offensive Security Researcher',
-    status: '🛡️ AFL++ protocol fuzzing harness',
-    location: 'Tunis, TN (UTC+1)',
-    bio: 'Simulating adversarial edge attacks, memory corruption exploits, and hardened sandboxing.',
-    stack: ['AFL++', 'Fuzzing', 'Reverse Eng', 'Rust'],
-    ragetechProject: 'aether',
-    featuredRepo: {
-      name: 'lhaddad/afl-network-fuzz',
-      tagline: 'Automated differential fuzzing harness for network daemons with state machine state exploration.',
-      stars: 1390,
-      forks: 114,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/aether',
-      cloneUrl: 'git clone https://github.com/ragetech/aether.git',
-      topics: ['fuzzing', 'security', 'rust', 'afl']
-    },
-    secondaryRepos: [
-      { name: 'lhaddad/webrtc-fuzz-suite', stars: 410, language: 'C++', languageColor: '#f34b7d', url: 'https://github.com/ragetech/aether' }
-    ],
-    socials: {
-      github: 'https://github.com/leila-haddad',
-      x: 'https://x.com/leilahaddad_sec',
-      website: 'https://haddad.security'
-    },
-    gpgKey: '90EE 7714 5530 AB99'
+    id: "dev-22",
+    handle: "liam",
+    name: "Liam Gallagher",
+    email: "liam@ragetech.dev",
+    role: "Systems Tooling Developer",
+    account_role: "developer",
+    squad: "systems",
+    bio: "Developer CLI tooling, terminal telemetry visualizers, and hermetic build system integration.",
+    avatar_url: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://liamg.sh",
+    github_url: "https://github.com/liamgallagher",
+    gpg_fingerprint: "55FF 1100 4422 99AA 7733",
+    is_verified: 1,
+    assigned_projects: ["hyperion-mesh"]
   },
   {
-    id: 23,
-    handle: 'vnovak',
-    name: 'Viktor Novak',
-    squad: 'systems',
-    role: 'Async Runtimes Developer',
-    status: '⚡ Work-stealing queue optimization',
-    location: 'Vienna, AT (UTC+1)',
-    bio: 'Work-stealing schedulers, cross-thread synchronization, and timer wheel precision optimization.',
-    stack: ['Rust', 'Tokio Internals', 'Priority Queues'],
-    ragetechProject: 'vortex',
-    featuredRepo: {
-      name: 'vnovak/work-steal-ring',
-      tagline: 'High-throughput lock-free work-stealing deque with Chase-Lev algorithm optimizations for multi-core CPUs.',
-      stars: 1240,
-      forks: 91,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/vortex',
-      cloneUrl: 'git clone https://github.com/ragetech/vortex.git',
-      topics: ['rust', 'concurrency', 'work-stealing', 'scheduler']
-    },
-    secondaryRepos: [
-      { name: 'vnovak/tokio-flamegraph', stars: 360, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/vortex' }
-    ],
-    socials: {
-      github: 'https://github.com/viktor-novak',
-      x: 'https://x.com/viktornovak_at',
-      website: 'https://novak.at'
-    },
-    gpgKey: '7412 CC09 EE55 198B'
+    id: "dev-23",
+    handle: "nadia",
+    name: "Nadia Belkacem",
+    email: "nadia@ragetech.dev",
+    role: "Vectorized Query Internals",
+    account_role: "developer",
+    squad: "systems",
+    bio: "SIMD query execution for analytical workloads, Arrow column layout, and dictionary encoding.",
+    avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://nadiabelkacem.com",
+    github_url: "https://github.com/nadiabelkacem",
+    gpg_fingerprint: "7722 0011 8899 EE44 33BB",
+    is_verified: 1,
+    assigned_projects: ["nexus-protocol"]
   },
   {
-    id: 24,
-    handle: 'ewatson',
-    name: 'Emily Watson',
-    squad: 'systems',
-    role: 'Mesh Network Engineer',
-    status: '🕸️ GossipSub mesh topology',
-    location: 'Melbourne, AU (UTC+10)',
-    bio: 'Decentralized gossip protocols, peer discovery topologies, and dynamic network routing algorithms.',
-    stack: ['libp2p', 'GossipSub', 'Go', 'Rust'],
-    ragetechProject: 'aether',
-    featuredRepo: {
-      name: 'ewatson/gossip-mesh-sim',
-      tagline: 'High-fidelity network simulator modeling 10,000 P2P nodes broadcasting under sporadic packet drops.',
-      stars: 1610,
-      forks: 128,
-      language: 'Go',
-      languageColor: '#00ADD8',
-      url: 'https://github.com/ragetech/aether',
-      cloneUrl: 'git clone https://github.com/ragetech/aether.git',
-      topics: ['p2p', 'gossipsub', 'libp2p', 'go']
-    },
-    secondaryRepos: [
-      { name: 'ewatson/kad-routing-table', stars: 430, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/aether' }
-    ],
-    socials: {
-      github: 'https://github.com/emily-watson',
-      x: 'https://x.com/emily_mesh',
-      website: 'https://ewatson.dev'
-    },
-    gpgKey: '883C 119A 44DE 5501'
+    id: "dev-24",
+    handle: "oscar",
+    name: "Oscar Berg",
+    email: "oscar@ragetech.dev",
+    role: "Linker & Binary Format Eng",
+    account_role: "developer",
+    squad: "compilers",
+    bio: "ELF/Mach-O/wasm linker optimizations, split debug info, and symbol deduplication engines.",
+    avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://oscarberg.dev",
+    github_url: "https://github.com/oscarberg",
+    gpg_fingerprint: "9911 44EE 22AA 7700 8833",
+    is_verified: 1,
+    assigned_projects: ["prism-compiler"]
   },
   {
-    id: 25,
-    handle: 'ksato',
-    name: 'Kenji Sato',
-    squad: 'security',
-    role: 'Virtualization Developer',
-    status: '⚡ vsock zero-latency channel',
-    location: 'Osaka, JP (UTC+9)',
-    bio: 'Guest-host communication channels via virtual sockets (vsock), isolated memory segments, and hypervisors.',
-    stack: ['Rust', 'KVM', 'containerd', 'Linux'],
-    ragetechProject: 'pulseos',
-    featuredRepo: {
-      name: 'ksato/vsock-stream-rs',
-      tagline: 'Fast asynchronous streaming transport over Linux virtio-vsock for sub-millisecond host-guest IPC.',
-      stars: 1180,
-      forks: 89,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/pulseos',
-      cloneUrl: 'git clone https://github.com/ragetech/pulseos.git',
-      topics: ['rust', 'vsock', 'virtualization', 'kvm']
-    },
-    secondaryRepos: [
-      { name: 'ksato/kvm-toy-vmm', stars: 580, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/pulseos' }
-    ],
-    socials: {
-      github: 'https://github.com/kenji-sato',
-      x: 'https://x.com/kenjisato_dev',
-      website: 'https://sato.osaka'
-    },
-    gpgKey: '3310 F099 77BC 2244'
+    id: "dev-25",
+    handle: "yuki",
+    name: "Yuki Tanaka",
+    email: "yuki@ragetech.dev",
+    role: "Zero-Copy IO Architect",
+    account_role: "developer",
+    squad: "systems",
+    bio: "Linux block layer tuning, NVMe-oF drivers, and high-frequency lock-free ring channels in C++23.",
+    avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://yukitanaka.jp",
+    github_url: "https://github.com/yukitanaka",
+    gpg_fingerprint: "1188 9900 44CC 33AA EE77",
+    is_verified: 1,
+    assigned_projects: ["aether-runtime"]
   },
   {
-    id: 26,
-    handle: 'crossi',
-    name: 'Camilla Rossi',
-    squad: 'frontend',
-    role: 'Platform UI Engineer',
-    status: '🚀 Fast static delivery & docs',
-    location: 'Milan, IT (UTC+1)',
-    bio: 'Clean typography, fast zero-dependency page delivery, developer documentation, and static performance.',
-    stack: ['TypeScript', 'Modern Web', 'CSS', 'Wasm'],
-    ragetechProject: 'eclipse',
-    featuredRepo: {
-      name: 'crossi/static-docs-engine',
-      tagline: 'Ultra-fast Markdown documentation generator with zero JavaScript runtime and instant search index.',
-      stars: 1430,
-      forks: 115,
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      url: 'https://github.com/ragetech/eclipse-ui',
-      cloneUrl: 'git clone https://github.com/ragetech/eclipse-ui.git',
-      topics: ['typescript', 'docs', 'static-site', 'perf']
-    },
-    secondaryRepos: [
-      { name: 'crossi/minimal-prism-theme', stars: 390, language: 'CSS', languageColor: '#563d7c', url: 'https://github.com/ragetech/eclipse-ui' }
-    ],
-    socials: {
-      github: 'https://github.com/camilla-rossi',
-      x: 'https://x.com/rossi_camilla',
-      website: 'https://camillarossi.dev'
-    },
-    gpgKey: '998A CC01 3345 BE11'
+    id: "dev-26",
+    handle: "rachel",
+    name: "Rachel O'Connor",
+    email: "rachel@ragetech.dev",
+    role: "Cryptographic Hardware Eng",
+    account_role: "developer",
+    squad: "security",
+    bio: "HSM integration, TPM 2.0 attestation, and Apple Secure Enclave key derivation protocols.",
+    avatar_url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://racheloconnor.ie",
+    github_url: "https://github.com/racheloconnor",
+    gpg_fingerprint: "44CC 8811 77EE 9900 22AA",
+    is_verified: 1,
+    assigned_projects: ["cipher-vault"]
   },
   {
-    id: 27,
-    handle: 'nbrooks',
-    name: 'Nathan Brooks',
-    squad: 'ai',
-    role: 'WebGPU & Compute Dev',
-    status: '⚡ WGSL neural weights shader',
-    location: 'Austin, US (UTC-5)',
-    bio: 'Executing quantized neural weights directly inside browser GPU shaders using WebGPU and WGSL.',
-    stack: ['WebGPU', 'WGSL', 'Rust', 'CUDA'],
-    ragetechProject: 'chimera',
-    featuredRepo: {
-      name: 'nbrooks/wgsl-matmul-fast',
-      tagline: 'Tiled matrix multiplication WGSL shaders delivering 2.4 TFLOPS on modern browser WebGPU devices.',
-      stars: 2310,
-      forks: 184,
-      language: 'Rust',
-      languageColor: '#dea584',
-      url: 'https://github.com/ragetech/chimera',
-      cloneUrl: 'git clone https://github.com/ragetech/chimera.git',
-      topics: ['webgpu', 'wgsl', 'compute', 'neural-nets']
-    },
-    secondaryRepos: [
-      { name: 'nbrooks/browser-gguf-runner', stars: 820, language: 'TypeScript', languageColor: '#3178c6', url: 'https://github.com/ragetech/chimera' }
-    ],
-    socials: {
-      github: 'https://github.com/nathan-brooks',
-      x: 'https://x.com/nbrooks_gpu',
-      website: 'https://brooks.compute'
-    },
-    gpgKey: '44DF 0019 883E 6721'
+    id: "dev-27",
+    handle: "arjun",
+    name: "Arjun Mehta",
+    email: "arjun@ragetech.dev",
+    role: "Distributed Consensus Researcher",
+    account_role: "developer",
+    squad: "edge",
+    bio: "Byzantine Fault Tolerance protocols, flexible Paxos variants, and active-active edge synchronization.",
+    avatar_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://arjunmehta.tech",
+    github_url: "https://github.com/arjunmehta",
+    gpg_fingerprint: "EE00 4422 99AA 1188 77CC",
+    is_verified: 1,
+    assigned_projects: ["vortex-db"]
   },
   {
-    id: 28,
-    handle: 'fzaid',
-    name: 'Farah Zaid',
-    squad: 'systems',
-    role: 'Performance Profiling Dev',
-    status: '⚡ Linux perf & branch prediction',
-    location: 'Amman, JO (UTC+3)',
-    bio: 'Instruction-level CPU optimization, flamegraphs, branch prediction tuning, and SIMD vectorization.',
-    stack: ['Flamegraphs', 'Linux Perf', 'SIMD', 'C++'],
-    ragetechProject: 'hyperion',
-    featuredRepo: {
-      name: 'fzaid/flamegraph-stream',
-      tagline: 'Real-time Linux perf profiling tool outputting interactive SVG flamegraphs on live production services.',
-      stars: 1780,
-      forks: 139,
-      language: 'C++',
-      languageColor: '#f34b7d',
-      url: 'https://github.com/ragetech/hyperion',
-      cloneUrl: 'git clone https://github.com/ragetech/hyperion.git',
-      topics: ['perf', 'flamegraphs', 'profiling', 'cpp']
-    },
-    secondaryRepos: [
-      { name: 'fzaid/simd-string-find', stars: 450, language: 'C++', languageColor: '#f34b7d', url: 'https://github.com/ragetech/hyperion' }
-    ],
-    socials: {
-      github: 'https://github.com/farah-zaid',
-      x: 'https://x.com/farah_perf',
-      website: 'https://zaid.engineer'
-    },
-    gpgKey: '6610 EE98 44A2 001B'
+    id: "dev-28",
+    handle: "selene",
+    name: "Selene Moreau",
+    email: "selene@ragetech.dev",
+    role: "Type Checker Specialist",
+    account_role: "developer",
+    squad: "compilers",
+    bio: "Linear type systems, borrow checking theory, and ownership semantic verification tools.",
+    avatar_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://seleneprogramming.fr",
+    github_url: "https://github.com/seleneprog",
+    gpg_fingerprint: "22BB 9900 4411 EE88 33CC",
+    is_verified: 1,
+    assigned_projects: ["prism-compiler"]
   },
   {
-    id: 29,
-    handle: 'oberg',
-    name: 'Oscar Berg',
-    squad: 'frontend',
-    role: 'Developer Experience Lead',
-    status: '⌨️ High-performance TUI engine',
-    location: 'Oslo, NO (UTC+1)',
-    bio: 'Keyboard-driven ergonomics, terminal user interfaces, and command-line developer tools.',
-    stack: ['Go', 'Terminal UX', 'Rust', 'BubbleTea'],
-    ragetechProject: 'eclipse',
-    featuredRepo: {
-      name: 'oberg/tui-forge',
-      tagline: 'Composable high-performance terminal user interface framework for monitoring edge servers.',
-      stars: 2490,
-      forks: 195,
-      language: 'Go',
-      languageColor: '#00ADD8',
-      url: 'https://github.com/ragetech/eclipse-ui',
-      cloneUrl: 'git clone https://github.com/ragetech/eclipse-ui.git',
-      topics: ['tui', 'go', 'terminal', 'cli']
-    },
-    secondaryRepos: [
-      { name: 'oberg/keybind-parser-rs', stars: 520, language: 'Rust', languageColor: '#dea584', url: 'https://github.com/ragetech/eclipse-ui' }
-    ],
-    socials: {
-      github: 'https://github.com/oscar-berg',
-      x: 'https://x.com/oscarberg_cli',
-      website: 'https://berg.run'
-    },
-    gpgKey: '119A 4488 C012 FE99'
+    id: "dev-29",
+    handle: "kofi",
+    name: "Kofi Mensah",
+    email: "kofi@ragetech.dev",
+    role: "Edge Mesh Routing Lead",
+    account_role: "lead",
+    squad: "edge",
+    bio: "Anycast network routing, BGP peering automation, and latency-minimized geographical packet routing.",
+    avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://kofimensah.gh",
+    github_url: "https://github.com/kofimensah",
+    gpg_fingerprint: "8811 2299 77CC 44EE 00AA",
+    is_verified: 1,
+    assigned_projects: ["hyperion-mesh"]
   }
 ];
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { DEVELOPERS: window.DEVELOPERS };
-}
-

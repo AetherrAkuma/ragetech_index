@@ -1,73 +1,82 @@
-# ragetech.dev — Sovereign Systems Engineering Collective
+# Ragetech — Sovereign Systems Engineering Collective
 
-A production-grade, human-crafted web application and edge runtime designed for **ragetech.dev** referencing the **Tailark Dusk** aesthetic, backed by **Cloudflare Workers** and a **Cloudflare D1 SQLite Database**.
+A human-crafted, sovereign edge platform and engineering collective website built referencing the **Tailark Dusk** (`dusk-landing-10`) and **Tailark Quartz** (`blog-article/one` & `team`) design language, powered by **Cloudflare Workers** and a **Cloudflare D1** SQLite database with dynamic **RBAC**.
 
 ---
 
-## ✦ Core Design & Architecture
+## ✦ Core Architecture & Features
 
-1. **Restrained Dusk Aesthetic**:
-   - Deep matte zinc & charcoal canvas (`#09090b`), hairline borders (`rgba(255, 255, 255, 0.07)`), and subtle ambient mesh gradients.
-   - Clean typographic hierarchy using **Plus Jakarta Sans** and tabular monospace with **JetBrains Mono**.
-   - No chaotic terminal box in the hero, no noisy tickers — pure technical serenity and craft.
+1. **Tailark Dusk Design Foundation**:
+   * Obsidian canvas (`#09090b`), surface elevation (`#101015`), hairline borders (`rgba(255, 255, 255, 0.08)`), and subtle ambient mesh gradients.
+   * **Equal Spotlight System**: Dynamic mouse-following radial spotlight on repository cards, ensuring all projects receive equal spotlight and prominence.
+   * Typographic hierarchy with **Plus Jakarta Sans** and tabular **JetBrains Mono**.
+   * **100% SVG Vector Icons** — Zero emojis.
+   * **GSAP 3.x** animations for fluid entrance timelines, spring modals, and accordion state changes.
 
-2. **Cloudflare D1 Serverless Database**:
-   - Edge SQLite database storing all 6 collective projects, 29 builders, project assignees, and repository showcases.
-   - `schema.sql`: Full schema with relational integrity, foreign key cascades, and query indexes.
-   - `seed.sql`: Complete database seed with all collective projects and builder profiles.
+2. **Tailark Header-2 & Hero-2**:
+   * `@tailark/header-2`: Blurred floating glass bar with brand mark, navigation links, quick Command Palette trigger, and dynamic RBAC session status.
+   * `@tailark/hero-section-2`: Monumental typography, live edge status pill, dual CTAs, and live edge telemetry metrics ribbon.
 
-3. **Dynamic Universal Page Loaders (Zero Subdomains Required)**:
-   - **Universal Project Loader** (`/p/:slug` -> `project.html`): Fetches project blueprint, performance specs, architecture breakdown, and lead maintainers dynamically from Cloudflare D1.
-   - **Universal Builder Dossier** (`/d/:handle` or `/@:handle` -> `developer.html`): Displays custom developer profile, flagship repository flex showcase, secondary repos, GPG key, and verified status.
-   - Both loaders feature automatic offline fallback to local datasets (`data/projects.js` and `data/developers.js`) ensuring 100% uptime.
+3. **Expandable Repository Showcase (`@tailark/expandable-features-8`)**:
+   * Category filter pills (*Distributed Runtimes*, *Compilers*, *Kernel & Systems*, *Cryptography*).
+   * Interactive split-pane accordion with equal spotlight illumination.
+   * Live blueprint preview with benchmark metrics, maintainer chips, and direct links to the custom whitepaper page.
 
-4. **In-Browser Developer Studio & Dynamic Maintenance**:
-   - Authenticated developers can update their status, bio, squad focus, and repos directly from the browser or via the REST API.
-   - Project leads can update blueprints, specifications, and code previews without modifying source code or waiting for PR builds.
+4. **The 29 Builders Guild (`@tailark/blocks/quartz/team`)**:
+   * Responsive grid of 29 developer cards with squad badges, roles, and verified cryptographic chips.
+   * Card click opens the **Developer Modal Dossier** featuring their bio, GPG fingerprint, and assigned repositories linking to project pages.
+
+5. **Templated Custom Repository Page (`project.html`)**:
+   * Modeled after **Tailark Quartz Blog Article** (`blog-article/one`).
+   * Clean technical whitepaper layout with category badge, read time, and monumental title.
+   * **Primary Top Action Bar**: `Visit Live Project Website` (external link) & `Source Repository` (GitHub).
+   * Dynamically queries Cloudflare D1 with automatic offline fallback.
+   * Dedicated **Assigned Maintainers** block at the bottom styled with Tailark Quartz team cards.
+
+6. **Dedicated Developer Dossier (`developer.html`)**:
+   * Individual developer profile with verified status badge, bio, and squad focus.
+   * Cryptographic **GPG Public Key Widget** with one-click fingerprint copy.
+   * Showcase of all repositories assigned to the engineer.
+   * Direct links to personal website and GitHub.
+
+7. **Global Command Palette (`Cmd + K` / `Ctrl + K`)**:
+   * Instant search overlay across all 6 repositories, 29 builders, and quick actions with keyboard navigation (`↑`, `↓`, `Enter`, `Esc`).
+
+8. **Dynamic RBAC Management Studio**:
+   * Role-based access control with roles: `admin`, `lead`, `developer`.
+   * In-app drawer interface with tabs for **Repositories**, **Builders**, and **Audit Log**.
+   * In-place CRUD operations directly persisted to Cloudflare D1.
+
+9. **Zero-Downtime Offline Fallback**:
+   * Complete isomorphic datasets in `data/projects.js` and `data/developers.js` guarantee 100% functionality even during offline development or static hosting.
 
 ---
 
 ## 🛠 Cloudflare D1 Database Commands
 
 ```bash
-# 1. Generate or update seed.sql from current data registries:
-npm run db:build-seed
-
-# 2. Run migrations and seed on local emulator:
+# 1. Run local D1 migrations and seed:
 npm run db:migrate:local
 npm run db:seed:local
 
-# 3. Create production D1 database on Cloudflare:
-npx wrangler d1 create ragetech_db
-# (Paste the generated database_id into wrangler.jsonc)
-
-# 4. Deploy schema and seed to production Cloudflare D1:
-npm run db:migrate:remote
-npm run db:seed:remote
-```
-
----
-
-## 🚀 Running Locally & Deploying
-
-```bash
-# Run local preview with Cloudflare Worker & D1 emulator:
+# 2. Start Cloudflare Worker edge emulator:
 npm run dev
 
-# Or run lightweight static preview:
-npm start
-
-# Deploy to Cloudflare:
+# 3. Deploy to production Cloudflare:
+npm run db:migrate:remote
+npm run db:seed:remote
 npm run deploy
 ```
 
 ---
 
-## 🌐 Dynamic Routing Map
+## 🚀 Running Locally
 
-- `/` — Collective Index (Tailark Dusk showcase & sticky scroll project inspector)
-- `/p/:slug` — Dedicated dynamic project page (e.g. `/p/hyperion`, `/p/pulseos`)
-- `/d/:handle` — Dedicated builder dossier (e.g. `/d/alexv`, `/d/elena`, `/d/mchen`)
-- `/api/projects` — REST API for collective projects
-- `/api/developers` — REST API for builders directory
-- `/api/auth/*` — Edge token authentication sessions
+```bash
+# Run lightweight static web server:
+npm run start
+# (Opens on http://localhost:3000)
+
+# Or run with Cloudflare Worker and D1 emulator:
+npm run dev
+```
