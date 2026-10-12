@@ -5,6 +5,23 @@
 const rootScope = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
 rootScope.RAGETECH_DEVELOPERS = [
   {
+    id: "dev-00",
+    handle: "reymartchua",
+    name: "Reymart Chua",
+    email: "reymartchua@ragetech.dev",
+    role: "Founding Lead & Systems Architect",
+    account_role: "admin",
+    squad: "systems",
+    bio: "Lead Systems Architect and Founding Engineer at Ragetech. Overseeing edge runtime orchestration, distributed consensus, and platform governance.",
+    avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80",
+    website_url: "https://ragetech.dev",
+    github_url: "https://github.com/reymartchua",
+    gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...REYMART...==\n-----END PGP PUBLIC KEY BLOCK-----",
+    gpg_fingerprint: "7F19 C201 4B89 E092 AA51",
+    is_verified: 1,
+    assigned_projects: ["aether-runtime", "vortex-db"]
+  },
+  {
     id: "dev-01",
     handle: "sora",
     name: "Sora Takahashi",

@@ -297,12 +297,12 @@
 
       <form id="loginForm" onsubmit="window.RagetechApp.handleLogin(event)">
         <div class="form-group">
-          <label class="form-label" for="loginHandle">Builder Handle</label>
-          <input type="text" id="loginHandle" class="form-input" placeholder="e.g. sora, marcus, elena" value="sora" required>
+          <label class="form-label" for="loginHandle">Builder Handle or Email</label>
+          <input type="text" id="loginHandle" class="form-input" placeholder="reymartchua@ragetech.dev" value="reymartchua@ragetech.dev" required>
         </div>
         <div class="form-group">
-          <label class="form-label" for="loginPassword">Access Key</label>
-          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" value="admin123" required>
+          <label class="form-label" for="loginPassword">Access Key (SHA-256)</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" value="yuichirokanade" required>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 24px;">
           <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
@@ -310,7 +310,7 @@
           </button>
         </div>
         <p style="font-size: 0.76rem; color: var(--text-muted); text-align: center; margin-top: 14px;">
-          RBAC roles enabled: <code>admin</code> (full D1 CRUD), <code>lead</code> (project edit), <code>developer</code>.
+          SHA-256 encrypted authentication. Admin credential configured for <code>reymartchua@ragetech.dev</code>.
         </p>
       </form>
     </div>

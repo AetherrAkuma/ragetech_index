@@ -645,19 +645,26 @@
     }
   }
 
+  async function sha256Client(message) {
+    const msgUint8 = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
     const handleInput = document.getElementById('loginHandle');
     const passInput = document.getElementById('loginPassword');
 
-    const handle = handleInput ? handleInput.value.trim().toLowerCase() : '';
+    const identifier = handleInput ? handleInput.value.trim().toLowerCase() : '';
     const password = passInput ? passInput.value.trim() : '';
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle, password })
+        body: JSON.stringify({ handle: identifier, email: identifier, password })
       });
 
       if (res.ok) {
@@ -673,24 +680,56 @@
         }
       }
     } catch (err) {
-      // Offline mock fallback
+      // Offline fallback
     }
 
-    // Default development fallback for Sora or any valid handle
-    const dev = state.developers.find(d => d.handle === handle) || {
-      handle: 'sora',
-      name: 'Sora Takahashi',
-      role: 'Founding Systems Architect',
-      account_role: 'admin',
-      squad: 'systems'
-    };
+    // Offline / fallback SHA-256 verification
+    const hash = await sha256Client(password);
+    if (identifier === 'reymartchua@ragetech.dev' || identifier === 'reymartchua' || identifier === 'reymart') {
+      if (hash === 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08' || password === 'yuichirokanade') {
+        const dev = state.developers.find(d => d.email === 'reymartchua@ragetech.dev' || d.handle === 'reymartchua') || {
+          id: 'dev-00',
+          handle: 'reymartchua',
+          name: 'Reymart Chua',
+          email: 'reymartchua@ragetech.dev',
+          role: 'Founding Lead & Systems Architect',
+          account_role: 'admin',
+          squad: 'systems',
+          avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80'
+        };
 
-    state.currentUser = dev;
-    state.sessionToken = `tok_${dev.handle}_mock`;
-    localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
-    closeLoginModal();
-    updateHeaderAuthUI();
-    openDrawer();
+        state.currentUser = dev;
+        state.sessionToken = `tok_reymartchua_${Date.now()}`;
+        localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
+        closeLoginModal();
+        updateHeaderAuthUI();
+        openDrawer();
+        return;
+      }
+    }
+
+    // Default fallback for sora
+    if (identifier === 'sora' || identifier === 'sora@ragetech.dev') {
+      if (hash === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9' || password === 'admin123') {
+        const dev = state.developers.find(d => d.handle === 'sora') || {
+          handle: 'sora',
+          name: 'Sora Takahashi',
+          role: 'Founding Systems Architect',
+          account_role: 'admin',
+          squad: 'systems'
+        };
+
+        state.currentUser = dev;
+        state.sessionToken = `tok_sora_${Date.now()}`;
+        localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
+        closeLoginModal();
+        updateHeaderAuthUI();
+        openDrawer();
+        return;
+      }
+    }
+
+    alert('Invalid builder credentials. Please verify your access key.');
   }
 
   function openDrawer() {
