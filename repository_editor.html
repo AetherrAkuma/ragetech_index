@@ -307,8 +307,29 @@
           <span>Action Buttons & Web Links (Multiple)</span>
         </div>
         <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
-          Add as many custom action buttons as you want. Customize each button's label, destination URL, visual style, and logo/icon (GitHub, Live Site, Thesis PDF, Demo, Docs, or custom SVG).
+          The primary <strong>Read More &rarr;</strong> button is a <strong>fixed, non-removable button</strong> that permanently redirects visitors to this project's custom repository dossier page (<code>project.html?id=...</code>) edited below. Below it, you can add any number of additional custom action buttons (GitHub, Live Site, Demo, Thesis PDF, External Docs, or Custom SVG).
         </p>
+
+        <!-- Fixed Non-removable Read More Button Display -->
+        <div style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="btn-primary" style="font-size: 0.76rem; padding: 4px 12px; pointer-events: none;">Read More &rarr;</span>
+              <span style="font-size: 0.82rem; font-weight: 700; color: var(--accent-cyan);">Fixed Default Button</span>
+              <span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px; color: var(--accent-emerald); border-color: rgba(16,185,129,0.3);">Permanent • Non-removable</span>
+            </div>
+            <p style="font-size: 0.77rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">
+              Always links directly to this repository's dossier page: <code id="fixedButtonPathPreview">project.html?id=hyperion</code>
+            </p>
+          </div>
+          <a id="fixedButtonTestLink" href="project.html?id=hyperion" target="_blank" class="btn-secondary" style="font-size: 0.74rem; padding: 5px 12px; white-space: nowrap; text-decoration: none;">
+            Preview Page ↗
+          </a>
+        </div>
+
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+          Additional Action Buttons & External Links
+        </div>
 
         <!-- Dynamic Action Buttons List -->
         <div id="actionButtonsContainer" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px;">
@@ -316,7 +337,7 @@
         </div>
 
         <button type="button" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="addActionButtonRow()">
-          <span>+ Add Action Button</span>
+          <span>+ Add Another Action Button</span>
         </button>
 
         <div style="border-top: 1px solid var(--border-subtle); margin-top: 20px; padding-top: 18px;">
@@ -1087,8 +1108,15 @@ Existing alternatives required significant hardware resources and heavy runtimes
         </span>
       `).join('');
 
+      // Update fixed button preview in section 4
+      const fixedSlug = slug || 'project';
+      const fixedPathEl = document.getElementById('fixedButtonPathPreview');
+      const fixedLinkEl = document.getElementById('fixedButtonTestLink');
+      if (fixedPathEl) fixedPathEl.textContent = `project.html?id=${fixedSlug}`;
+      if (fixedLinkEl) fixedLinkEl.href = `project.html?id=${fixedSlug}`;
+
       homeActionButtonsWrap.innerHTML = `
-        <span class="btn-primary" style="font-size:0.78rem; padding: 6px 14px; cursor: default;">Dedicated Page &rarr;</span>
+        <span class="btn-primary" style="font-size:0.78rem; padding: 6px 14px; cursor: default;">Read More &rarr;</span>
         ${buttonsHtml}
       `;
 

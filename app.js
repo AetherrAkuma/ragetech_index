@@ -362,7 +362,7 @@
 
               <div style="display:flex; gap:8px; flex-wrap: wrap;">
                 <a href="project.html?id=${p.slug}" class="btn-primary" style="font-size:0.8rem; padding: 7px 16px; text-decoration: none;">
-                  Dedicated Page &rarr;
+                  Read More &rarr;
                 </a>
                 ${actionButtonsHtml}
               </div>
