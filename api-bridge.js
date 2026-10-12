@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  // 1. Immediately purge any legacy ghost local storage overrides
+  // 1. Immediately purge any legacy ghost local storage overrides & caches
   try {
     localStorage.removeItem('ragetech_custom_projects');
     localStorage.removeItem('ragetech_custom_developers');
@@ -24,7 +24,27 @@
     }
   } catch (e) {}
 
-  // 2. Real-time Cross-Tab & Inter-Window Synchronization Engine
+  // 2. Unregister any stale Service Workers or CacheStorage to prevent stale JS caching
+  try {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        for (const reg of regs) reg.unregister();
+      }).catch(() => {});
+    }
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      caches.keys().then(names => {
+        for (const name of names) caches.delete(name);
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  // 3. Ensure global fallback namespaces are strictly empty
+  if (typeof window !== 'undefined') {
+    window.RAGETECH_PROJECTS = [];
+    window.RAGETECH_DEVELOPERS = [];
+  }
+
+  // 4. Real-time Cross-Tab & Inter-Window Synchronization Engine
   const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ragetech_realtime_sync') : null;
   const syncListeners = new Set();
 

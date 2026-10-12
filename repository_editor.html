@@ -687,10 +687,8 @@
     <div style="font-size: 0.88rem; color: #f4f4f5;" id="studioToastMsg">Repository updated successfully.</div>
   </div>
 
-  <!-- Data Scripts -->
-  <script src="data/developers.js"></script>
-  <script src="data/projects.js"></script>
-  <script src="api-bridge.js"></script>
+  <!-- Direct Edge API Bridge -->
+  <script src="api-bridge.js?v=20261012-d1"></script>
 
   <!-- Studio Engine Script -->
   <script>
@@ -714,7 +712,7 @@
       { label: 'Source Code', url: 'https://github.com/ragetech/hyperion', style: 'secondary', icon: 'github' }
     ];
 
-    let allDevelopers = window.RAGETECH_DEVELOPERS || [];
+    let allDevelopers = [];
 
     // Built-in Icon SVGs Library
     const ICON_SVGS = {
@@ -1840,14 +1838,7 @@ Existing alternatives required significant hardware resources and heavy runtimes
         }
       } catch (e) {}
 
-      try {
-        const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        customDevs.forEach(cd => {
-          const idx = allDevelopers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-          if (idx >= 0) allDevelopers[idx] = { ...allDevelopers[idx], ...cd };
-          else allDevelopers.push(cd);
-        });
-      } catch (e) {}
+
 
       renderMaintainersPicker();
       renderSpecsInputs();

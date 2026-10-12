@@ -32,7 +32,7 @@
 
       <nav class="site-nav">
         <a href="index.html#repositories" class="nav-link">Repositories</a>
-        <a href="index.html#collective" class="nav-link">The 29 Builders</a>
+        <a href="index.html#collective" class="nav-link">Builders Guild</a>
         <a href="index.html#manifesto" class="nav-link">Manifesto</a>
       </nav>
 
@@ -42,7 +42,7 @@
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>All 29 Builders</span>
+          <span>All Builders</span>
         </a>
       </div>
     </div>
@@ -54,7 +54,7 @@
     <nav class="article-breadcrumbs" aria-label="Breadcrumb">
       <a href="index.html">Ragetech</a>
       <span>/</span>
-      <a href="index.html#collective">The 29 Builders</a>
+      <a href="index.html#collective">Builders Guild</a>
       <span>/</span>
       <span id="breadcrumbDevName" style="color: var(--text-primary);">Loading Profile...</span>
     </nav>
@@ -136,9 +136,7 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="data/developers.js"></script>
-  <script src="data/projects.js"></script>
-  <script src="api-bridge.js"></script>
+  <script src="api-bridge.js?v=20261012-d1"></script>
   <script>
     let currentFingerprint = "";
 
@@ -153,21 +151,7 @@
 
     async function loadDeveloperDetails() {
       const urlParams = new URLSearchParams(window.location.search);
-      const handle = urlParams.get('id') || urlParams.get('handle') || 'sora';
-
-      // Check tombstones
-      try {
-        const deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
-        if (deletedDevs.includes(handle)) {
-          document.title = 'Developer Removed — Ragetech';
-          document.getElementById('devName').textContent = 'Developer Removed';
-          document.getElementById('devHandle').textContent = `@${handle}`;
-          document.getElementById('devRole').textContent = 'Archived Collective Member';
-          document.getElementById('devBio').textContent = 'This developer profile has been permanently removed from the sovereign systems collective catalog.';
-          document.getElementById('assignedProjectsList').innerHTML = '<p style="color:var(--text-muted); padding: 16px 0;">No active repository assignments.</p>';
-          return;
-        }
-      } catch (e) {}
+      const handle = urlParams.get('id') || urlParams.get('handle') || 'reymartchua';
 
       let dev = null;
 

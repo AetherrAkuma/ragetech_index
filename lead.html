@@ -84,9 +84,7 @@
     </div>
   </div>
 
-  <script src="data/developers.js"></script>
-  <script src="data/projects.js"></script>
-  <script src="api-bridge.js"></script>
+  <script src="api-bridge.js?v=20261012-d1"></script>
   <script>
     let currentLead = null;
     let projectsList = [];
@@ -395,13 +393,6 @@
           const sess = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
           sess.user = currentLead;
           localStorage.setItem('ragetech_session', JSON.stringify(sess));
-
-          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-          const dIdx = customDevs.findIndex(d => d.id === currentLead.id || d.handle === currentLead.handle);
-          if (dIdx >= 0) {
-            customDevs[dIdx].assigned_projects = currentLead.assigned_projects;
-            localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-          }
         } catch (e) {}
       }
 
@@ -515,26 +506,13 @@
           showAlert(data.error || 'Failed to update access key.');
         }
       } catch (err) {
-        // Fallback local update
-        try {
-          const msgUint8 = new TextEncoder().encode(p1);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-          const idx = customDevs.findIndex(d => d.id === leadUser.id || d.handle === leadUser.handle);
-          if (idx >= 0) {
-            customDevs[idx].password_hash = newHash;
-          } else {
-            customDevs.push({ ...leadUser, password_hash: newHash });
-          }
-          localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-
-          if (session && session.user) {
-            session.user.password_hash = newHash;
-            localStorage.setItem('ragetech_session', JSON.stringify(session));
-          }
+        showAlert('Network error updating credentials. Please verify database connectivity.');
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<span>Update & Save Access Key</span>`;
+        }
+      }
 
           if (currPassEl) currPassEl.value = '';
           if (newPassEl) newPassEl.value = '';

@@ -145,6 +145,31 @@
     if (buildersEl) {
       buildersEl.innerHTML = `${state.developers.length}<span> active</span>`;
     }
+
+    const navReposLink = document.getElementById('navReposLink');
+    if (navReposLink) {
+      navReposLink.textContent = `Repositories [${state.projects.length}]`;
+    }
+
+    const navBuildersLink = document.getElementById('navBuildersLink');
+    if (navBuildersLink) {
+      navBuildersLink.textContent = `Builders [${state.developers.length}]`;
+    }
+
+    const heroBadge = document.getElementById('heroPillBadgeText');
+    if (heroBadge) {
+      heroBadge.textContent = `Sovereign Systems & Engineering Portfolio • ${state.developers.length} Verified Maintainers`;
+    }
+
+    const heroSubtitle = document.getElementById('heroSubtitleText');
+    if (heroSubtitle) {
+      heroSubtitle.textContent = `Ragetech is an independent guild of ${state.developers.length} engineers and creators building software systems, theses, and open-source infrastructure.`;
+    }
+
+    const collectiveTitle = document.getElementById('collectiveSectionTitle');
+    if (collectiveTitle) {
+      collectiveTitle.textContent = state.developers.length > 0 ? `The ${state.developers.length} Engineers` : 'The Engineering Collective';
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -191,7 +216,7 @@
     if (!nav) return;
 
     if (!state.projects || state.projects.length === 0) {
-      nav.innerHTML = '<div style="color:var(--text-muted); font-size:0.75rem; padding: 12px;">No active repositories.</div>';
+      nav.innerHTML = '<div style="color:var(--text-muted); font-size:0.75rem; padding: 12px 8px;">0 active repositories</div>';
       return;
     }
 
@@ -212,7 +237,20 @@
     if (!container) return;
 
     if (!state.projects || state.projects.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted); padding: 60px 24px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;">No active repositories published in database.</div>';
+      container.innerHTML = `
+        <div class="spotlight-card" style="padding: 48px 32px; border-radius: var(--radius-lg); text-align: center; border: 1px dashed rgba(255,255,255,0.15);">
+          <div style="width: 44px; height: 44px; margin: 0 auto 16px; border-radius: 50%; background: rgba(6,182,212,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          </div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">No Repositories Published</h3>
+          <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 20px; font-size: 0.88rem; line-height: 1.6;">
+            The project repository catalog is currently reset in the Cloudflare D1 database. Authenticated maintainers can publish new projects from the dashboard.
+          </p>
+          <button class="btn-primary" onclick="window.RagetechApp.openLoginModal()" style="margin: 0 auto;">
+            <span>Builder Login</span>
+          </button>
+        </div>
+      `;
       return;
     }
 
@@ -715,12 +753,12 @@
         action: () => { openLoginModal(); }
       },
       {
-        title: 'Jump to All 6 Repositories',
+        title: `Jump to Repositories (${state.projects.length})`,
         subtitle: 'Scroll to repositories section',
         action: () => { document.getElementById('repositories')?.scrollIntoView({ behavior: 'smooth' }); }
       },
       {
-        title: 'Jump to 29 Collective Builders',
+        title: `Jump to Builders Collective (${state.developers.length})`,
         subtitle: 'Scroll to builders section',
         action: () => { document.getElementById('collective')?.scrollIntoView({ behavior: 'smooth' }); }
       }
@@ -934,16 +972,8 @@
     // Offline / fallback SHA-256 verification
     const hash = await sha256Client(password);
     
-    let allDevs = (state.developers && state.developers.length ? state.developers : (window.RAGETECH_DEVELOPERS || []));
+    let allDevs = (state.developers && state.developers.length ? state.developers : []);
     allDevs = JSON.parse(JSON.stringify(allDevs));
-    try {
-      const custom = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-      custom.forEach(cd => {
-        const idx = allDevs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-        if (idx >= 0) allDevs[idx] = { ...allDevs[idx], ...cd };
-        else allDevs.push(cd);
-      });
-    } catch (e) {}
 
     const dev = allDevs.find(d => 
       (d.email && d.email.toLowerCase() === identifier) ||

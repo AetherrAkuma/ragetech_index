@@ -155,9 +155,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/developers.js"></script>
-  <script src="data/projects.js"></script>
-  <script src="api-bridge.js"></script>
+  <script src="api-bridge.js?v=20261012-d1"></script>
   <script>
     let currentView = 'repos';
     let projectsData = [];
@@ -272,7 +270,14 @@
                 </tr>
               </thead>
               <tbody>
-                ${projectsData.map(p => {
+                ${projectsData.length === 0 ? `
+                  <tr>
+                    <td colspan="6" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+                      <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">No Projects Registered</div>
+                      <div style="font-size: 0.85rem;">Currently 0 repositories exist in Cloudflare D1. Click <strong>+ Create New Project</strong> to publish a new repository.</div>
+                    </td>
+                  </tr>
+                ` : projectsData.map(p => {
                   const maintainers = p.assignees || p.maintainer_handles || (p.maintainers ? p.maintainers.map(m => m.handle) : []);
                   return `
                     <tr>
@@ -588,26 +593,13 @@
           showAlert(data.error || 'Failed to update access key.');
         }
       } catch (err) {
-        // Fallback local update
-        try {
-          const msgUint8 = new TextEncoder().encode(p1);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-          const idx = customDevs.findIndex(d => d.id === adminUser.id || d.handle === adminUser.handle);
-          if (idx >= 0) {
-            customDevs[idx].password_hash = newHash;
-          } else {
-            customDevs.push({ ...adminUser, password_hash: newHash });
-          }
-          localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-
-          if (session && session.user) {
-            session.user.password_hash = newHash;
-            localStorage.setItem('ragetech_session', JSON.stringify(session));
-          }
+        showAlert('Network error updating access key. Please verify database connectivity.');
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<span>Update & Save Access Key</span>`;
+        }
+      }
 
           if (currPassEl) currPassEl.value = '';
           if (newPassEl) newPassEl.value = '';

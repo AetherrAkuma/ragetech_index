@@ -32,7 +32,7 @@
 
       <nav class="site-nav">
         <a href="index.html#repositories" class="nav-link">Repositories</a>
-        <a href="index.html#collective" class="nav-link">The 29 Builders</a>
+        <a href="index.html#collective" class="nav-link">Builders Guild</a>
         <a href="index.html#manifesto" class="nav-link">Manifesto</a>
       </nav>
 
@@ -149,10 +149,8 @@
     </div>
   </footer>
 
-  <!-- Datasets -->
-  <script src="data/developers.js"></script>
-  <script src="data/projects.js"></script>
-  <script src="api-bridge.js"></script>
+  <!-- Edge API Bridge -->
+  <script src="api-bridge.js?v=20261012-d1"></script>
 
   <!-- Dossier Renderer & Markdown Engine -->
   <script>
@@ -254,7 +252,8 @@
         document.title = 'Repository Not Found — Ragetech';
         document.getElementById('repoTitle').textContent = 'Repository Not Found';
         document.getElementById('repoTagline').textContent = 'This repository does not exist or has been removed from the catalog.';
-        document.getElementById('markdownContent').innerHTML = '<p style="color:var(--text-muted); padding: 24px 0;">The requested whitepaper dossier has been removed or is not available in the database catalog.</p>';
+        const mdEl = document.getElementById('repoMarkdownContent');
+        if (mdEl) mdEl.innerHTML = '<p style="color:var(--text-muted); padding: 24px 0;">The requested whitepaper dossier has been removed or is not available in the database catalog.</p>';
         return;
       }
 
@@ -364,14 +363,13 @@
 
       // Render Assigned Maintainers (@tailark/blocks/quartz/team)
       const maintainersContainer = document.getElementById('assignedMaintainersGrid');
-      let devs = window.RAGETECH_DEVELOPERS ? [...window.RAGETECH_DEVELOPERS] : [];
+      let devs = [];
       try {
-        const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        customDevs.forEach(cd => {
-          const idx = devs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-          if (idx >= 0) devs[idx] = { ...devs[idx], ...cd };
-          else devs.push(cd);
-        });
+        const dRes = await fetch('/api/developers');
+        if (dRes.ok) {
+          const dJson = await dRes.json();
+          if (Array.isArray(dJson.data)) devs = dJson.data;
+        }
       } catch (e) {}
 
       const assignedHandles = project.maintainer_handles || project.assignees || (project.maintainers ? project.maintainers.map(m => m.handle) : []);

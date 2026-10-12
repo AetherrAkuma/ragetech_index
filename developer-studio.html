@@ -74,9 +74,7 @@
     </main>
   </div>
 
-  <script src="data/developers.js"></script>
-  <script src="data/projects.js"></script>
-  <script src="api-bridge.js"></script>
+  <script src="api-bridge.js?v=20261012-d1"></script>
   <script>
     let currentDev = null;
     let allProjects = [];
@@ -258,17 +256,7 @@
         });
       } catch (err) {}
 
-      // Sync with localStorage custom developers
-      try {
-        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        const idx = customDevs.findIndex(d => d.id === currentDev.id || d.handle === currentDev.handle);
-        if (idx >= 0) {
-          customDevs[idx] = { ...customDevs[idx], ...currentDev };
-        } else {
-          customDevs.push(currentDev);
-        }
-        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-      } catch (e) {}
+
 
       localStorage.setItem('ragetech_session', JSON.stringify({ user: currentDev, token: `tok_${currentDev.handle}` }));
       document.getElementById('devName').textContent = currentDev.name;
@@ -432,36 +420,7 @@
           showAlert(data.error || 'Failed to update access key.');
         }
       } catch (err) {
-        // Fallback local update
-        try {
-          const msgUint8 = new TextEncoder().encode(p1);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-          const idx = customDevs.findIndex(d => d.id === currentDev.id || d.handle === currentDev.handle);
-          if (idx >= 0) {
-            customDevs[idx].password_hash = newHash;
-          } else {
-            customDevs.push({ ...currentDev, password_hash: newHash });
-          }
-          localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-
-          const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || 'null');
-          if (savedSession && savedSession.user) {
-            savedSession.user.password_hash = newHash;
-            localStorage.setItem('ragetech_session', JSON.stringify(savedSession));
-          }
-
-          if (currPassEl) currPassEl.value = '';
-          if (newPassEl) newPassEl.value = '';
-          if (confPassEl) confPassEl.value = '';
-
-          showAlert('Access key updated locally with SHA-256 hash.', true);
-        } catch (e2) {
-          showAlert('Error updating password.');
-        }
+        showAlert('Network error updating credentials. Please verify database connectivity.');
       } finally {
         if (saveBtn) {
           saveBtn.disabled = false;
