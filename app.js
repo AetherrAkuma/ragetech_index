@@ -206,6 +206,29 @@
       .replace(/"/g, '&quot;');
   }
 
+  function formatPreviewCode(raw) {
+    if (!raw) return '';
+    let str = String(raw);
+
+    // Unescape literal \n, \r, \t if serialized from SQL or JSON strings
+    if (str.includes('\\n')) {
+      str = str.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\t/g, '  ');
+    }
+
+    // If it looks like single-line or unformatted JSON, prettify it
+    const trimmed = str.trim();
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        str = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // keep as is if JSON parsing fails
+      }
+    }
+
+    return str;
+  }
+
   function renderRepositoryShowcase() {
     renderStickyProjectNav();
     renderProjectsStack();
@@ -335,7 +358,8 @@
           </div>
         `;
       } else if (pType === 'markdown') {
-        const mdLines = (p.previewContent || '').split('\n').filter(Boolean);
+        const rawMd = (p.previewContent || '').replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n');
+        const mdLines = rawMd.split('\n').filter(Boolean);
         previewWindowHtml = `
           <div class="project-preview-window">
             <div class="preview-window-top">
@@ -366,7 +390,7 @@
               <span>${p.previewTitle || 'telemetry_sink.rs'}</span>
               <span style="color:#71717a;">READ-ONLY</span>
             </div>
-            <pre class="preview-window-body"><code>${escapeHtml(p.previewContent || '')}</code></pre>
+            <pre class="preview-window-body"><code>${escapeHtml(formatPreviewCode(p.previewContent || ''))}</code></pre>
             <div class="preview-window-footer">
               <span>${p.previewMeta || 'Active configuration'}</span>
               <span style="color:#10b981;">● Active</span>

@@ -1475,7 +1475,10 @@ Existing alternatives required significant hardware resources and heavy runtimes
       } else {
         // Default: Code Terminal
         const codeTitle = document.getElementById('editPreviewTitle').value || 'telemetry_sink.rs';
-        const codeSnippet = document.getElementById('editPreviewContent').value || '';
+        let codeSnippet = document.getElementById('editPreviewContent').value || '';
+        if (codeSnippet.includes('\\n')) {
+          codeSnippet = codeSnippet.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\t/g, '  ');
+        }
         const codeMeta = document.getElementById('editPreviewMeta').value || 'Cargo.lock: active configuration';
         showcaseContainer.innerHTML = `
           <div class="preview-window-top">
