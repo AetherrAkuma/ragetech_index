@@ -2824,5 +2824,242 @@ button, a.btn-primary, a.btn-secondary, a.btn-auth, .nav-link, .dash-nav-item {
   }
 }
 
+/* ========================================================================
+   Tailark FAQs-1 (Dusk Accordion System) — Responsive Two-Column Layout
+   ======================================================================== */
+.faq-section {
+  padding: 88px 0 64px;
+  position: relative;
+}
 
+.faq-container {
+  width: 100%;
+  max-width: var(--max-w-content);
+  margin: 0 auto;
+}
 
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 56px;
+  align-items: flex-start;
+}
+
+.faq-intro-col {
+  position: sticky;
+  top: 96px;
+}
+
+.faq-heading {
+  font-size: clamp(2rem, 3.8vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary);
+  margin: 12px 0 16px;
+  text-wrap: balance;
+}
+
+.faq-subtext {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: 28px;
+}
+
+.faq-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.faq-accordion-col {
+  width: 100%;
+}
+
+.faq-accordion {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tailark Dusk border-dashed accordion item */
+.faq-item {
+  border-bottom: 1px dashed var(--border-subtle);
+  transition: border-color 0.2s ease;
+}
+
+.faq-item:first-child {
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.faq-item:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.faq-item.is-open {
+  border-bottom-color: rgba(6, 182, 212, 0.4);
+}
+
+.faq-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 4px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: color 0.15s ease;
+  user-select: none;
+}
+
+.faq-trigger:hover {
+  color: var(--accent-cyan);
+}
+
+.faq-trigger:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.faq-question-text {
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  color: inherit;
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+}
+
+.faq-item.is-open .faq-chevron {
+  transform: rotate(180deg);
+  color: var(--accent-cyan);
+}
+
+/* Zero-jank CSS Grid height expansion */
+.faq-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-item.is-open .faq-collapse {
+  grid-template-rows: 1fr;
+}
+
+.faq-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.faq-content p {
+  padding: 0 4px 22px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+.faq-content code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--accent-cyan);
+}
+
+.faq-support-text {
+  margin-top: 28px;
+  padding: 0 4px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.faq-support-link {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.faq-support-link:hover {
+  color: var(--accent-cyan);
+}
+
+.faq-support-action {
+  display: inline-block;
+  color: var(--accent-cyan);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.faq-support-action:hover {
+  color: #fff;
+}
+
+/* Responsive adjustments for Tablets & Mobile */
+@media (max-width: 900px) {
+  .faq-section {
+    padding: 60px 0 40px;
+  }
+
+  .faq-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .faq-intro-col {
+    position: static;
+  }
+
+  .faq-heading {
+    font-size: 2rem;
+  }
+
+  .faq-actions-row {
+    width: 100%;
+  }
+
+  .faq-actions-row .btn-primary,
+  .faq-actions-row .btn-secondary {
+    flex: 1 1 200px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .faq-trigger {
+    padding: 18px 2px;
+  }
+
+  .faq-question-text {
+    font-size: 1rem;
+  }
+
+  .faq-content p {
+    font-size: 0.94rem;
+    padding-bottom: 18px;
+  }
+}

@@ -32,6 +32,7 @@
     renderBuildersGrid();
     setupEqualSpotlightListeners();
     setupCommandPaletteListeners();
+    setupFaqListeners();
     initTelemetryHUD();
     initGSAPAnimations();
 
@@ -1036,6 +1037,50 @@
   }
 
   // --------------------------------------------------------------------------
+  // Tailark FAQs-1 Accordion Engine
+  // --------------------------------------------------------------------------
+  function setupFaqListeners() {
+    const faqContainer = document.querySelector('.faq-accordion');
+    if (!faqContainer) return;
+
+    faqContainer.addEventListener('click', (e) => {
+      const trigger = e.target.closest('.faq-trigger');
+      if (!trigger) return;
+
+      const item = trigger.closest('.faq-item');
+      if (!item) return;
+
+      const isOpen = item.classList.contains('is-open');
+
+      // Tailark / Shadcn single-collapsible pattern: close other accordion items
+      const allItems = faqContainer.querySelectorAll('.faq-item');
+      allItems.forEach((other) => {
+        if (other !== item && other.classList.contains('is-open')) {
+          other.classList.remove('is-open');
+          const otherTrigger = other.querySelector('.faq-trigger');
+          if (otherTrigger) otherTrigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Toggle targeted item
+      if (isOpen) {
+        item.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      } else {
+        item.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+  }
+
+  function toggleFaqItem(faqId) {
+    const item = document.querySelector(`.faq-item[data-faq-id="${faqId}"]`);
+    if (!item) return;
+    const trigger = item.querySelector('.faq-trigger');
+    if (trigger) trigger.click();
+  }
+
+  // --------------------------------------------------------------------------
   // Public Namespace Exports
   // --------------------------------------------------------------------------
   window.RagetechApp = {
@@ -1054,7 +1099,8 @@
     openLoginModal,
     closeLoginModal,
     handleLogin,
-    handleLogout
+    handleLogout,
+    toggleFaq: toggleFaqItem
   };
 
   // Run on DOM ready
