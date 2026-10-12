@@ -239,8 +239,9 @@
                     <td>
                       <div class="table-actions">
                         <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="padding: 5px 12px; font-size: 0.76rem; text-decoration: none;">Edit in Studio</a>
-                        <button onclick="openLeadModal('${p.slug}')" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem;">Quick Edit</button>
+                        <button onclick="openLeadEditModal('${p.slug}')" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem;">Quick Edit</button>
                         <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem; text-decoration: none;">View</a>
+                        <button onclick="deleteLeadProject('${p.id || p.slug}')" class="btn-icon-action danger" style="padding: 5px 10px; font-size: 0.76rem;" title="Delete Assigned Repository">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -359,6 +360,65 @@
         } catch (err) {}
       }
       closeLeadModal();
+      renderLeadProjects();
+    }
+
+    // Delete Repository (Strictly restricted to Lead's assigned/created repos)
+    async function deleteLeadProject(id) {
+      const proj = projectsList.find(p => p.id === id || p.slug === id);
+      if (!proj) return;
+
+      const leadHandle = currentLead ? currentLead.handle : '';
+      const leadAssigned = (currentLead && currentLead.assigned_projects) ? currentLead.assigned_projects : [];
+
+      const isAssigned = (proj.maintainer_handles || []).includes(leadHandle) ||
+                         (proj.assignees || []).includes(leadHandle) ||
+                         (proj.maintainers && proj.maintainers.some(m => m.handle === leadHandle)) ||
+                         leadAssigned.includes(proj.slug) ||
+                         leadAssigned.includes(proj.id) ||
+                         proj.created_by === leadHandle;
+
+      if (!isAssigned) {
+        alert(`Access Denied: You (@${leadHandle}) can only delete repositories assigned to your lead.`);
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to permanently delete repository "${proj.name}" (${proj.slug})? This will remove it from the collective catalog.`)) {
+        return;
+      }
+
+      // 1. D1 API DELETE
+      try {
+        await fetch(`/api/manage/projects/${proj.id || proj.slug}`, { method: 'DELETE' });
+      } catch (e) {}
+
+      // 2. Remove from LocalStorage custom projects
+      try {
+        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
+        customProjects = customProjects.filter(p => p.id !== proj.id && p.slug !== proj.slug);
+        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
+        localStorage.removeItem(`ragetech_project_${proj.slug}`);
+      } catch (e) {}
+
+      // 3. Remove from Lead's assigned projects in session if present
+      if (currentLead && currentLead.assigned_projects) {
+        currentLead.assigned_projects = currentLead.assigned_projects.filter(s => s !== proj.slug && s !== proj.id);
+        try {
+          const sess = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+          sess.user = currentLead;
+          localStorage.setItem('ragetech_session', JSON.stringify(sess));
+
+          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+          const dIdx = customDevs.findIndex(d => d.id === currentLead.id || d.handle === currentLead.handle);
+          if (dIdx >= 0) {
+            customDevs[dIdx].assigned_projects = currentLead.assigned_projects;
+            localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+          }
+        } catch (e) {}
+      }
+
+      // 4. Update local in-memory list
+      projectsList = projectsList.filter(p => p.id !== proj.id && p.slug !== proj.slug);
       renderLeadProjects();
     }
 
