@@ -102,8 +102,27 @@
       window.location.href = 'index.html';
     }
 
-    function loadDevData() {
-      allProjects = window.RAGETECH_PROJECTS || [];
+    async function loadDevData() {
+      let d1Projects = [];
+      try {
+        const pRes = await fetch('/api/projects');
+        if (pRes.ok) {
+          const json = await pRes.json();
+          if (json.data && json.data.length > 0) d1Projects = json.data;
+        }
+      } catch (e) {}
+
+      let baseProjects = d1Projects.length > 0 ? d1Projects : (window.RAGETECH_PROJECTS || []);
+      try {
+        const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
+        customProjects.forEach(cp => {
+          const idx = baseProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
+          if (idx >= 0) baseProjects[idx] = { ...baseProjects[idx], ...cp };
+          else baseProjects.push(cp);
+        });
+      } catch (e) {}
+      allProjects = baseProjects;
+
       renderDevProfile();
     }
 
@@ -167,13 +186,13 @@
 
     async function handleSaveDevProfile(e) {
       e.preventDefault();
-      currentDev.name = document.getElementById('devFullName').value;
-      currentDev.role = document.getElementById('devRoleTitle').value;
-      currentDev.bio = document.getElementById('devBioInput').value;
-      currentDev.avatar_url = document.getElementById('devAvatarInput').value;
-      currentDev.website_url = document.getElementById('devWebsiteInput').value;
-      currentDev.github_url = document.getElementById('devGithubInput').value;
-      currentDev.gpg_fingerprint = document.getElementById('devGpgInput').value;
+      currentDev.name = document.getElementById('devFullName').value.trim();
+      currentDev.role = document.getElementById('devRoleTitle').value.trim();
+      currentDev.bio = document.getElementById('devBioInput').value.trim();
+      currentDev.avatar_url = document.getElementById('devAvatarInput').value.trim();
+      currentDev.website_url = document.getElementById('devWebsiteInput').value.trim();
+      currentDev.github_url = document.getElementById('devGithubInput').value.trim();
+      currentDev.gpg_fingerprint = document.getElementById('devGpgInput').value.trim();
 
       try {
         await fetch('/api/manage/developers', {
@@ -182,6 +201,18 @@
           body: JSON.stringify(currentDev)
         });
       } catch (err) {}
+
+      // Sync with localStorage custom developers
+      try {
+        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+        const idx = customDevs.findIndex(d => d.id === currentDev.id || d.handle === currentDev.handle);
+        if (idx >= 0) {
+          customDevs[idx] = { ...customDevs[idx], ...currentDev };
+        } else {
+          customDevs.push(currentDev);
+        }
+        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+      } catch (e) {}
 
       localStorage.setItem('ragetech_session', JSON.stringify({ user: currentDev, token: `tok_${currentDev.handle}` }));
       document.getElementById('devName').textContent = currentDev.name;

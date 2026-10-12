@@ -169,14 +169,22 @@
         // Fall through
       }
 
-      // 2. Offline dataset fallback
+      // 2. Check LocalStorage for custom developers
+      if (!dev) {
+        try {
+          const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+          dev = customDevs.find(d => d.handle === handle || d.id === handle);
+        } catch (e) {}
+      }
+
+      // 3. Offline dataset fallback
       if (!dev && window.RAGETECH_DEVELOPERS) {
         dev = window.RAGETECH_DEVELOPERS.find(d => d.handle === handle) || window.RAGETECH_DEVELOPERS[0];
       }
 
       if (!dev) return;
 
-      document.title = `${dev.name} (@${dev.handle}) — Builder Dossier | Ragetech`;
+      document.title = `${dev.name} (@${dev.handle}) — Developer Dossier | Ragetech`;
       document.getElementById('breadcrumbDevName').textContent = `@${dev.handle}`;
       document.getElementById('devName').textContent = dev.name;
       document.getElementById('devHandle').textContent = `@${dev.handle}`;
@@ -204,9 +212,29 @@
       const ghBtn = document.getElementById('devGithubBtn');
       if (dev.github_url) { ghBtn.href = dev.github_url; } else { ghBtn.style.display = 'none'; }
 
-      // Assigned Projects List
+      // Assigned Projects List (Query D1 + LocalStorage)
       const assignedList = document.getElementById('assignedProjectsList');
-      const allProjects = window.RAGETECH_PROJECTS || [];
+      let allProjects = [];
+      try {
+        const pRes = await fetch('/api/projects');
+        if (pRes.ok) {
+          const pJson = await pRes.json();
+          if (pJson.data && pJson.data.length > 0) allProjects = pJson.data;
+        }
+      } catch (e) {}
+
+      if (allProjects.length === 0 && window.RAGETECH_PROJECTS) {
+        allProjects = [...window.RAGETECH_PROJECTS];
+      }
+      try {
+        const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
+        customProjects.forEach(cp => {
+          const idx = allProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
+          if (idx >= 0) allProjects[idx] = { ...allProjects[idx], ...cp };
+          else allProjects.push(cp);
+        });
+      } catch (e) {}
+
       const assignedSlugs = dev.assigned_projects || [];
       const matchedProjects = allProjects.filter(p => assignedSlugs.includes(p.slug));
 

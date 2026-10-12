@@ -4,9 +4,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — Ragetech Collective</title>
-  <meta name="description" content="Sovereign administrative console for full D1 database CRUD and governance.">
+  <meta name="description" content="Central administration console for dynamic projects, landing page showcases, and team developer management.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .avatar-preset-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border-subtle);
+      cursor: pointer;
+      overflow: hidden;
+      transition: all var(--transition-fast);
+      padding: 0;
+      background: none;
+    }
+    .avatar-preset-btn:hover {
+      border-color: var(--accent-cyan);
+      transform: scale(1.1);
+    }
+    .project-toggle-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+    .project-toggle-card:hover {
+      border-color: rgba(6, 182, 212, 0.4);
+      background: rgba(6, 182, 212, 0.05);
+    }
+    .project-toggle-card.selected {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.12);
+    }
+    .project-toggle-checkbox {
+      accent-color: var(--accent-cyan);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .feature-hint-card {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .feature-hint-card p {
+      margin: 4px 0 0;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body class="dashboard-page">
 
@@ -23,12 +82,13 @@
           </div>
           <span class="brand-name">RAGETECH</span>
         </a>
-        <span class="badge-role admin">ADMIN CONSOLE</span>
+        <span class="badge-role admin">ADMIN DASHBOARD</span>
       </div>
 
       <div class="header-actions">
         <a href="index.html" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px;">
-          <span>Back to Landing Page</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>View Public Site</span>
         </a>
         <button onclick="handleLogout()" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; color: #f87171; border-color: rgba(239,68,68,0.25);">
           <span>Sign Out</span>
@@ -52,11 +112,11 @@
       <nav class="dashboard-nav-menu">
         <div class="dash-nav-item active" data-view="repos" onclick="switchView('repos')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          <span>Repositories CRUD</span>
+          <span>Projects & Showcase</span>
         </div>
         <div class="dash-nav-item" data-view="builders" onclick="switchView('builders')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          <span>Builders Directory CRUD</span>
+          <span>Team & Developers</span>
         </div>
         <div class="dash-nav-item" data-view="assignments" onclick="switchView('assignments')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
@@ -64,13 +124,13 @@
         </div>
         <div class="dash-nav-item" data-view="audit" onclick="switchView('audit')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-          <span>System Audit Trail</span>
+          <span>Activity & Database Log</span>
         </div>
       </nav>
 
       <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted);">
         <div>Database: Cloudflare D1</div>
-        <div style="color: var(--accent-emerald); margin-top: 4px;">● Master Authorization Active</div>
+        <div style="color: var(--accent-emerald); margin-top: 4px;">● Live Dynamic Synchronization</div>
       </div>
     </aside>
 
@@ -80,9 +140,9 @@
     </main>
   </div>
 
-  <!-- Dynamic Modal for Adding / Editing Repositories or Developers -->
+  <!-- Dynamic Modal for Adding / Editing Developers -->
   <div id="crudModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-dialog" style="max-width: 600px;">
+    <div class="modal-dialog" style="max-width: 680px; max-height: 90vh; overflow-y: auto;">
       <button class="modal-close-btn" onclick="closeCrudModal()" aria-label="Close modal">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
@@ -108,7 +168,6 @@
       try {
         const parsed = JSON.parse(saved);
         if (parsed.user.account_role !== 'admin') {
-          // If not admin, redirect to respective role dashboard
           if (parsed.user.account_role === 'lead') {
             window.location.href = 'lead.html';
           } else {
@@ -131,30 +190,52 @@
       window.location.href = 'index.html';
     }
 
+    // Dynamic Data Loader (Edge D1 + LocalStorage Parity)
     async function loadData() {
+      let d1Projects = [];
+      let d1Devs = [];
+
+      // 1. Fetch Projects from D1 Edge API if available
       try {
         const pRes = await fetch('/api/projects');
         if (pRes.ok) {
           const json = await pRes.json();
-          if (json.data && json.data.length > 0) projectsData = json.data;
+          if (json.data && json.data.length > 0) d1Projects = json.data;
         }
       } catch (e) {}
 
-      if (!projectsData || projectsData.length === 0) {
-        projectsData = window.RAGETECH_PROJECTS || [];
-      }
-
+      // 2. Fetch Developers from D1 Edge API if available
       try {
         const dRes = await fetch('/api/developers');
         if (dRes.ok) {
           const json = await dRes.json();
-          if (json.data && json.data.length > 0) developersData = json.data;
+          if (json.data && json.data.length > 0) d1Devs = json.data;
         }
       } catch (e) {}
 
-      if (!developersData || developersData.length === 0) {
-        developersData = window.RAGETECH_DEVELOPERS || [];
-      }
+      // 3. Merge with LocalStorage Custom Projects
+      let baseProjects = d1Projects.length > 0 ? d1Projects : (window.RAGETECH_PROJECTS || []);
+      try {
+        const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
+        customProjects.forEach(cp => {
+          const idx = baseProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
+          if (idx >= 0) baseProjects[idx] = { ...baseProjects[idx], ...cp };
+          else baseProjects.push(cp);
+        });
+      } catch (e) {}
+      projectsData = baseProjects;
+
+      // 4. Merge with LocalStorage Custom Developers
+      let baseDevs = d1Devs.length > 0 ? d1Devs : (window.RAGETECH_DEVELOPERS || []);
+      try {
+        const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+        customDevs.forEach(cd => {
+          const idx = baseDevs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
+          if (idx >= 0) baseDevs[idx] = { ...baseDevs[idx], ...cd };
+          else baseDevs.push(cd);
+        });
+      } catch (e) {}
+      developersData = baseDevs;
 
       renderCurrentView();
     }
@@ -175,48 +256,72 @@
         main.innerHTML = `
           <div class="dash-header-row">
             <div>
-              <h1 class="dash-title">Repositories Management</h1>
-              <p class="dash-subtitle">Create, configure, update live URLs, and remove collective repositories.</p>
+              <h1 class="dash-title">Projects & Landing Page Showcase</h1>
+              <p class="dash-subtitle">Manage repositories, customize landing page metrics & code terminal, and edit technical whitepapers.</p>
             </div>
             <a href="repository_editor.html" class="btn-primary">
-              <span>+ Add Repository</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>+ Create New Project</span>
             </a>
+          </div>
+
+          <!-- Feature Guidance Banner -->
+          <div class="feature-hint-card">
+            <div style="font-size: 1.4rem;">✨</div>
+            <div>
+              <strong style="color: var(--text-primary); font-size: 0.92rem;">Dual-Layer Visual Customization:</strong>
+              <p>Every repository has two editable areas: <strong>(1) The Landing Page Showcase</strong> (repo tag, version badge, architectural metrics table, and interactive code preview terminal), and <strong>(2) The Dedicated Dossier Page</strong> (<code>project.html</code> whitepaper, custom action button, and maintainer team). Click <strong>Customize</strong> on any project to edit both with live preview!</p>
+            </div>
           </div>
 
           <div class="data-table-container">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Repository Name</th>
-                  <th>Slug</th>
+                  <th>Project Name & Path</th>
+                  <th>Version Badge</th>
                   <th>Category</th>
-                  <th>Live Website</th>
+                  <th>Assigned Maintainers</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                ${projectsData.map(p => `
-                  <tr>
-                    <td>
-                      <div style="font-weight: 700;">${p.name}</div>
-                      <div style="font-size: 0.78rem; color: var(--text-muted);">${p.tagline}</div>
-                    </td>
-                    <td><code>${p.slug}</code></td>
-                    <td><span class="squad-badge systems">${p.category}</span></td>
-                    <td>
-                      ${p.live_url ? `<a href="${p.live_url}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">${p.live_url.replace('https://', '')}</a>` : '<span style="color: var(--text-muted);">None</span>'}
-                    </td>
-                    <td><span class="verified-icon-chip">${p.status.toUpperCase()}</span></td>
-                    <td>
-                      <div class="table-actions">
-                        <a href="repository_editor.html?id=${p.slug}" class="btn-icon-action">Edit</a>
-                        <a href="project.html?id=${p.slug}" class="btn-icon-action">Preview</a>
-                        <button class="btn-icon-action danger" onclick="deleteProject('${p.id || p.slug}')">Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${projectsData.map(p => {
+                  const maintainers = p.assignees || p.maintainer_handles || (p.maintainers ? p.maintainers.map(m => m.handle) : []);
+                  return `
+                    <tr>
+                      <td>
+                        <div style="font-weight: 700; font-size: 0.95rem;">${p.name}</div>
+                        <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan); margin-top: 2px;">${p.repo || `ragetech/${p.slug}`}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">${p.tagline || ''}</div>
+                      </td>
+                      <td><span class="stack-pill" style="font-size: 0.72rem; padding: 2px 8px;">${p.badge || 'v0.9.4'}</span></td>
+                      <td><span class="squad-badge systems">${p.category || 'Systems'}</span></td>
+                      <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                          ${maintainers.length > 0 
+                            ? maintainers.map(h => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 6px;">@${h}</span>`).join('') 
+                            : '<span style="font-size: 0.72rem; color: var(--text-muted);">None</span>'}
+                        </div>
+                      </td>
+                      <td><span class="verified-icon-chip" style="font-size: 0.72rem;">${(p.status || 'ACTIVE').toUpperCase()}</span></td>
+                      <td>
+                        <div class="table-actions">
+                          <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="font-size: 0.76rem; padding: 5px 12px; text-decoration: none;" title="Open Visual Customizer">
+                            Customize
+                          </a>
+                          <a href="project.html?id=${p.slug}" target="_blank" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px; text-decoration: none;">
+                            View Page
+                          </a>
+                          <button class="btn-icon-action danger" onclick="deleteProject('${p.id || p.slug}')" title="Delete Repository">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
               </tbody>
             </table>
           </div>
@@ -225,11 +330,12 @@
         main.innerHTML = `
           <div class="dash-header-row">
             <div>
-              <h1 class="dash-title">Builders Directory Management</h1>
-              <p class="dash-subtitle">Complete CRUD for collective developers, roles, squads, and access keys.</p>
+              <h1 class="dash-title">Team & Developers Directory</h1>
+              <p class="dash-subtitle">Create, customize, and manage developer profiles, engineering job titles, bios, profile links, and assigned repositories.</p>
             </div>
             <button class="btn-primary" onclick="openDeveloperModal()">
-              <span>+ Add Builder</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>+ Add New Developer</span>
             </button>
           </div>
 
@@ -237,10 +343,10 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Builder</th>
-                  <th>Role & Assigned Repositories</th>
-                  <th>Account Role</th>
-                  <th>Fingerprint</th>
+                  <th>Developer Profile</th>
+                  <th>Engineering Title</th>
+                  <th>Assigned Repositories</th>
+                  <th>Permission Level</th>
                   <th>Verified</th>
                   <th>Actions</th>
                 </tr>
@@ -249,30 +355,41 @@
                 ${developersData.map(d => `
                   <tr>
                     <td>
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="${d.avatar_url}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="${d.avatar_url}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle);" alt="${d.name}">
                         <div>
-                          <div style="font-weight: 700;">${d.name}</div>
-                          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">@${d.handle} • ${d.email || 'no-email'}</div>
+                          <div style="font-weight: 700; font-size: 0.92rem;">${d.name}</div>
+                          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">@${d.handle}</div>
+                          <div style="font-size: 0.72rem; color: var(--text-muted);">${d.email || 'No email set'}</div>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div style="font-weight: 600;">${d.role}</div>
-                      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px;">
+                      <div style="font-weight: 600; font-size: 0.86rem;">${d.role}</div>
+                      <div style="font-size: 0.74rem; color: var(--text-muted); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.bio || ''}</div>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                         ${(d.assigned_projects && d.assigned_projects.length > 0)
-                          ? d.assigned_projects.map(slug => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px;">${slug}</span>`).join('')
-                          : '<span style="font-size: 0.72rem; color: var(--text-muted);">None Assigned</span>'}
+                          ? d.assigned_projects.map(slug => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px; color: var(--accent-cyan); border-color: rgba(6,182,212,0.3);">${slug}</span>`).join('')
+                          : '<span style="font-size: 0.72rem; color: var(--text-muted);">Core Platform</span>'}
                       </div>
                     </td>
-                    <td><span class="badge-role ${d.account_role || 'developer'}">${(d.account_role || 'developer').toUpperCase()}</span></td>
-                    <td><code>${(d.gpg_fingerprint || 'N/A').slice(0, 14)}...</code></td>
-                    <td>${d.is_verified ? '<span style="color: var(--accent-emerald);">Verified</span>' : '<span style="color: var(--text-muted);">Unverified</span>'}</td>
+                    <td>
+                      <span class="badge-role ${d.account_role || 'developer'}">
+                        ${(d.account_role === 'admin' ? 'Administrator' : (d.account_role === 'lead' ? 'Project Lead' : 'Developer')).toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      ${d.is_verified 
+                        ? '<span style="color: var(--accent-emerald); font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">✓ Verified</span>' 
+                        : '<span style="color: var(--text-muted); font-size: 0.8rem;">Standard</span>'}
+                    </td>
                     <td>
                       <div class="table-actions">
-                        <button class="btn-icon-action" onclick="openDeveloperModal('${d.handle}')">Edit</button>
-                        <a href="developer.html?id=${d.handle}" class="btn-icon-action">Profile</a>
-                        <button class="btn-icon-action danger" onclick="deleteDeveloper('${d.id || d.handle}')">Remove</button>
+                        <button class="btn-primary" style="font-size: 0.76rem; padding: 5px 12px;" onclick="openDeveloperModal('${d.handle}')">Edit Profile</button>
+                        <a href="developer.html?id=${d.handle}" target="_blank" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px; text-decoration: none;">View Dossier</a>
+                        <button class="btn-icon-action danger" onclick="deleteDeveloper('${d.id || d.handle}')" title="Remove Developer">Remove</button>
                       </div>
                     </td>
                   </tr>
@@ -285,11 +402,11 @@
         main.innerHTML = `
           <div class="dash-header-row">
             <div>
-              <h1 class="dash-title">Project Maintainer Assignments</h1>
-              <p class="dash-subtitle">Manage which engineers are assigned to maintain and sign releases for repositories.</p>
+              <h1 class="dash-title">Maintainer Team Assignments</h1>
+              <p class="dash-subtitle">Easily assign developers to maintain repositories and sign release whitepapers.</p>
             </div>
             <button class="btn-primary" onclick="openAssignmentModal()">
-              <span>+ Assign Builder</span>
+              <span>+ Assign Developer</span>
             </button>
           </div>
 
@@ -305,18 +422,25 @@
               </thead>
               <tbody>
                 ${projectsData.map(p => {
-                  const handles = p.maintainer_handles || (p.maintainers ? p.maintainers.map(m => m.handle) : []);
+                  const handles = p.assignees || p.maintainer_handles || (p.maintainers ? p.maintainers.map(m => m.handle) : []);
                   return `
                     <tr>
-                      <td><div style="font-weight: 700;">${p.name}</div><code>${p.slug}</code></td>
-                      <td><span class="squad-badge systems">${p.category}</span></td>
+                      <td>
+                        <div style="font-weight: 700;">${p.name}</div>
+                        <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">${p.repo || `ragetech/${p.slug}`}</div>
+                      </td>
+                      <td><span class="squad-badge systems">${p.category || 'Systems'}</span></td>
                       <td>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                          ${handles.map(h => `<span class="stack-pill">@${h}</span>`).join('')}
+                          ${handles.length > 0 
+                            ? handles.map(h => `<span class="stack-pill">@${h}</span>`).join('')
+                            : '<span style="font-size: 0.76rem; color: var(--text-muted);">None</span>'}
                         </div>
                       </td>
                       <td>
-                        <button class="btn-icon-action" onclick="openAssignmentModal('${p.id || p.slug}')">Manage Team</button>
+                        <a href="repository_editor.html?id=${p.slug}#step-maintainers" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 12px; text-decoration: none;">
+                          Manage Team in Studio
+                        </a>
                       </td>
                     </tr>
                   `;
@@ -329,8 +453,8 @@
         main.innerHTML = `
           <div class="dash-header-row">
             <div>
-              <h1 class="dash-title">System Audit Trail</h1>
-              <p class="dash-subtitle">Immutable log of administrative authorizations and database mutations.</p>
+              <h1 class="dash-title">Activity & Database Log</h1>
+              <p class="dash-subtitle">Live log of administrative authorizations, updates, and Cloudflare D1 edge synchronizations.</p>
             </div>
           </div>
 
@@ -339,33 +463,33 @@
               <thead>
                 <tr>
                   <th>Timestamp (UTC)</th>
-                  <th>Action</th>
-                  <th>Target Type</th>
-                  <th>Target ID</th>
-                  <th>Details</th>
+                  <th>Event</th>
+                  <th>Scope</th>
+                  <th>Target</th>
+                  <th>Description</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
+                  <td><code>2026-10-12 12:10:00</code></td>
+                  <td><span class="squad-badge edge">D1 SYNC</span></td>
+                  <td>Edge DB</td>
+                  <td>projects</td>
+                  <td>Synchronized landing page specs and interactive terminal preview</td>
+                </tr>
+                <tr>
                   <td><code>2026-10-12 11:15:00</code></td>
-                  <td><span class="squad-badge edge">LOGIN</span></td>
-                  <td>Auth</td>
-                  <td>dev-00</td>
-                  <td>Admin authorization for @reymartchua</td>
+                  <td><span class="squad-badge compilers">AUTH</span></td>
+                  <td>Session</td>
+                  <td>reymartchua</td>
+                  <td>Master authorization active for @reymartchua</td>
                 </tr>
                 <tr>
                   <td><code>2026-10-12 10:45:00</code></td>
-                  <td><span class="squad-badge systems">UPDATE</span></td>
+                  <td><span class="squad-badge systems">SCHEMA</span></td>
                   <td>Database</td>
                   <td>schema.sql</td>
-                  <td>Removed comments for Cloudflare D1 optimization</td>
-                </tr>
-                <tr>
-                  <td><code>2026-10-10 08:30:00</code></td>
-                  <td><span class="squad-badge compilers">PUBLISH</span></td>
-                  <td>Repository</td>
-                  <td>proj-01</td>
-                  <td>Aether Runtime technical whitepaper published</td>
+                  <td>Cloudflare D1 tables verified and indexed</td>
                 </tr>
               </tbody>
             </table>
@@ -381,123 +505,224 @@
       modal.setAttribute('aria-hidden', 'true');
     }
 
-    function openProjectModal(slug) {
-      if (slug) {
-        window.location.href = `repository_editor.html?id=${slug}`;
-      } else {
-        window.location.href = 'repository_editor.html';
-      }
-    }
-
+    // Delete Project (Syncs D1 + LocalStorage)
     async function deleteProject(id) {
-      if (!confirm('Are you sure you want to permanently delete this repository and its whitepaper?')) return;
+      if (!confirm('Are you sure you want to permanently delete this repository and its whitepaper dossier?')) return;
+      
       try {
         await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
       } catch (e) {}
+
+      // Update LocalStorage custom projects
+      try {
+        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
+        customProjects = customProjects.filter(p => p.id !== id && p.slug !== id);
+        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
+        localStorage.removeItem(`ragetech_project_${id}`);
+      } catch (e) {}
+
       projectsData = projectsData.filter(p => p.id !== id && p.slug !== id);
       renderCurrentView();
     }
 
+    // Fully Customizable Developer Profile Editor Modal
     function openDeveloperModal(handle) {
       const dev = handle ? developersData.find(d => d.handle === handle) : null;
       const content = document.getElementById('crudModalContent');
+
+      // Sample avatar presets
+      const avatarPresets = [
+        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80',
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80',
+        'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=280&q=80'
+      ];
+
       content.innerHTML = `
-        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">${dev ? 'Edit Builder Profile' : 'Add New Builder'}</h3>
-        <form onsubmit="handleSaveDeveloper(event, '${dev ? dev.id : ''}')">
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" id="dName" class="form-input" required value="${dev ? dev.name : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Handle (@handle)</label>
-            <input type="text" id="dHandle" class="form-input" required value="${dev ? dev.handle : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" id="dEmail" class="form-input" value="${dev ? dev.email || '' : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Set Access Key / Password (will be SHA-256 hashed)</label>
-            <input type="password" id="dPassword" class="form-input" placeholder="${dev ? 'Leave blank to keep current password' : '••••••••••••'}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Account Role</label>
-            <select id="dAccountRole" class="form-select">
-              <option value="developer" ${dev && dev.account_role === 'developer' ? 'selected' : ''}>Developer</option>
-              <option value="lead" ${dev && dev.account_role === 'lead' ? 'selected' : ''}>Project Lead</option>
-              <option value="admin" ${dev && dev.account_role === 'admin' ? 'selected' : ''}>Administrator</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Engineering Role</label>
-            <input type="text" id="dRole" class="form-input" required value="${dev ? dev.role : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Assigned Projects / Repositories (Dynamic)</label>
-            <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;">Select the repositories this engineer is assigned to maintain:</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 180px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
-              ${projectsData.map(p => {
-                const isAssigned = dev && dev.assigned_projects && dev.assigned_projects.includes(p.slug);
-                return `
-                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; cursor: pointer;">
-                    <input type="checkbox" name="builderAssignedRepo" value="${p.slug}" ${isAssigned ? 'checked' : ''} style="accent-color: var(--accent-cyan);">
-                    <span>${p.name}</span>
-                  </label>
-                `;
-              }).join('')}
+        <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 20px;">
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0 0 6px;">${dev ? 'Customize Developer Profile' : 'Add New Developer'}</h2>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0;">Configure public developer coordinates, biography, permission access, and assigned repositories.</p>
+        </div>
+
+        <form id="devForm" onsubmit="handleSaveDeveloper(event, '${dev ? dev.id : ''}')">
+          <!-- Group 1: Basic Information -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">1. Identity & Credentials</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label" for="dName">Full Name</label>
+                <input type="text" id="dName" class="form-input" required placeholder="e.g. Reymart Chua" value="${dev ? dev.name : ''}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="dHandle">Username / Handle</label>
+                <input type="text" id="dHandle" class="form-input" required placeholder="e.g. reymartchua" value="${dev ? dev.handle : ''}">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label" for="dEmail">Email Address</label>
+                <input type="email" id="dEmail" class="form-input" placeholder="developer@ragetech.dev" value="${dev ? dev.email || '' : ''}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="dAccountRole">Account Access Level</label>
+                <select id="dAccountRole" class="form-select">
+                  <option value="developer" ${dev && dev.account_role === 'developer' ? 'selected' : ''}>Developer (Standard)</option>
+                  <option value="lead" ${dev && dev.account_role === 'lead' ? 'selected' : ''}>Project Lead (Governance)</option>
+                  <option value="admin" ${dev && dev.account_role === 'admin' ? 'selected' : ''}>Administrator (Full Access)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="dPassword">Login Password / Passphrase</label>
+              <input type="password" id="dPassword" class="form-input" placeholder="${dev ? 'Leave blank to keep existing password' : 'Enter strong password (will be SHA-256 hashed)'}">
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">Passwords are securely hashed using SHA-256 before storing.</div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Biography</label>
-            <textarea id="dBio" class="form-textarea" rows="3">${dev ? dev.bio : ''}</textarea>
+
+          <!-- Group 2: Role & Assigned Projects -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">2. Engineering Role & Dynamic Projects</div>
+
+            <div class="form-group">
+              <label class="form-label" for="dRole">Engineering Title / Job Specialization</label>
+              <input type="text" id="dRole" class="form-input" required placeholder="e.g. Distributed Consensus Lead & Systems Architect" value="${dev ? dev.role : ''}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Assigned Repositories (Dynamic)</label>
+              <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;">Click repositories to assign or unassign this engineer as an official maintainer:</p>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 190px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                ${projectsData.map(p => {
+                  const isAssigned = dev && dev.assigned_projects && dev.assigned_projects.includes(p.slug);
+                  return `
+                    <label class="project-toggle-card ${isAssigned ? 'selected' : ''}" id="card_${p.slug}">
+                      <input type="checkbox" name="builderAssignedRepo" value="${p.slug}" ${isAssigned ? 'checked' : ''} class="project-toggle-checkbox" onchange="toggleProjectCardStyle('${p.slug}', this.checked)">
+                      <div style="min-width: 0;">
+                        <div style="font-weight: 600; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                        <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-cyan);">${p.badge || 'v0.9'}</div>
+                      </div>
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.84rem;">
+                <input type="checkbox" id="dVerified" ${!dev || dev.is_verified ? 'checked' : ''} style="accent-color: var(--accent-emerald); width: 16px; height: 16px;">
+                <span>Show "Verified Maintainer" badge on public dossier</span>
+              </label>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Avatar Image URL</label>
-            <input type="url" id="dAvatar" class="form-input" value="${dev ? dev.avatar_url : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80'}">
+
+          <!-- Group 3: Biography & Photo -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">3. Biography & Profile Picture</div>
+
+            <div class="form-group">
+              <label class="form-label" for="dBio">Biographical Overview / Technical Focus</label>
+              <textarea id="dBio" class="form-textarea" rows="3" placeholder="Overview of engineering background, research focus, and core technologies...">${dev ? dev.bio : ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="dAvatar">Profile Photo / Avatar URL</label>
+              <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+                <img id="avatarPreview" src="${dev ? dev.avatar_url : avatarPresets[0]}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan);">
+                <input type="url" id="dAvatar" class="form-input" style="flex: 1;" value="${dev ? dev.avatar_url : avatarPresets[0]}" oninput="document.getElementById('avatarPreview').src = this.value">
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.74rem; color: var(--text-muted);">Quick Presets:</span>
+                ${avatarPresets.map((preset, idx) => `
+                  <button type="button" class="avatar-preset-btn" onclick="selectAvatarPreset('${preset}')" title="Preset ${idx + 1}">
+                    <img src="${preset}" style="width: 100%; height: 100%; object-fit: cover;">
+                  </button>
+                `).join('')}
+              </div>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Personal Website URL</label>
-            <input type="url" id="dWebsite" class="form-input" value="${dev ? dev.website_url || '' : ''}">
+
+          <!-- Group 4: Web Coordinates & Cryptographic Fingerprint -->
+          <div style="margin-bottom: 24px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">4. Web Coordinates & Cryptographic Key</div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label" for="dWebsite">Personal Website URL</label>
+                <input type="url" id="dWebsite" class="form-input" placeholder="https://..." value="${dev ? dev.website_url || '' : ''}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="dGithub">GitHub Profile URL</label>
+                <input type="url" id="dGithub" class="form-input" placeholder="https://github.com/..." value="${dev ? dev.github_url || '' : ''}">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="dGpg">Cryptographic GPG Key Fingerprint</label>
+              <input type="text" id="dGpg" class="form-input" placeholder="e.g. 8F4A 2B19 E03C 41FA 98E1" value="${dev ? dev.gpg_fingerprint || '' : '8F4A 2B19 E03C 41FA 98E1'}">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">GitHub URL</label>
-            <input type="url" id="dGithub" class="form-input" value="${dev ? dev.github_url || '' : ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">GPG Key Fingerprint</label>
-            <input type="text" id="dGpg" class="form-input" value="${dev ? dev.gpg_fingerprint || '' : '8F4A 2B19 E03C 41FA 98E1'}">
-          </div>
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
             <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
-            <button type="submit" class="btn-primary">Save Builder</button>
+            <button type="submit" class="btn-primary" id="saveDevBtn">
+              <span>Save & Sync Database</span>
+            </button>
           </div>
         </form>
       `;
+
       const modal = document.getElementById('crudModal');
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
     }
 
+    function toggleProjectCardStyle(slug, isChecked) {
+      const card = document.getElementById(`card_${slug}`);
+      if (card) {
+        card.classList.toggle('selected', isChecked);
+      }
+    }
+
+    function selectAvatarPreset(url) {
+      document.getElementById('dAvatar').value = url;
+      document.getElementById('avatarPreview').src = url;
+    }
+
+    // Save Developer (Cloudflare D1 + LocalStorage Sync)
     async function handleSaveDeveloper(e, id) {
       e.preventDefault();
+      const saveBtn = document.getElementById('saveDevBtn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span>Saving...</span>`;
+      }
+
+      const rawHandle = document.getElementById('dHandle').value.trim().replace(/^@/, '');
       const assigned_projects = Array.from(document.querySelectorAll('input[name="builderAssignedRepo"]:checked')).map(cb => cb.value);
+      
       const payload = {
         id: id || `dev-${Date.now()}`,
-        name: document.getElementById('dName').value,
-        handle: document.getElementById('dHandle').value,
-        email: document.getElementById('dEmail').value,
+        name: document.getElementById('dName').value.trim(),
+        handle: rawHandle,
+        email: document.getElementById('dEmail').value.trim(),
         password: document.getElementById('dPassword').value || undefined,
         account_role: document.getElementById('dAccountRole').value,
-        role: document.getElementById('dRole').value,
+        role: document.getElementById('dRole').value.trim(),
         assigned_projects,
-        bio: document.getElementById('dBio').value,
-        avatar_url: document.getElementById('dAvatar').value,
-        website_url: document.getElementById('dWebsite').value,
-        github_url: document.getElementById('dGithub').value,
-        gpg_fingerprint: document.getElementById('dGpg').value,
-        is_verified: 1
+        bio: document.getElementById('dBio').value.trim(),
+        avatar_url: document.getElementById('dAvatar').value.trim(),
+        website_url: document.getElementById('dWebsite').value.trim(),
+        github_url: document.getElementById('dGithub').value.trim(),
+        gpg_fingerprint: document.getElementById('dGpg').value.trim(),
+        is_verified: document.getElementById('dVerified').checked ? 1 : 0
       };
 
+      // 1. Send to Cloudflare D1
       try {
         await fetch('/api/manage/developers', {
           method: 'POST',
@@ -506,33 +731,87 @@
         });
       } catch (err) {}
 
-      const idx = developersData.findIndex(d => d.id === id || d.handle === payload.handle);
-      if (idx !== -1) {
-        developersData[idx] = { ...developersData[idx], ...payload };
+      // 2. Persist to LocalStorage for multi-page instant parity
+      try {
+        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+        const idx = customDevs.findIndex(d => d.id === payload.id || d.handle === payload.handle);
+        if (idx >= 0) {
+          customDevs[idx] = { ...customDevs[idx], ...payload };
+        } else {
+          customDevs.push(payload);
+        }
+        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+      } catch (err) {}
+
+      // 3. Update In-Memory Developers
+      const devIdx = developersData.findIndex(d => d.id === payload.id || d.handle === payload.handle);
+      if (devIdx !== -1) {
+        developersData[devIdx] = { ...developersData[devIdx], ...payload };
       } else {
         developersData.push(payload);
       }
+
+      // 4. Update Projects Maintainers List Dynamically
+      projectsData.forEach(p => {
+        let handles = p.assignees || p.maintainer_handles || [];
+        if (assigned_projects.includes(p.slug)) {
+          if (!handles.includes(payload.handle)) handles.push(payload.handle);
+        } else {
+          handles = handles.filter(h => h !== payload.handle);
+        }
+        p.assignees = handles;
+        p.maintainer_handles = handles;
+      });
+
+      // Update LocalStorage Projects maintainers
+      try {
+        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
+        customProjects.forEach(cp => {
+          let handles = cp.assignees || cp.maintainer_handles || [];
+          if (assigned_projects.includes(cp.slug)) {
+            if (!handles.includes(payload.handle)) handles.push(payload.handle);
+          } else {
+            handles = handles.filter(h => h !== payload.handle);
+          }
+          cp.assignees = handles;
+          cp.maintainer_handles = handles;
+        });
+        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
+      } catch (e) {}
+
       closeCrudModal();
       renderCurrentView();
     }
 
+    // Delete Developer (Cloudflare D1 + LocalStorage Sync)
     async function deleteDeveloper(id) {
-      if (!confirm('Are you sure you want to permanently remove this builder from the collective?')) return;
+      if (!confirm('Are you sure you want to permanently remove this developer from the collective?')) return;
+      
       try {
         await fetch(`/api/manage/developers/${id}`, { method: 'DELETE' });
       } catch (e) {}
+
+      // Update LocalStorage
+      try {
+        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+        customDevs = customDevs.filter(d => d.id !== id && d.handle !== id);
+        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+      } catch (e) {}
+
       developersData = developersData.filter(d => d.id !== id && d.handle !== id);
       renderCurrentView();
     }
 
+    // Quick Assignment Modal
     function openAssignmentModal(slug) {
       const proj = projectsData.find(p => p.slug === slug || p.id === slug) || projectsData[0];
       const content = document.getElementById('crudModalContent');
       content.innerHTML = `
-        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">Assign Builders to ${proj.name}</h3>
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 12px;">Assign Developer to ${proj.name}</h3>
+        <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 20px;">Connect an engineer to this project and grant repository maintainer permissions.</p>
         <form onsubmit="handleSaveAssignment(event, '${proj.id || proj.slug}')">
           <div class="form-group">
-            <label class="form-label">Select Builder</label>
+            <label class="form-label">Select Developer</label>
             <select id="assignDevId" class="form-select">
               ${developersData.map(d => `<option value="${d.id || d.handle}">${d.name} (@${d.handle})</option>`).join('')}
             </select>
@@ -543,7 +822,7 @@
           </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
             <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
-            <button type="submit" class="btn-primary">Add Assignment</button>
+            <button type="submit" class="btn-primary">Save Assignment</button>
           </div>
         </form>
       `;
@@ -565,8 +844,21 @@
         });
       } catch (err) {}
 
+      // Update in local data
+      const dev = developersData.find(d => d.id === devId || d.handle === devId);
+      const proj = projectsData.find(p => p.id === projId || p.slug === projId);
+      if (dev && proj) {
+        if (!dev.assigned_projects) dev.assigned_projects = [];
+        if (!dev.assigned_projects.includes(proj.slug)) dev.assigned_projects.push(proj.slug);
+
+        let handles = proj.assignees || proj.maintainer_handles || [];
+        if (!handles.includes(dev.handle)) handles.push(dev.handle);
+        proj.assignees = handles;
+        proj.maintainer_handles = handles;
+      }
+
       closeCrudModal();
-      alert('Assignment saved successfully!');
+      renderCurrentView();
     }
 
     // Init

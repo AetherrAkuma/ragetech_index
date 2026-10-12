@@ -348,8 +348,17 @@
 
       // Render Assigned Maintainers (@tailark/blocks/quartz/team)
       const maintainersContainer = document.getElementById('assignedMaintainersGrid');
-      const devs = window.RAGETECH_DEVELOPERS || [];
-      const assignedHandles = project.maintainer_handles || (project.maintainers ? project.maintainers.map(m => m.handle) : []);
+      let devs = window.RAGETECH_DEVELOPERS ? [...window.RAGETECH_DEVELOPERS] : [];
+      try {
+        const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+        customDevs.forEach(cd => {
+          const idx = devs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
+          if (idx >= 0) devs[idx] = { ...devs[idx], ...cd };
+          else devs.push(cd);
+        });
+      } catch (e) {}
+
+      const assignedHandles = project.maintainer_handles || project.assignees || (project.maintainers ? project.maintainers.map(m => m.handle) : []);
       const matchedDevs = devs.filter(d => assignedHandles.includes(d.handle));
 
       if (matchedDevs.length > 0) {

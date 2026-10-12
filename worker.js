@@ -74,7 +74,14 @@ export default {
 
           const formatted = projects.map(p => ({
             ...p,
+            repo: p.repo || `ragetech/${p.slug}`,
+            badge: p.badge || 'v0.9.4-alpha',
+            specs: p.specs_json ? JSON.parse(p.specs_json) : (p.specs || []),
             stats: p.stats_json ? JSON.parse(p.stats_json) : {},
+            previewTitle: p.preview_title || 'telemetry_sink.rs',
+            previewContent: p.preview_content || '',
+            previewMeta: p.preview_meta || 'Active configuration',
+            assignees: p.maintainers_json ? JSON.parse(p.maintainers_json) : [],
             maintainer_handles: p.maintainers_json ? JSON.parse(p.maintainers_json) : []
           }));
 
@@ -121,7 +128,13 @@ export default {
               source: 'd1',
               data: {
                 ...project,
+                repo: project.repo || `ragetech/${project.slug}`,
+                badge: project.badge || 'v0.9.4-alpha',
+                specs: project.specs_json ? JSON.parse(project.specs_json) : [],
                 stats: project.stats_json ? JSON.parse(project.stats_json) : {},
+                previewTitle: project.preview_title || 'telemetry_sink.rs',
+                previewContent: project.preview_content || '',
+                previewMeta: project.preview_meta || 'Active configuration',
                 sections: sections.map(s => ({ title: s.section_title, content: s.section_content })),
                 maintainers
               }
@@ -267,44 +280,55 @@ export default {
       try {
         const body = await request.json();
         const { 
-          id, slug, name, tagline, description, category, status, 
+          id, slug, name, repo, badge, tagline, description, category, status, 
           live_url, github_url, tech_stack,
           action_button_label, action_button_url, cover_image_url, 
-          markdown_content, maintainer_handles 
+          markdown_content, maintainer_handles,
+          specs, specs_json, preview_title, preview_content, preview_meta
         } = body;
 
         const effectiveBtnLabel = action_button_label || 'Visit Site';
         const effectiveBtnUrl = action_button_url || live_url;
         const targetId = id || `proj-${Date.now()}`;
+        const effectiveRepo = repo || `ragetech/${slug}`;
+        const effectiveBadge = badge || 'v0.9.4-alpha';
+        const effectiveSpecsJson = specs_json || (specs ? JSON.stringify(specs) : null);
+        const effectivePreviewTitle = preview_title || 'telemetry_sink.rs';
+        const effectivePreviewContent = preview_content || '';
+        const effectivePreviewMeta = preview_meta || 'Active configuration';
 
         if (env.DB) {
           const existing = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(id || '', slug).first();
           if (existing) {
             await env.DB.prepare(`
               UPDATE projects 
-              SET name = ?, tagline = ?, description = ?, category = ?, status = ?, 
+              SET name = ?, repo = ?, badge = ?, tagline = ?, description = ?, category = ?, status = ?, 
                   live_url = ?, github_url = ?, tech_stack = ?, 
                   action_button_label = ?, action_button_url = ?, cover_image_url = ?, markdown_content = ?,
+                  specs_json = ?, preview_title = ?, preview_content = ?, preview_meta = ?,
                   updated_at = CURRENT_TIMESTAMP
               WHERE id = ?
             `).bind(
-              name, tagline, description, category, status || 'active', 
+              name, effectiveRepo, effectiveBadge, tagline, description, category, status || 'active', 
               live_url, github_url, tech_stack, 
-              effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null, 
+              effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null,
+              effectiveSpecsJson, effectivePreviewTitle, effectivePreviewContent, effectivePreviewMeta,
               existing.id
             ).run();
           } else {
             await env.DB.prepare(`
               INSERT INTO projects (
-                id, slug, name, tagline, description, category, status, 
+                id, slug, name, repo, badge, tagline, description, category, status, 
                 live_url, github_url, tech_stack, 
-                action_button_label, action_button_url, cover_image_url, markdown_content
+                action_button_label, action_button_url, cover_image_url, markdown_content,
+                specs_json, preview_title, preview_content, preview_meta
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
-              targetId, slug, name, tagline, description, category, status || 'active', 
+              targetId, slug, name, effectiveRepo, effectiveBadge, tagline, description, category, status || 'active', 
               live_url, github_url, tech_stack, 
-              effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null
+              effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null,
+              effectiveSpecsJson, effectivePreviewTitle, effectivePreviewContent, effectivePreviewMeta
             ).run();
           }
 
@@ -351,7 +375,7 @@ export default {
     if (pathname === '/api/manage/developers' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { id, handle, name, email, password, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified } = body;
+        const { id, handle, name, email, password, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified, assigned_projects } = body;
 
         if (env.DB) {
           const existing = await env.DB.prepare('SELECT id, password_hash FROM developers WHERE id = ? OR handle = ?').bind(id, handle).first();
@@ -359,6 +383,8 @@ export default {
           if (password) {
             passHash = await sha256Hex(password);
           }
+
+          const devId = existing ? existing.id : (id || `dev-${Date.now()}`);
 
           if (existing) {
             await env.DB.prepare(`
@@ -370,10 +396,24 @@ export default {
             await env.DB.prepare(`
               INSERT INTO developers (id, handle, name, email, password_hash, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(id || `dev-${Date.now()}`, handle, name, email, passHash, role, account_role || 'developer', squad || 'systems', bio, avatar_url, website_url, github_url, gpg_fingerprint || '8F4A 2B19 E03C 41FA 98E1', is_verified !== undefined ? is_verified : 1).run();
+            `).bind(devId, handle, name, email, passHash, role, account_role || 'developer', squad || 'systems', bio, avatar_url, website_url, github_url, gpg_fingerprint || '8F4A 2B19 E03C 41FA 98E1', is_verified !== undefined ? is_verified : 1).run();
           }
 
-          return jsonResponse({ success: true, message: 'Developer profile updated' }, corsHeaders);
+          // Persist Assigned Projects
+          if (Array.isArray(assigned_projects)) {
+            await env.DB.prepare('DELETE FROM project_assignments WHERE developer_id = ?').bind(devId).run();
+            for (const pSlug of assigned_projects) {
+              const proj = await env.DB.prepare('SELECT id FROM projects WHERE slug = ? OR id = ?').bind(pSlug, pSlug).first();
+              if (proj) {
+                await env.DB.prepare(`
+                  INSERT OR IGNORE INTO project_assignments (id, project_id, developer_id, contribution_role)
+                  VALUES (?, ?, ?, 'Maintainer')
+                `).bind(`pa-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, proj.id, devId).run();
+              }
+            }
+          }
+
+          return jsonResponse({ success: true, message: 'Developer profile updated in Cloudflare D1' }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Saved (offline mode)' }, corsHeaders);
       } catch (err) {

@@ -38,13 +38,34 @@
 
   // Fetch from D1 API or gracefully fallback to offline registry
   async function fetchPlatformData() {
-    // 1. Immediately hydrate from offline registry
+    // 1. Immediately hydrate from offline registry + local dynamic changes
+    let customProjects = [];
+    let customDevs = [];
+    try {
+      const storedP = localStorage.getItem('ragetech_custom_projects');
+      if (storedP) customProjects = JSON.parse(storedP);
+      const storedD = localStorage.getItem('ragetech_custom_developers');
+      if (storedD) customDevs = JSON.parse(storedD);
+    } catch (e) {}
+
     if (window.RAGETECH_PROJECTS && window.RAGETECH_PROJECTS.length > 0) {
       state.projects = [...window.RAGETECH_PROJECTS];
-      state.activeProjectSlug = state.projects[0].slug;
+      // Overlay custom project changes
+      customProjects.forEach(cp => {
+        const idx = state.projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
+        if (idx >= 0) state.projects[idx] = { ...state.projects[idx], ...cp };
+        else state.projects.push(cp);
+      });
+      state.activeProjectSlug = state.projects[0]?.slug;
     }
+
     if (window.RAGETECH_DEVELOPERS && window.RAGETECH_DEVELOPERS.length > 0) {
       state.developers = [...window.RAGETECH_DEVELOPERS];
+      customDevs.forEach(cd => {
+        const idx = state.developers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
+        if (idx >= 0) state.developers[idx] = { ...state.developers[idx], ...cd };
+        else state.developers.push(cd);
+      });
     }
 
     // 2. Query Cloudflare D1 API if served via HTTP
@@ -55,7 +76,14 @@
           const json = await res.json();
           if (json.success && json.data && json.data.length > 0) {
             state.projects = json.data;
-            if (!state.activeProjectSlug) state.activeProjectSlug = state.projects[0].slug;
+            customProjects.forEach(cp => {
+              const idx = state.projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
+              if (idx >= 0) state.projects[idx] = { ...state.projects[idx], ...cp };
+              else state.projects.push(cp);
+            });
+            if (!state.activeProjectSlug && state.projects.length > 0) {
+              state.activeProjectSlug = state.projects[0].slug;
+            }
           }
         }
       } catch (e) {}
@@ -66,6 +94,11 @@
           const json = await res.json();
           if (json.success && json.data && json.data.length > 0) {
             state.developers = json.data;
+            customDevs.forEach(cd => {
+              const idx = state.developers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
+              if (idx >= 0) state.developers[idx] = { ...state.developers[idx], ...cd };
+              else state.developers.push(cd);
+            });
           }
         }
       } catch (e) {}
