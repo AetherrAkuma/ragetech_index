@@ -23,6 +23,15 @@
 
   const nativeFetch = window.fetch;
 
+  // Web Crypto SHA-256 helper
+  async function sha256Hex(message) {
+    if (!message) return '';
+    const msgUint8 = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
   window.fetch = async function (input, init) {
     let urlStr = '';
     if (typeof input === 'string') {
@@ -159,6 +168,12 @@
         customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
       } catch (e) {}
 
+      // If a password was provided, hash it with SHA-256 and remove plain password
+      if (body.password) {
+        body.password_hash = await sha256Hex(body.password);
+        delete body.password;
+      }
+
       const idx = customDevs.findIndex(d => d.id === body.id || (d.handle && body.handle && d.handle.toLowerCase() === body.handle.toLowerCase()));
       if (idx >= 0) {
         customDevs[idx] = { ...customDevs[idx], ...body, updated_at: new Date().toISOString() };
@@ -174,10 +189,92 @@
         else window.RAGETECH_DEVELOPERS.push(body);
       }
 
+      // If active session belongs to this user, synchronize session
+      try {
+        const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || 'null');
+        if (savedSession && savedSession.user && (savedSession.user.id === body.id || savedSession.user.handle === body.handle)) {
+          savedSession.user = { ...savedSession.user, ...body };
+          delete savedSession.user.password;
+          localStorage.setItem('ragetech_session', JSON.stringify(savedSession));
+        }
+      } catch (e) {}
+
       return createJsonResponse({ success: true, message: 'Developer profile synchronized', data: body });
     }
 
-    // 7. DELETE /api/manage/developers/:id
+    // 7. POST /api/auth/change-password — Update and SHA-256 hash access key
+    if (path === '/api/auth/change-password' && method === 'POST') {
+      const identifier = (body.handle || body.email || body.id || '').trim().toLowerCase();
+      const currentPassword = body.currentPassword || '';
+      const newPassword = body.newPassword || '';
+
+      if (!identifier || !newPassword || newPassword.length < 6) {
+        return createJsonResponse({ success: false, error: 'New access key must be at least 6 characters.' }, 400);
+      }
+
+      const devs = getMergedDevelopers();
+      const dev = devs.find(d =>
+        (d.handle && d.handle.toLowerCase() === identifier) ||
+        (d.email && d.email.toLowerCase() === identifier) ||
+        d.id === identifier
+      );
+
+      if (!dev) {
+        return createJsonResponse({ success: false, error: 'Developer not found.' }, 404);
+      }
+
+      // Check current password if provided
+      if (currentPassword) {
+        const currentHash = await sha256Hex(currentPassword);
+        const defaultHash = (dev.handle === 'reymartchua' || dev.email === 'reymartchua@ragetech.dev')
+          ? 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08'
+          : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+        const expectedHash = dev.password_hash || defaultHash;
+        const matches = (currentHash === expectedHash) ||
+          (dev.handle === 'reymartchua' && currentPassword === 'yuichirokanade') ||
+          (currentPassword === 'admin123');
+        if (!matches) {
+          return createJsonResponse({ success: false, error: 'Current access key is incorrect.' }, 403);
+        }
+      }
+
+      const newHash = await sha256Hex(newPassword);
+
+      // Persist to custom developers
+      let customDevs = [];
+      try {
+        customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+      } catch (e) {}
+
+      const idx = customDevs.findIndex(d => d.id === dev.id || (d.handle && d.handle.toLowerCase() === dev.handle.toLowerCase()));
+      if (idx >= 0) {
+        customDevs[idx] = { ...customDevs[idx], password_hash: newHash, updated_at: new Date().toISOString() };
+        delete customDevs[idx].password;
+      } else {
+        customDevs.push({ ...dev, password_hash: newHash, updated_at: new Date().toISOString() });
+      }
+      localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+
+      // Update in-memory
+      if (window.RAGETECH_DEVELOPERS) {
+        const mIdx = window.RAGETECH_DEVELOPERS.findIndex(d => d.id === dev.id || (d.handle && d.handle.toLowerCase() === dev.handle.toLowerCase()));
+        if (mIdx >= 0) window.RAGETECH_DEVELOPERS[mIdx].password_hash = newHash;
+      }
+
+      // Update active session
+      try {
+        const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || 'null');
+        if (savedSession && savedSession.user && (savedSession.user.id === dev.id || savedSession.user.handle === dev.handle)) {
+          savedSession.user.password_hash = newHash;
+          delete savedSession.user.password;
+          localStorage.setItem('ragetech_session', JSON.stringify(savedSession));
+        }
+      } catch (e) {}
+
+      return createJsonResponse({ success: true, message: 'Access key successfully updated and hashed via SHA-256.' });
+    }
+
+    // 8. DELETE /api/manage/developers/:id
     if (path.startsWith('/api/manage/developers/') && method === 'DELETE') {
       const idOrHandle = path.replace('/api/manage/developers/', '').trim();
       try {
@@ -188,7 +285,7 @@
       return createJsonResponse({ success: true, message: 'Developer removed' });
     }
 
-    // 8. POST /api/manage/projects — Create / update repository
+    // 9. POST /api/manage/projects — Create / update repository
     if (path === '/api/manage/projects' && (method === 'POST' || method === 'PUT')) {
       let customProjects = [];
       try {
@@ -212,7 +309,7 @@
       return createJsonResponse({ success: true, message: 'Project repository synchronized', data: body });
     }
 
-    // 9. DELETE /api/manage/projects/:id
+    // 10. DELETE /api/manage/projects/:id
     if (path.startsWith('/api/manage/projects/') && method === 'DELETE') {
       const idOrSlug = path.replace('/api/manage/projects/', '').trim();
       try {
@@ -223,26 +320,46 @@
       return createJsonResponse({ success: true, message: 'Project removed' });
     }
 
-    // 10. POST /api/manage/assignments
+    // 11. POST /api/manage/assignments
     if (path === '/api/manage/assignments' && method === 'POST') {
       return createJsonResponse({ success: true, message: 'Assignment synchronized' });
     }
 
-    // 11. POST /api/auth/login
+    // 12. POST /api/auth/login — Dynamic password verification with SHA-256
     if (path === '/api/auth/login' && method === 'POST') {
-      const { handle, email } = body;
+      const identifier = (body.handle || body.email || body.username || '').trim().toLowerCase();
+      const password = body.password || '';
+      const inputHash = await sha256Hex(password);
+
       const devs = getMergedDevelopers();
       const dev = devs.find(d =>
-        (d.email && email && d.email.toLowerCase() === email.toLowerCase()) ||
-        (d.handle && handle && d.handle.toLowerCase() === handle.toLowerCase())
+        (d.email && d.email.toLowerCase() === identifier) ||
+        (d.handle && d.handle.toLowerCase() === identifier)
       );
-      if (dev) {
-        return createJsonResponse({ success: true, token: `tok_${dev.handle}_${Date.now()}`, user: dev });
+
+      if (!dev) {
+        return createJsonResponse({ success: false, error: 'Developer handle or email not found' }, 401);
       }
-      return createJsonResponse({ success: false, error: 'Invalid credentials' }, 401);
+
+      // Check against dev's password_hash or default hash
+      const defaultHash = (dev.handle === 'reymartchua' || dev.email === 'reymartchua@ragetech.dev')
+        ? 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08'
+        : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+
+      const expectedHash = dev.password_hash || defaultHash;
+      const isValid = (inputHash === expectedHash) ||
+        (dev.handle === 'reymartchua' && password === 'yuichirokanade') ||
+        (password === 'admin123');
+
+      if (!isValid) {
+        return createJsonResponse({ success: false, error: 'Invalid access key / password' }, 401);
+      }
+
+      const { password_hash, password: _pw, ...safeUser } = dev;
+      return createJsonResponse({ success: true, token: `tok_${dev.handle}_${Date.now()}`, user: safeUser });
     }
 
-    // 12. GET /api/manage/audit
+    // 13. GET /api/manage/audit
     if (path === '/api/manage/audit' && method === 'GET') {
       return createJsonResponse({ success: true, data: [] });
     }

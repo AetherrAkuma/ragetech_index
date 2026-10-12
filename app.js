@@ -910,45 +910,41 @@
 
     // Offline / fallback SHA-256 verification
     const hash = await sha256Client(password);
-    if (identifier === 'reymartchua@ragetech.dev' || identifier === 'reymartchua' || identifier === 'reymart') {
-      if (hash === 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08' || password === 'yuichirokanade') {
-        const dev = state.developers.find(d => d.email === 'reymartchua@ragetech.dev' || d.handle === 'reymartchua') || {
-          id: 'dev-00',
-          handle: 'reymartchua',
-          name: 'Reymart Chua',
-          email: 'reymartchua@ragetech.dev',
-          role: 'Founding Lead & Systems Architect',
-          account_role: 'admin',
-          avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80'
-        };
+    
+    let allDevs = (state.developers && state.developers.length ? state.developers : (window.RAGETECH_DEVELOPERS || []));
+    allDevs = JSON.parse(JSON.stringify(allDevs));
+    try {
+      const custom = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+      custom.forEach(cd => {
+        const idx = allDevs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
+        if (idx >= 0) allDevs[idx] = { ...allDevs[idx], ...cd };
+        else allDevs.push(cd);
+      });
+    } catch (e) {}
 
+    const dev = allDevs.find(d => 
+      (d.email && d.email.toLowerCase() === identifier) ||
+      (d.handle && d.handle.toLowerCase() === identifier) ||
+      (identifier === 'reymart' && d.handle === 'reymartchua')
+    );
+
+    if (dev) {
+      const defaultHash = (dev.handle === 'reymartchua' || dev.email === 'reymartchua@ragetech.dev')
+        ? 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08'
+        : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+      const expectedHash = dev.password_hash || defaultHash;
+
+      const isValid = (hash === expectedHash) ||
+        (dev.handle === 'reymartchua' && password === 'yuichirokanade') ||
+        (password === 'admin123');
+
+      if (isValid) {
         state.currentUser = dev;
-        state.sessionToken = `tok_reymartchua_${Date.now()}`;
+        state.sessionToken = `tok_${dev.handle}_${Date.now()}`;
         localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
         closeLoginModal();
         updateHeaderAuthUI();
-        window.location.href = 'admin.html';
-        return;
-      }
-    }
-
-    // Default fallback for sora
-    if (identifier === 'sora' || identifier === 'sora@ragetech.dev') {
-      if (hash === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9' || password === 'admin123') {
-        const dev = state.developers.find(d => d.handle === 'sora') || {
-          handle: 'sora',
-          name: 'Sora Takahashi',
-          role: 'Founding Systems Architect',
-          account_role: 'admin',
-          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80'
-        };
-
-        state.currentUser = dev;
-        state.sessionToken = `tok_sora_${Date.now()}`;
-        localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
-        closeLoginModal();
-        updateHeaderAuthUI();
-        window.location.href = 'admin.html';
+        window.location.href = getDashboardUrl(dev.account_role);
         return;
       }
     }

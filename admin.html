@@ -126,6 +126,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
           <span>Activity & Database Log</span>
         </div>
+        <div class="dash-nav-item" data-view="security" onclick="switchView('security')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Security & Access Key</span>
+        </div>
       </nav>
 
       <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted);">
@@ -496,6 +500,150 @@
             </table>
           </div>
         `;
+      } else if (currentView === 'security') {
+        const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+        const adminUser = savedSession.user || {};
+        main.innerHTML = `
+          <div class="dash-header-row">
+            <div>
+              <h1 class="dash-title">Security & Access Key Management</h1>
+              <p class="dash-subtitle">Update your master administrative credentials. Passwords are saved using standard SHA-256 cryptographic hashing.</p>
+            </div>
+          </div>
+
+          <div class="spotlight-card" style="padding: 32px; max-width: 540px;">
+            <div id="adminSecurityAlert" style="display: none; padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.84rem; margin-bottom: 20px;"></div>
+
+            <form onsubmit="handleAdminUpdatePassword(event)" id="adminPassForm">
+              <div class="form-group">
+                <label class="form-label" for="adminCurrPass">Current Access Key (Optional for verification)</label>
+                <input type="password" id="adminCurrPass" class="form-input" placeholder="Enter current password if set" autocomplete="current-password">
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">Default access key is <code>yuichirokanade</code> for Reymart (or <code>admin123</code>).</div>
+              </div>
+
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label" for="adminNewPass">New Access Key (Minimum 6 characters)</label>
+                <input type="password" id="adminNewPass" class="form-input" required minlength="6" placeholder="••••••••••••" autocomplete="new-password">
+              </div>
+
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label" for="adminConfirmPass">Confirm New Access Key</label>
+                <input type="password" id="adminConfirmPass" class="form-input" required minlength="6" placeholder="••••••••••••" autocomplete="new-password">
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+                <button type="submit" id="adminSavePassBtn" class="btn-primary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>Generate SHA-256 Hash & Save</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+      }
+    }
+
+    async function handleAdminUpdatePassword(e) {
+      e.preventDefault();
+      const currPassEl = document.getElementById('adminCurrPass');
+      const newPassEl = document.getElementById('adminNewPass');
+      const confPassEl = document.getElementById('adminConfirmPass');
+      const alertBox = document.getElementById('adminSecurityAlert');
+      const saveBtn = document.getElementById('adminSavePassBtn');
+
+      const currPass = currPassEl ? currPassEl.value : '';
+      const p1 = newPassEl ? newPassEl.value : '';
+      const p2 = confPassEl ? confPassEl.value : '';
+
+      function showAlert(msg, isSuccess = false) {
+        if (!alertBox) return;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isSuccess ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+        alertBox.style.border = isSuccess ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)';
+        alertBox.style.color = isSuccess ? '#34d399' : '#f87171';
+        alertBox.textContent = msg;
+      }
+
+      if (!p1 || p1.length < 6) {
+        showAlert('New access key must be at least 6 characters long.');
+        return;
+      }
+
+      if (p1 !== p2) {
+        showAlert('New passwords do not match. Please verify and re-type.');
+        return;
+      }
+
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span>Hashing & Saving...</span>`;
+      }
+
+      const session = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+      const adminUser = session.user || { handle: 'reymartchua', email: 'reymartchua@ragetech.dev', id: 'dev-00' };
+
+      try {
+        const res = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            handle: adminUser.handle,
+            email: adminUser.email,
+            id: adminUser.id,
+            currentPassword: currPass,
+            newPassword: p1
+          })
+        });
+
+        const data = await res.json();
+
+        if (currPassEl) currPassEl.value = '';
+        if (newPassEl) newPassEl.value = '';
+        if (confPassEl) confPassEl.value = '';
+
+        if (res.ok && data.success) {
+          showAlert('Access key successfully updated and hashed with SHA-256 in Cloudflare D1!', true);
+        } else {
+          showAlert(data.error || 'Failed to update access key.');
+        }
+      } catch (err) {
+        // Fallback local update
+        try {
+          const msgUint8 = new TextEncoder().encode(p1);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+          const idx = customDevs.findIndex(d => d.id === adminUser.id || d.handle === adminUser.handle);
+          if (idx >= 0) {
+            customDevs[idx].password_hash = newHash;
+          } else {
+            customDevs.push({ ...adminUser, password_hash: newHash });
+          }
+          localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+
+          if (session && session.user) {
+            session.user.password_hash = newHash;
+            localStorage.setItem('ragetech_session', JSON.stringify(session));
+          }
+
+          if (currPassEl) currPassEl.value = '';
+          if (newPassEl) newPassEl.value = '';
+          if (confPassEl) confPassEl.value = '';
+
+          showAlert('Access key updated locally with SHA-256 hash.', true);
+        } catch (e2) {
+          showAlert('Error updating password.');
+        }
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>Generate SHA-256 Hash & Save</span>
+          `;
+        }
       }
     }
 
@@ -766,6 +914,16 @@
         is_verified: document.getElementById('dVerified').checked ? 1 : 0
       };
 
+      // If new password provided, calculate SHA-256 hash
+      if (passVal) {
+        try {
+          const msgUint8 = new TextEncoder().encode(passVal);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          payload.password_hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {}
+      }
+
       // 1. Send to Cloudflare D1
       try {
         await fetch('/api/manage/developers', {
@@ -774,6 +932,9 @@
           body: JSON.stringify(payload)
         });
       } catch (err) {}
+
+      // Clean plain password before storing locally
+      delete payload.password;
 
       // 2. Persist to LocalStorage for multi-page instant parity
       try {
