@@ -87,12 +87,15 @@
       }
     }
 
-    // Merge static datasets with custom localStorage modifications
+    // Merge static datasets with custom localStorage modifications (respecting tombstones)
     function getMergedProjects() {
       let projects = window.RAGETECH_PROJECTS ? JSON.parse(JSON.stringify(window.RAGETECH_PROJECTS)) : [];
       try {
+        const deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        projects = projects.filter(p => !deleted.includes(p.id) && !deleted.includes(p.slug));
         const custom = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
         custom.forEach(cp => {
+          if (deleted.includes(cp.id) || deleted.includes(cp.slug)) return;
           const idx = projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
           if (idx >= 0) projects[idx] = { ...projects[idx], ...cp };
           else projects.push(cp);
@@ -104,8 +107,11 @@
     function getMergedDevelopers() {
       let devs = window.RAGETECH_DEVELOPERS ? JSON.parse(JSON.stringify(window.RAGETECH_DEVELOPERS)) : [];
       try {
+        const deleted = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
+        devs = devs.filter(d => !deleted.includes(d.id) && !deleted.includes(d.handle));
         const custom = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
         custom.forEach(cd => {
+          if (deleted.includes(cd.id) || deleted.includes(cd.handle)) return;
           const idx = devs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
           if (idx >= 0) devs[idx] = { ...devs[idx], ...cd };
           else devs.push(cd);
@@ -281,7 +287,16 @@
         let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
         customDevs = customDevs.filter(d => d.id !== idOrHandle && d.handle !== idOrHandle);
         localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+
+        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
+        if (!deleted.includes(idOrHandle)) deleted.push(idOrHandle);
+        localStorage.setItem('ragetech_deleted_developers', JSON.stringify(deleted));
       } catch (e) {}
+
+      if (window.RAGETECH_DEVELOPERS) {
+        window.RAGETECH_DEVELOPERS = window.RAGETECH_DEVELOPERS.filter(d => d.id !== idOrHandle && d.handle !== idOrHandle);
+      }
+
       return createJsonResponse({ success: true, message: 'Developer removed' });
     }
 
@@ -316,7 +331,16 @@
         let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
         customProjects = customProjects.filter(p => p.id !== idOrSlug && p.slug !== idOrSlug);
         localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
+
+        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        if (!deleted.includes(idOrSlug)) deleted.push(idOrSlug);
+        localStorage.setItem('ragetech_deleted_projects', JSON.stringify(deleted));
       } catch (e) {}
+
+      if (window.RAGETECH_PROJECTS) {
+        window.RAGETECH_PROJECTS = window.RAGETECH_PROJECTS.filter(p => p.id !== idOrSlug && p.slug !== idOrSlug);
+      }
+
       return createJsonResponse({ success: true, message: 'Project removed' });
     }
 

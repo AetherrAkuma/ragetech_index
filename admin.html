@@ -218,11 +218,14 @@
         }
       } catch (e) {}
 
-      // 3. Merge with LocalStorage Custom Projects
+      // 3. Merge with LocalStorage Custom Projects (filtering deleted tombstones)
       let baseProjects = d1Projects.length > 0 ? d1Projects : (window.RAGETECH_PROJECTS || []);
       try {
+        const deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        baseProjects = baseProjects.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
         const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
         customProjects.forEach(cp => {
+          if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
           const idx = baseProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
           if (idx >= 0) baseProjects[idx] = { ...baseProjects[idx], ...cp };
           else baseProjects.push(cp);
@@ -230,11 +233,14 @@
       } catch (e) {}
       projectsData = baseProjects;
 
-      // 4. Merge with LocalStorage Custom Developers
+      // 4. Merge with LocalStorage Custom Developers (filtering deleted tombstones)
       let baseDevs = d1Devs.length > 0 ? d1Devs : (window.RAGETECH_DEVELOPERS || []);
       try {
+        const deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
+        baseDevs = baseDevs.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
         const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
         customDevs.forEach(cd => {
+          if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
           const idx = baseDevs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
           if (idx >= 0) baseDevs[idx] = { ...baseDevs[idx], ...cd };
           else baseDevs.push(cd);
@@ -660,19 +666,31 @@
 
     // Delete Project (Syncs D1 + LocalStorage)
     async function deleteProject(id) {
-      if (!confirm('Are you sure you want to permanently delete this repository and its whitepaper dossier?')) return;
+      const proj = projectsData.find(p => p.id === id || p.slug === id);
+      const name = proj ? proj.name : id;
+      if (!confirm(`Are you sure you want to permanently delete repository "${name}" and its whitepaper dossier? This cannot be undone.`)) return;
       
       try {
         await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
       } catch (e) {}
 
-      // Update LocalStorage custom projects
+      // Update LocalStorage custom projects and record tombstone
       try {
         let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
         customProjects = customProjects.filter(p => p.id !== id && p.slug !== id);
         localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
         localStorage.removeItem(`ragetech_project_${id}`);
+
+        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        if (!deleted.includes(id)) deleted.push(id);
+        if (proj && proj.slug && !deleted.includes(proj.slug)) deleted.push(proj.slug);
+        if (proj && proj.id && !deleted.includes(proj.id)) deleted.push(proj.id);
+        localStorage.setItem('ragetech_deleted_projects', JSON.stringify(deleted));
       } catch (e) {}
+
+      if (window.RAGETECH_PROJECTS) {
+        window.RAGETECH_PROJECTS = window.RAGETECH_PROJECTS.filter(p => p.id !== id && p.slug !== id);
+      }
 
       projectsData = projectsData.filter(p => p.id !== id && p.slug !== id);
       renderCurrentView();
@@ -853,11 +871,20 @@
             </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
-            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
-            <button type="submit" class="btn-primary" id="saveDevBtn">
-              <span>Save & Sync Database</span>
-            </button>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
+            <div>
+              ${dev ? `
+                <button type="button" class="btn-icon-action danger" style="padding: 7px 14px; font-size: 0.8rem;" onclick="closeCrudModal(); deleteDeveloper('${dev.id || dev.handle}');">
+                  Remove Developer
+                </button>
+              ` : ''}
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
+              <button type="submit" class="btn-primary" id="saveDevBtn">
+                <span>Save & Sync Database</span>
+              </button>
+            </div>
           </div>
         </form>
       `;
@@ -1053,18 +1080,30 @@
 
     // Delete Developer (Cloudflare D1 + LocalStorage Sync)
     async function deleteDeveloper(id) {
-      if (!confirm('Are you sure you want to permanently remove this developer from the collective?')) return;
+      const dev = developersData.find(d => d.id === id || d.handle === id);
+      const name = dev ? `${dev.name} (@${dev.handle})` : id;
+      if (!confirm(`Are you sure you want to permanently remove ${name} from the collective? This cannot be undone.`)) return;
       
       try {
         await fetch(`/api/manage/developers/${id}`, { method: 'DELETE' });
       } catch (e) {}
 
-      // Update LocalStorage
+      // Update LocalStorage custom developers and record tombstone
       try {
         let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
         customDevs = customDevs.filter(d => d.id !== id && d.handle !== id);
         localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+
+        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
+        if (!deleted.includes(id)) deleted.push(id);
+        if (dev && dev.handle && !deleted.includes(dev.handle)) deleted.push(dev.handle);
+        if (dev && dev.id && !deleted.includes(dev.id)) deleted.push(dev.id);
+        localStorage.setItem('ragetech_deleted_developers', JSON.stringify(deleted));
       } catch (e) {}
+
+      if (window.RAGETECH_DEVELOPERS) {
+        window.RAGETECH_DEVELOPERS = window.RAGETECH_DEVELOPERS.filter(d => d.id !== id && d.handle !== id);
+      }
 
       developersData = developersData.filter(d => d.id !== id && d.handle !== id);
       renderCurrentView();
