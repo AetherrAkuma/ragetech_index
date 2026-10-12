@@ -76,23 +76,9 @@
       <p class="article-subtitle" id="repoTagline">Please wait while the repository dossier is verified and rendered from edge consensus...</p>
     </header>
 
-    <!-- Top Action Bar (Assignable Button for Whatever Purpose, Default: Visit Site) -->
+    <!-- Top Action Bar (Multiple Customizable Action Buttons) -->
     <div class="article-action-bar" id="repoActionBar">
-      <a href="#" target="_blank" rel="noreferrer" class="btn-visit-site" id="repoActionButton">
-        <span id="repoActionButtonText">Visit Site</span>
-        <svg id="repoActionIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-          <polyline points="15 3 21 3 21 9"></polyline>
-          <line x1="10" y1="14" x2="21" y2="3"></line>
-        </svg>
-      </a>
-
-      <a href="#" target="_blank" rel="noreferrer" class="btn-secondary" id="repoGithubLink">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-        </svg>
-        <span>Source Code</span>
-      </a>
+      <div id="dynamicProjectActionButtons" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
 
       <!-- Quick Studio Editor Link (Shown if admin or lead) -->
       <a href="#" id="adminEditLink" class="btn-secondary" style="display: none; border-color: var(--accent-cyan); color: var(--accent-cyan);">
@@ -291,26 +277,50 @@
         }
       } catch (e) {}
 
-      // Configure Assignable Action Button (Default: "Visit Site")
-      const actionButton = document.getElementById('repoActionButton');
-      const actionButtonText = document.getElementById('repoActionButtonText');
-      const buttonLabel = project.action_button_label || 'Visit Site';
-      const buttonUrl = project.action_button_url || project.live_url;
+      // Render Multiple Dynamic Action Buttons
+      const dynamicButtonsWrap = document.getElementById('dynamicProjectActionButtons');
+      const ICON_SVGS = {
+        external: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`,
+        github: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>`,
+        doc: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+        code: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+        play: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+        download: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
+        star: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+        globe: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`
+      };
 
-      actionButtonText.textContent = buttonLabel;
-
-      if (buttonUrl) {
-        actionButton.href = buttonUrl;
-      } else {
-        actionButton.style.display = 'none';
+      function getProjBtnIcon(btn) {
+        if (btn.icon === 'custom' && btn.customSvg) return `<span class="action-custom-svg">${btn.customSvg}</span>`;
+        if (btn.icon && ICON_SVGS[btn.icon]) return ICON_SVGS[btn.icon];
+        return '';
       }
 
-      // GitHub Source Code Link
-      const ghLink = document.getElementById('repoGithubLink');
-      if (project.github_url) {
-        ghLink.href = project.github_url;
-      } else {
-        ghLink.style.display = 'none';
+      function getProjBtnClass(style) {
+        if (style === 'primary') return 'btn-primary';
+        if (style === 'outline') return 'btn-outline-cyan';
+        if (style === 'emerald') return 'btn-accent-emerald';
+        return 'btn-secondary';
+      }
+
+      let actionButtons = project.actionButtons || project.action_buttons || [];
+      if (actionButtons.length === 0 && (project.action_button_label || project.live_url || project.github_url)) {
+        actionButtons = [];
+        if (project.action_button_label || project.live_url) {
+          actionButtons.push({ label: project.action_button_label || 'Visit Site', url: project.action_button_url || project.live_url || '#', style: 'primary', icon: 'external' });
+        }
+        if (project.github_url) {
+          actionButtons.push({ label: 'Source Code', url: project.github_url, style: 'secondary', icon: 'github' });
+        }
+      }
+
+      if (dynamicButtonsWrap && actionButtons.length > 0) {
+        dynamicButtonsWrap.innerHTML = actionButtons.map(btn => `
+          <a href="${btn.url}" target="_blank" rel="noreferrer" class="${getProjBtnClass(btn.style)}" style="padding: 8px 18px; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            ${getProjBtnIcon(btn)}
+            <span>${btn.label}</span>
+          </a>
+        `).join('');
       }
 
       // Tech Stack Pills

@@ -81,6 +81,9 @@ export default {
             previewTitle: p.preview_title || 'telemetry_sink.rs',
             previewContent: p.preview_content || '',
             previewMeta: p.preview_meta || 'Active configuration',
+            previewType: p.preview_type || 'code',
+            previewUrl: p.preview_url || '',
+            actionButtons: p.action_buttons_json ? JSON.parse(p.action_buttons_json) : null,
             assignees: p.maintainers_json ? JSON.parse(p.maintainers_json) : [],
             maintainer_handles: p.maintainers_json ? JSON.parse(p.maintainers_json) : []
           }));
@@ -135,6 +138,9 @@ export default {
                 previewTitle: project.preview_title || 'telemetry_sink.rs',
                 previewContent: project.preview_content || '',
                 previewMeta: project.preview_meta || 'Active configuration',
+                previewType: project.preview_type || 'code',
+                previewUrl: project.preview_url || '',
+                actionButtons: project.action_buttons_json ? JSON.parse(project.action_buttons_json) : null,
                 sections: sections.map(s => ({ title: s.section_title, content: s.section_content })),
                 maintainers
               }
@@ -284,7 +290,8 @@ export default {
           live_url, github_url, tech_stack,
           action_button_label, action_button_url, cover_image_url, 
           markdown_content, maintainer_handles,
-          specs, specs_json, preview_title, preview_content, preview_meta
+          specs, specs_json, preview_title, preview_content, preview_meta,
+          preview_type, preview_url, action_buttons, action_buttons_json
         } = body;
 
         const effectiveBtnLabel = action_button_label || 'Visit Site';
@@ -296,6 +303,9 @@ export default {
         const effectivePreviewTitle = preview_title || 'telemetry_sink.rs';
         const effectivePreviewContent = preview_content || '';
         const effectivePreviewMeta = preview_meta || 'Active configuration';
+        const effectivePreviewType = preview_type || 'code';
+        const effectivePreviewUrl = preview_url || '';
+        const effectiveActionButtonsJson = action_buttons_json || (action_buttons ? JSON.stringify(action_buttons) : null);
 
         if (env.DB) {
           const existing = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(id || '', slug).first();
@@ -306,6 +316,7 @@ export default {
                   live_url = ?, github_url = ?, tech_stack = ?, 
                   action_button_label = ?, action_button_url = ?, cover_image_url = ?, markdown_content = ?,
                   specs_json = ?, preview_title = ?, preview_content = ?, preview_meta = ?,
+                  preview_type = ?, preview_url = ?, action_buttons_json = ?,
                   updated_at = CURRENT_TIMESTAMP
               WHERE id = ?
             `).bind(
@@ -313,6 +324,7 @@ export default {
               live_url, github_url, tech_stack, 
               effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null,
               effectiveSpecsJson, effectivePreviewTitle, effectivePreviewContent, effectivePreviewMeta,
+              effectivePreviewType, effectivePreviewUrl, effectiveActionButtonsJson,
               existing.id
             ).run();
           } else {
@@ -321,14 +333,16 @@ export default {
                 id, slug, name, repo, badge, tagline, description, category, status, 
                 live_url, github_url, tech_stack, 
                 action_button_label, action_button_url, cover_image_url, markdown_content,
-                specs_json, preview_title, preview_content, preview_meta
+                specs_json, preview_title, preview_content, preview_meta,
+                preview_type, preview_url, action_buttons_json
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               targetId, slug, name, effectiveRepo, effectiveBadge, tagline, description, category, status || 'active', 
               live_url, github_url, tech_stack, 
               effectiveBtnLabel, effectiveBtnUrl, cover_image_url || null, markdown_content || null,
-              effectiveSpecsJson, effectivePreviewTitle, effectivePreviewContent, effectivePreviewMeta
+              effectiveSpecsJson, effectivePreviewTitle, effectivePreviewContent, effectivePreviewMeta,
+              effectivePreviewType, effectivePreviewUrl, effectiveActionButtonsJson
             ).run();
           }
 

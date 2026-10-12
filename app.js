@@ -199,8 +199,32 @@
       if (window.RAGETECH_PROJECTS) state.projects = [...window.RAGETECH_PROJECTS];
     }
 
+    const ICON_SVGS = {
+      external: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`,
+      github: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>`,
+      doc: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+      code: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+      play: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+      download: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
+      star: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+      globe: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`
+    };
+
+    function getAppBtnIcon(btn) {
+      if (btn.icon === 'custom' && btn.customSvg) return `<span class="action-custom-svg">${btn.customSvg}</span>`;
+      if (btn.icon && ICON_SVGS[btn.icon]) return ICON_SVGS[btn.icon];
+      return '';
+    }
+
+    function getAppBtnClass(style) {
+      if (style === 'primary') return 'btn-primary';
+      if (style === 'outline') return 'btn-outline-cyan';
+      if (style === 'emerald') return 'btn-accent-emerald';
+      return 'btn-secondary';
+    }
+
     container.innerHTML = state.projects.map((p, idx) => {
-      const assignees = p.assignees || [];
+      const assignees = p.assignees || p.maintainer_handles || [];
       const assigneeAvatars = assignees.map(handle => {
         const dev = state.developers.find(d => d.handle === handle);
         const initials = dev ? dev.name.split(' ').map(n => n[0]).join('').slice(0, 2) : handle.slice(0, 2).toUpperCase();
@@ -213,6 +237,96 @@
         { label: 'Memory Overhead', val: '< 16 MB RSS baseline' },
         { label: 'Runtime Stack', val: p.tech_stack || 'Rust / Tokio / io_uring' }
       ];
+
+      // Action Buttons List
+      let actionButtons = p.actionButtons || p.action_buttons || [];
+      if (actionButtons.length === 0 && (p.action_button_label || p.github_url || p.live_url)) {
+        actionButtons = [
+          { label: p.action_button_label || 'Spec', url: p.action_button_url || p.live_url || '#', style: 'secondary', icon: 'external' }
+        ];
+        if (p.github_url) actionButtons.push({ label: 'GitHub', url: p.github_url, style: 'secondary', icon: 'github' });
+      }
+
+      const actionButtonsHtml = actionButtons.map(btn => `
+        <a href="${btn.url}" target="_blank" rel="noreferrer" class="${getAppBtnClass(btn.style)}" style="font-size:0.8rem; padding: 7px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          ${getAppBtnIcon(btn)}
+          <span>${btn.label}</span>
+        </a>
+      `).join('');
+
+      // Dynamic Showcase Window
+      const pType = p.previewType || p.preview_type || 'code';
+      let previewWindowHtml = '';
+
+      if (pType === 'image') {
+        const imgUrl = p.previewUrl || p.cover_image_url || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80';
+        previewWindowHtml = `
+          <div class="project-preview-window">
+            <div class="preview-image-wrap">
+              <img src="${imgUrl}" alt="${p.name}" class="preview-showcase-img">
+              <div class="preview-image-caption">${p.previewTitle || p.name}</div>
+            </div>
+          </div>
+        `;
+      } else if (pType === 'live') {
+        const liveUrl = p.previewUrl || p.live_url || 'https://hyperion.ragetech.dev';
+        previewWindowHtml = `
+          <div class="project-preview-window">
+            <div class="preview-live-wrap">
+              <div class="preview-browser-bar">
+                <span class="browser-dot" style="background:#ef4444;"></span>
+                <span class="browser-dot" style="background:#eab308;"></span>
+                <span class="browser-dot" style="background:#10b981;"></span>
+                <span style="margin-left: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.previewTitle || `https://ragetech.dev/${p.slug}`}</span>
+              </div>
+              <iframe src="${liveUrl}" class="preview-showcase-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+              <div class="preview-window-footer">
+                <span>${p.previewMeta || 'Interactive Sandbox'}</span>
+                <span style="color:#10b981;">● Online</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (pType === 'markdown') {
+        const mdLines = (p.previewContent || '').split('\n').filter(Boolean);
+        previewWindowHtml = `
+          <div class="project-preview-window">
+            <div class="preview-window-top">
+              <span>${p.previewTitle || 'Key Capabilities'}</span>
+              <span style="color:#71717a;">OVERVIEW</span>
+            </div>
+            <div class="preview-feature-card">
+              <ul class="preview-feature-list">
+                ${mdLines.map(line => `
+                  <li class="preview-feature-item">
+                    <span class="preview-feature-bullet">◆</span>
+                    <span>${line.replace(/^[-•*]\s*/, '')}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+            <div class="preview-window-footer">
+              <span>${p.previewMeta || 'Verified Parameters'}</span>
+              <span style="color:#10b981;">● Ready</span>
+            </div>
+          </div>
+        `;
+      } else {
+        // Code terminal
+        previewWindowHtml = `
+          <div class="project-preview-window">
+            <div class="preview-window-top">
+              <span>${p.previewTitle || 'telemetry_sink.rs'}</span>
+              <span style="color:#71717a;">READ-ONLY</span>
+            </div>
+            <pre class="preview-window-body"><code>${escapeHtml(p.previewContent || '')}</code></pre>
+            <div class="preview-window-footer">
+              <span>${p.previewMeta || 'Active configuration'}</span>
+              <span style="color:#10b981;">● Active</span>
+            </div>
+          </div>
+        `;
+      }
 
       return `
         <article 
@@ -246,31 +360,17 @@
                 ${assigneeAvatars}
               </div>
 
-              <div style="display:flex; gap:10px;">
+              <div style="display:flex; gap:8px; flex-wrap: wrap;">
                 <a href="project.html?id=${p.slug}" class="btn-primary" style="font-size:0.8rem; padding: 7px 16px; text-decoration: none;">
                   Dedicated Page &rarr;
                 </a>
-                <a href="${p.action_button_url || p.github_url || '#'}" target="_blank" rel="noreferrer" class="btn-secondary" style="font-size:0.8rem; padding: 7px 14px; text-decoration: none;">
-                  ${p.action_button_label || 'Spec'}
-                </a>
+                ${actionButtonsHtml}
               </div>
             </div>
           </div>
 
-          <!-- Right Column: Technical Preview Window -->
-          <div class="project-preview-window">
-            <div class="preview-window-top">
-              <span>${p.previewTitle || 'telemetry_sink.rs'}</span>
-              <span style="color:#71717a;">READ-ONLY</span>
-            </div>
-
-            <pre class="preview-window-body"><code>${escapeHtml(p.previewContent || '')}</code></pre>
-
-            <div class="preview-window-footer">
-              <span>${p.previewMeta || 'Cargo.lock: active configuration'}</span>
-              <span style="color:#10b981;">● Active</span>
-            </div>
-          </div>
+          <!-- Right Column: Dynamic Preview Window -->
+          ${previewWindowHtml}
         </article>
       `;
     }).join('');
