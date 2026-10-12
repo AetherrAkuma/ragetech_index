@@ -315,7 +315,10 @@ export default {
           // Fall through
         }
       }
-      return jsonResponse({ success: false, message: 'Developer not found' }, corsHeaders, 4    // POST /api/auth/login — RBAC Login System with SHA-256 verification
+      return jsonResponse({ success: false, message: 'Developer not found' }, corsHeaders, 404);
+    }
+
+    // POST /api/auth/login — RBAC Login System with SHA-256 verification
     if (pathname === '/api/auth/login' && request.method === 'POST') {
       try {
         const body = await request.json();
@@ -666,8 +669,6 @@ export default {
         return jsonResponse({ success: true, message: 'Developer removed (offline mode)' }, corsHeaders);
       } catch (err) {
         return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
-      }
-    }ers, 500);
       }
     }
 
