@@ -619,6 +619,7 @@
       </div>
     `;
 
+    modal.inert = false;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
 
@@ -630,8 +631,12 @@
   function closeModal() {
     const modal = document.getElementById('developerModal');
     if (modal) {
+      if (modal.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
+      modal.inert = true;
     }
   }
 
@@ -696,6 +701,7 @@
     const input = document.getElementById('cmdKInput');
     if (!modal) return;
 
+    modal.inert = false;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
 
@@ -710,8 +716,12 @@
   function closeCommandPalette() {
     const modal = document.getElementById('cmdKModal');
     if (modal) {
+      if (modal.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
+      modal.inert = true;
     }
   }
 
@@ -904,6 +914,7 @@
       setTimeout(() => handleInput.focus(), 60);
     }
     if (modal) {
+      modal.inert = false;
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
     }
@@ -911,6 +922,9 @@
 
   function closeLoginModal() {
     const modal = document.getElementById('loginModal');
+    if (modal && modal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
     const form = document.getElementById('loginForm');
     if (form) form.reset();
     const handleInput = document.getElementById('loginHandle');
@@ -920,6 +934,7 @@
     if (modal) {
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
+      modal.inert = true;
     }
   }
 

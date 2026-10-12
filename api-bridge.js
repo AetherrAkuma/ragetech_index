@@ -70,12 +70,42 @@
     };
   }
 
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'ragetech_last_sync' && e.newValue) {
-      try {
-        const data = JSON.parse(e.newValue);
-        syncListeners.forEach(fn => { try { fn(data); } catch (err) {} });
-      } catch (err) {}
-    }
-  });
+  // 5. Seamless Localhost Development Bridge (VS Code Live Server :5500, Vite, file://)
+  // When running locally on a static development server (e.g., Live Server port 5500),
+  // automatically proxy /api/* requests to the live Cloudflare D1 backend (https://ragetech.dev)
+  // so you can develop, test, and save changes locally without needing to push to Git!
+  const isLocalHost = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' || 
+    window.location.protocol === 'file:'
+  );
+  const isLocalWorker = typeof window !== 'undefined' && window.location.port === '8787';
+  const REMOTE_API_BASE = 'https://ragetech.dev';
+
+  if (typeof window !== 'undefined' && isLocalHost && !isLocalWorker) {
+    const origFetch = window.fetch;
+    window.fetch = function (resource, options) {
+      if (typeof resource === 'string') {
+        if (resource.startsWith('/api/') || resource === '/api') {
+          return origFetch(`${REMOTE_API_BASE}${resource}`, options);
+        }
+        try {
+          const parsed = new URL(resource);
+          if (parsed.pathname.startsWith('/api')) {
+            return origFetch(`${REMOTE_API_BASE}${parsed.pathname}${parsed.search}`, options);
+          }
+        } catch (e) {}
+      } else if (resource instanceof Request) {
+        try {
+          const parsed = new URL(resource.url);
+          if (parsed.pathname.startsWith('/api')) {
+            const remoteUrl = `${REMOTE_API_BASE}${parsed.pathname}${parsed.search}`;
+            return origFetch(new Request(remoteUrl, resource), options);
+          }
+        } catch (e) {}
+      }
+      return origFetch(resource, options);
+    };
+    console.info('[Ragetech DevBridge] Active: Localhost static server detected. Seamlessly routing /api/* requests to Cloudflare D1 (https://ragetech.dev).');
+  }
 })();
