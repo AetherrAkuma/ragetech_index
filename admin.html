@@ -103,12 +103,12 @@
     <aside class="dashboard-sidebar">
       <div class="dashboard-user-card" id="adminUserCard" onclick="openDeveloperModal(currentAdminUser ? currentAdminUser.handle : 'reymartchua')" style="cursor: pointer;" title="Click to customize your admin profile and custom photo">
         <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80" alt="Admin" class="dashboard-user-avatar" id="adminAvatar" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80';">
-        <div style="flex: 1; min-width: 0;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="adminName">Reymart Chua</div>
-            <span style="font-size: 0.72rem; color: var(--accent-cyan);">✎ Edit</span>
+        <div class="dashboard-user-info" style="flex: 1; min-width: 0; overflow: hidden;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+            <div style="font-weight: 700; font-size: 0.90rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="adminName" title="Reymart Chua">Reymart Chua</div>
+            <span style="font-size: 0.70rem; color: var(--accent-cyan); flex-shrink: 0;">✎ Edit</span>
           </div>
-          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);" id="adminEmail">reymartchua@ragetech.dev</div>
+          <div class="dashboard-user-meta" id="adminEmail" title="reymartchua@ragetech.dev">reymartchua@ragetech.dev</div>
         </div>
       </div>
 
@@ -184,8 +184,17 @@
           return null;
         }
         currentAdminUser = parsed.user;
-        document.getElementById('adminName').textContent = currentAdminUser.name;
-        document.getElementById('adminEmail').textContent = currentAdminUser.email || `@${currentAdminUser.handle}`;
+        const nameEl = document.getElementById('adminName');
+        const emailEl = document.getElementById('adminEmail');
+        const emailVal = currentAdminUser.email || `@${currentAdminUser.handle}`;
+        if (nameEl) {
+          nameEl.textContent = currentAdminUser.name;
+          nameEl.title = currentAdminUser.name;
+        }
+        if (emailEl) {
+          emailEl.textContent = emailVal;
+          emailEl.title = emailVal;
+        }
         if (currentAdminUser.avatar_url) document.getElementById('adminAvatar').src = currentAdminUser.avatar_url;
 
         // Fetch fresh developer record from D1 to ensure live avatar is applied
@@ -193,7 +202,15 @@
           if (json.success && json.data) {
             currentAdminUser = { ...currentAdminUser, ...json.data };
             localStorage.setItem('ragetech_session', JSON.stringify({ user: currentAdminUser, token: parsed.token }));
-            document.getElementById('adminName').textContent = currentAdminUser.name;
+            if (nameEl) {
+              nameEl.textContent = currentAdminUser.name;
+              nameEl.title = currentAdminUser.name;
+            }
+            if (emailEl) {
+              const freshEmail = currentAdminUser.email || `@${currentAdminUser.handle}`;
+              emailEl.textContent = freshEmail;
+              emailEl.title = freshEmail;
+            }
             if (currentAdminUser.avatar_url) document.getElementById('adminAvatar').src = currentAdminUser.avatar_url;
           }
         }).catch(() => {});
@@ -245,8 +262,17 @@
           const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
           localStorage.setItem('ragetech_session', JSON.stringify({ ...savedSession, user: currentAdminUser }));
           const nameEl = document.getElementById('adminName');
+          const emailEl = document.getElementById('adminEmail');
           const avatarEl = document.getElementById('adminAvatar');
-          if (nameEl) nameEl.textContent = currentAdminUser.name;
+          if (nameEl) {
+            nameEl.textContent = currentAdminUser.name;
+            nameEl.title = currentAdminUser.name;
+          }
+          if (emailEl) {
+            const freshEmail = currentAdminUser.email || `@${currentAdminUser.handle}`;
+            emailEl.textContent = freshEmail;
+            emailEl.title = freshEmail;
+          }
           if (avatarEl && currentAdminUser.avatar_url) avatarEl.src = currentAdminUser.avatar_url;
         }
       }
@@ -328,14 +354,14 @@
                       </td>
                       <td><span class="verified-icon-chip" style="font-size: 0.72rem;">${(p.status || 'ACTIVE').toUpperCase()}</span></td>
                       <td>
-                        <div class="table-actions">
-                          <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="font-size: 0.76rem; padding: 5px 12px; text-decoration: none;" title="Open Visual Customizer">
+                        <div class="table-actions" style="justify-content: flex-end;">
+                          <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;" title="Open Visual Customizer">
                             Customize
                           </a>
-                          <a href="project.html?id=${p.slug}" target="_blank" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px; text-decoration: none;">
-                            View Page
+                          <a href="project.html?id=${p.slug}" target="_blank" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 8px; text-decoration: none;" title="View Public Page">
+                            View
                           </a>
-                          <button class="btn-icon-action danger" onclick="deleteProject('${p.id || p.slug}')" title="Delete Repository">
+                          <button class="btn-icon-action danger" style="padding: 4px 8px;" onclick="deleteProject('${p.id || p.slug}')" title="Delete Repository">
                             Delete
                           </button>
                         </div>
@@ -364,54 +390,54 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Developer Profile</th>
-                  <th>Engineering Title</th>
-                  <th>Assigned Repositories</th>
-                  <th>Permission Level</th>
-                  <th>Verified</th>
-                  <th>Actions</th>
+                  <th style="min-width: 170px;">Developer Profile</th>
+                  <th style="min-width: 170px;">Engineering Title</th>
+                  <th style="min-width: 120px;">Assigned Repos</th>
+                  <th style="min-width: 110px;">Role</th>
+                  <th style="min-width: 80px;">Status</th>
+                  <th style="min-width: 180px; text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 ${developersData.map(d => `
                   <tr>
                     <td>
-                      <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${d.avatar_url}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle);" alt="${d.name}">
-                        <div>
-                          <div style="font-weight: 700; font-size: 0.92rem;">${d.name}</div>
-                          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">@${d.handle}</div>
-                          <div style="font-size: 0.72rem; color: var(--text-muted);">${d.email || 'No email set'}</div>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${d.avatar_url}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle); flex-shrink: 0;" alt="${d.name}">
+                        <div style="min-width: 0; overflow: hidden;">
+                          <div style="font-weight: 700; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${d.name}">${d.name}</div>
+                          <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">@${d.handle}</div>
+                          <div style="font-size: 0.70rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${d.email || ''}">${d.email || 'No email set'}</div>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div style="font-weight: 600; font-size: 0.86rem;">${d.role}</div>
-                      <div style="font-size: 0.74rem; color: var(--text-muted); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.bio || ''}</div>
+                      <div style="font-weight: 600; font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;" title="${d.role}">${d.role}</div>
+                      <div style="font-size: 0.72rem; color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${d.bio || ''}">${d.bio || ''}</div>
                     </td>
                     <td>
-                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap; max-width: 140px;">
                         ${(d.assigned_projects && d.assigned_projects.length > 0)
                           ? d.assigned_projects.map(slug => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px; color: var(--accent-cyan); border-color: rgba(6,182,212,0.3);">${slug}</span>`).join('')
                           : '<span style="font-size: 0.72rem; color: var(--text-muted);">Core Platform</span>'}
                       </div>
                     </td>
                     <td>
-                      <span class="badge-role ${d.account_role || 'developer'}">
+                      <span class="badge-role ${d.account_role || 'developer'}" style="font-size: 0.68rem; padding: 3px 8px; white-space: nowrap;">
                         ${(d.account_role === 'admin' ? 'Administrator' : (d.account_role === 'lead' ? 'Project Lead' : 'Developer')).toUpperCase()}
                       </span>
                     </td>
-                    <td>
+                    <td style="white-space: nowrap;">
                       ${d.is_verified 
-                        ? '<span style="color: var(--accent-emerald); font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">✓ Verified</span>' 
-                        : '<span style="color: var(--text-muted); font-size: 0.8rem;">Standard</span>'}
+                        ? '<span style="color: var(--accent-emerald); font-weight: 600; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 3px;">✓ Verified</span>' 
+                        : '<span style="color: var(--text-muted); font-size: 0.78rem;">Standard</span>'}
                     </td>
                     <td>
-                      <div class="table-actions">
-                        <button class="btn-primary" style="font-size: 0.76rem; padding: 5px 12px;" onclick="openDeveloperModal('${d.handle}')">Edit Profile</button>
-                        <button class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px;" onclick="openQuickPasswordModal('${d.handle}')" title="Reset Developer Access Key">Change Key</button>
-                        <a href="developer.html?id=${d.handle}" target="_blank" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px; text-decoration: none;">View Dossier</a>
-                        <button class="btn-icon-action danger" onclick="deleteDeveloper('${d.id || d.handle}')" title="Remove Developer">Remove</button>
+                      <div class="table-actions" style="justify-content: flex-end;">
+                        <button class="btn-primary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="openDeveloperModal('${d.handle}')" title="Edit Profile">Edit</button>
+                        <button class="btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="openQuickPasswordModal('${d.handle}')" title="Reset Developer Access Key">Key</button>
+                        <a href="developer.html?id=${d.handle}" target="_blank" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 8px; text-decoration: none;" title="View Dossier">View</a>
+                        <button class="btn-icon-action danger" style="padding: 4px 8px;" onclick="deleteDeveloper('${d.id || d.handle}')" title="Remove Developer">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -651,18 +677,23 @@
     }
 
     // Fully Customizable Developer Profile Editor Modal
+    // Fully Customizable Developer Profile Editor Modal
     function openDeveloperModal(handle) {
       const dev = handle ? developersData.find(d => d.handle === handle) : null;
       const content = document.getElementById('crudModalContent');
+      const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80';
 
-      // Sample avatar presets
-      const avatarPresets = [
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80',
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80',
-        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80',
-        'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=280&q=80'
-      ];
+      let existingTitles = [];
+      if (dev && dev.role) {
+        if (dev.role.includes('&')) {
+          existingTitles = dev.role.split('&').map(s => s.trim()).filter(Boolean);
+        } else if (dev.role.includes(',')) {
+          existingTitles = dev.role.split(',').map(s => s.trim()).filter(Boolean);
+        } else {
+          existingTitles = [dev.role.trim()];
+        }
+      }
+      if (existingTitles.length === 0) existingTitles = [''];
 
       content.innerHTML = `
         <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 20px;">
@@ -720,11 +751,26 @@
             <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">2. Engineering Role & Dynamic Projects</div>
 
             <div class="form-group">
-              <label class="form-label" for="dRole">Engineering Title / Job Specialization</label>
-              <input type="text" id="dRole" class="form-input" required placeholder="e.g. Distributed Consensus Lead & Systems Architect" value="${dev ? dev.role : ''}">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="form-label" style="margin-bottom: 0;">Engineering Title / Roles</label>
+                <button type="button" class="btn-secondary" onclick="addTitleInputRow()" style="font-size: 0.74rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>+ Add Title</span>
+                </button>
+              </div>
+              <div id="titleInputsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                ${existingTitles.map((t, idx) => `
+                  <div class="title-input-row" style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" class="form-input dev-title-input" placeholder="${idx === 0 ? 'e.g. Distributed Consensus Lead' : 'e.g. Systems Architect'}" value="${t.replace(/"/g, '&quot;')}" ${idx === 0 ? 'required' : ''} style="flex: 1;">
+                    <button type="button" class="btn-icon-action danger" onclick="removeTitleInputRow(this)" title="Delete title" style="padding: 7px 10px; height: 38px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-top: 14px;">
               <label class="form-label">Assigned Repositories (Dynamic)</label>
               <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;">Click repositories to assign or unassign this engineer as an official maintainer:</p>
               
@@ -752,40 +798,32 @@
             </div>
           </div>
 
-          <!-- Group 3: Biography & Photo -->
+          <!-- Group 3: Profile Picture & Biography -->
           <div style="margin-bottom: 20px;">
-            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">3. Biography & Profile Picture</div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">3. Profile Picture & Biography</div>
 
-            <div class="form-group">
-              <label class="form-label" for="dBio">Biographical Overview / Technical Focus</label>
-              <textarea id="dBio" class="form-textarea" rows="3" placeholder="Overview of engineering background, research focus, and core technologies...">${dev ? dev.bio : ''}</textarea>
-            </div>
-
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 14px;">
               <label class="form-label" for="dAvatar">Profile Photo / Avatar (URL or File Upload)</label>
-              <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-                <img id="avatarPreview" src="${dev ? dev.avatar_url : avatarPresets[0]}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan); background: #18181b;">
-                <input type="text" id="dAvatar" class="form-input" style="flex: 1;" value="${dev ? dev.avatar_url : avatarPresets[0]}" oninput="document.getElementById('avatarPreview').src = this.value">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <img id="avatarPreview" src="${dev ? dev.avatar_url : defaultAvatar}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan); background: #18181b; flex-shrink: 0;" alt="Avatar">
+                <input type="text" id="dAvatar" class="form-input" style="flex: 1;" placeholder="https://... or upload local file" value="${dev ? dev.avatar_url : defaultAvatar}" oninput="document.getElementById('avatarPreview').src = this.value">
                 <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('dAvatarFile').click()">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                   <span>Upload File</span>
                 </button>
                 <input type="file" id="dAvatarFile" accept="image/*" style="display: none;" onchange="handleAdminAvatarUpload(this)">
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 0.74rem; color: var(--text-muted);">Quick Presets:</span>
-                ${avatarPresets.map((preset, idx) => `
-                  <button type="button" class="avatar-preset-btn" onclick="selectAvatarPreset('${preset}')" title="Preset ${idx + 1}">
-                    <img src="${preset}" style="width: 100%; height: 100%; object-fit: cover;">
-                  </button>
-                `).join('')}
-              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="dBio">Biographical Overview / Technical Focus</label>
+              <textarea id="dBio" class="form-textarea" rows="3" placeholder="Overview of engineering background, research focus, and core technologies...">${dev ? dev.bio : ''}</textarea>
             </div>
           </div>
 
-          <!-- Group 4: Web Coordinates & Cryptographic Fingerprint -->
+          <!-- Group 4: Web Coordinates -->
           <div style="margin-bottom: 24px;">
-            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">4. Web Coordinates & Cryptographic Key</div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">4. Web Coordinates & Social Links</div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
               <div class="form-group">
@@ -796,11 +834,6 @@
                 <label class="form-label" for="dGithub">GitHub Profile URL</label>
                 <input type="url" id="dGithub" class="form-input" placeholder="https://github.com/..." value="${dev ? dev.github_url || '' : ''}">
               </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="dGpg">Cryptographic GPG Key Fingerprint</label>
-              <input type="text" id="dGpg" class="form-input" placeholder="e.g. 8F4A 2B19 E03C 41FA 98E1" value="${dev ? dev.gpg_fingerprint || '' : '8F4A 2B19 E03C 41FA 98E1'}">
             </div>
           </div>
 
@@ -828,16 +861,45 @@
       modal.setAttribute('aria-hidden', 'false');
     }
 
+    function addTitleInputRow(val = '') {
+      const container = document.getElementById('titleInputsContainer');
+      if (!container) return;
+      const count = container.querySelectorAll('.title-input-row').length;
+      const row = document.createElement('div');
+      row.className = 'title-input-row';
+      row.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+      row.innerHTML = `
+        <input type="text" class="form-input dev-title-input" placeholder="${count === 0 ? 'e.g. Distributed Consensus Lead' : 'e.g. Systems Architect'}" value="${val}" style="flex: 1;">
+        <button type="button" class="btn-icon-action danger" onclick="removeTitleInputRow(this)" title="Delete title" style="padding: 7px 10px; height: 38px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
+      `;
+      container.appendChild(row);
+      const input = row.querySelector('input');
+      if (input && !val) input.focus();
+    }
+
+    function removeTitleInputRow(btn) {
+      const container = document.getElementById('titleInputsContainer');
+      if (!container) return;
+      const rows = container.querySelectorAll('.title-input-row');
+      if (rows.length <= 1) {
+        const input = rows[0].querySelector('input');
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+        return;
+      }
+      const row = btn.closest('.title-input-row');
+      if (row) row.remove();
+    }
+
     function toggleProjectCardStyle(slug, isChecked) {
       const card = document.getElementById(`card_${slug}`);
       if (card) {
         card.classList.toggle('selected', isChecked);
       }
-    }
-
-    function selectAvatarPreset(url) {
-      document.getElementById('dAvatar').value = url;
-      document.getElementById('avatarPreview').src = url;
     }
 
     async function handleAdminAvatarUpload(input) {
@@ -885,6 +947,14 @@
       const passEl = document.getElementById('dPassword');
       const passVal = passEl ? passEl.value : undefined;
       if (passEl) passEl.value = '';
+
+      const titleInputs = Array.from(document.querySelectorAll('.dev-title-input'));
+      const collectedTitles = titleInputs.map(i => i.value.trim()).filter(Boolean);
+      const finalRole = collectedTitles.length > 0 ? collectedTitles.join(' & ') : 'Developer';
+
+      const existingDev = developersData.find(d => d.id === id || d.handle === rawHandle);
+      const gpgEl = document.getElementById('dGpg');
+      const gpg_fingerprint = gpgEl ? gpgEl.value.trim() : (existingDev ? existingDev.gpg_fingerprint || '' : '');
       
       const payload = {
         id: id || `dev-${Date.now()}`,
@@ -893,13 +963,13 @@
         email: document.getElementById('dEmail').value.trim(),
         password: passVal || undefined,
         account_role: document.getElementById('dAccountRole').value,
-        role: document.getElementById('dRole').value.trim(),
+        role: finalRole,
         assigned_projects,
         bio: document.getElementById('dBio').value.trim(),
         avatar_url: document.getElementById('dAvatar').value.trim(),
         website_url: document.getElementById('dWebsite').value.trim(),
         github_url: document.getElementById('dGithub').value.trim(),
-        gpg_fingerprint: document.getElementById('dGpg').value.trim(),
+        gpg_fingerprint,
         is_verified: document.getElementById('dVerified').checked ? 1 : 0
       };
 

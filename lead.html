@@ -42,12 +42,12 @@
     <aside class="dashboard-sidebar">
       <div class="dashboard-user-card" id="leadUserCard" onclick="openLeadProfileModal()" style="cursor: pointer;" title="Click to customize your lead profile and photo">
         <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80" alt="Lead" class="dashboard-user-avatar" id="leadAvatar" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80';">
-        <div style="flex: 1; min-width: 0;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="leadName">Marcus Vance</div>
-            <span style="font-size: 0.72rem; color: var(--accent-cyan);">✎ Edit</span>
+        <div class="dashboard-user-info" style="flex: 1; min-width: 0; overflow: hidden;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+            <div style="font-weight: 700; font-size: 0.90rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="leadName">Marcus Vance</div>
+            <span style="font-size: 0.70rem; color: var(--accent-cyan); flex-shrink: 0;">✎ Edit</span>
           </div>
-          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);" id="leadRole">Distributed Consensus Lead</div>
+          <div class="dashboard-user-meta" id="leadRole">Distributed Consensus Lead</div>
         </div>
       </div>
 
@@ -249,11 +249,11 @@
                       </div>
                     </td>
                     <td>
-                      <div class="table-actions">
-                        <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="padding: 5px 12px; font-size: 0.76rem; text-decoration: none;">Edit in Studio</a>
-                        <button onclick="openLeadEditModal('${p.slug}')" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem;">Quick Edit</button>
-                        <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem; text-decoration: none;">View</a>
-                        <button onclick="deleteLeadProject('${p.id || p.slug}')" class="btn-icon-action danger" style="padding: 5px 10px; font-size: 0.76rem;" title="Delete Assigned Repository">Delete</button>
+                      <div class="table-actions" style="justify-content: flex-end;">
+                        <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; text-decoration: none;" title="Edit in Studio">Studio</a>
+                        <button onclick="openLeadEditModal('${p.slug}')" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" title="Quick Edit Metadata">Edit</button>
+                        <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; text-decoration: none;" title="View Project Page">View</a>
+                        <button onclick="deleteLeadProject('${p.id || p.slug}')" class="btn-icon-action danger" style="padding: 4px 8px; font-size: 0.75rem;" title="Delete Assigned Repository">Delete</button>
                       </div>
                     </td>
                   </tr>
