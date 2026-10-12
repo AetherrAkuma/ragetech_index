@@ -227,8 +227,15 @@
       const assignees = p.assignees || p.maintainer_handles || [];
       const assigneeAvatars = assignees.map(handle => {
         const dev = state.developers.find(d => d.handle === handle);
+        const name = dev ? dev.name : handle;
+        const avatarUrl = dev ? dev.avatar_url : `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80`;
         const initials = dev ? dev.name.split(' ').map(n => n[0]).join('').slice(0, 2) : handle.slice(0, 2).toUpperCase();
-        return `<a href="developer.html?id=${handle}" class="builder-pill-avatar" title="${dev ? `${dev.name} (@${dev.handle})` : handle}">${initials}</a>`;
+        return `
+          <a href="developer.html?id=${handle}" class="builder-pill-avatar" title="${name} (@${handle})">
+            <img src="${avatarUrl}" alt="${name}" class="builder-pill-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" loading="lazy">
+            <span class="builder-pill-avatar-fallback" style="display:none;">${initials}</span>
+          </a>
+        `;
       }).join('');
 
       const specs = p.specs || [

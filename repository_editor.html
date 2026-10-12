@@ -1095,8 +1095,15 @@ Existing alternatives required significant hardware resources and heavy runtimes
       const avatarsWrap = document.getElementById('homePrevAvatars');
       avatarsWrap.innerHTML = Array.from(selectedMaintainers).map(h => {
         const d = allDevelopers.find(dev => dev.handle === h);
+        const name = d ? d.name : h;
+        const avatarUrl = d ? d.avatar_url : `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80`;
         const initials = d ? d.name.split(' ').map(n => n[0]).join('').slice(0, 2) : h.slice(0, 2).toUpperCase();
-        return `<span class="builder-pill-avatar" title="${d ? d.name : h}">${initials}</span>`;
+        return `
+          <span class="builder-pill-avatar" title="${name} (@${h})">
+            <img src="${avatarUrl}" alt="${name}" class="builder-pill-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="builder-pill-avatar-fallback" style="display:none;">${initials}</span>
+          </span>
+        `;
       }).join('');
 
       // Render Homepage Action Buttons
