@@ -16,7 +16,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=20261012-v3">
+  <link rel="stylesheet" href="styles.css?v=20261012-v4">
   <style>
     /* Scoped Tailark FAQs-1 Dusk Accordion */
     .faq-grid {
@@ -174,33 +174,61 @@
     @media (max-width: 900px) {
       .faq-grid {
         grid-template-columns: 1fr;
-        gap: 36px;
+        gap: 24px;
       }
       .faq-intro-col {
         position: static;
       }
       .faq-heading {
-        font-size: 2rem;
+        font-size: 1.85rem;
       }
       .faq-actions-row {
         width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
       }
       .faq-actions-row .btn-primary,
       .faq-actions-row .btn-secondary {
-        flex: 1 1 200px;
+        width: 100%;
         justify-content: center;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        height: 36px;
+        box-sizing: border-box;
       }
     }
     @media (max-width: 600px) {
+      .faq-heading {
+        font-size: 1.55rem;
+      }
+      .faq-subtext {
+        font-size: 0.86rem;
+        line-height: 1.5;
+        margin-bottom: 16px;
+      }
       .faq-trigger {
-        padding: 18px 2px;
+        padding: 13px 2px;
       }
       .faq-question-text {
-        font-size: 1rem;
+        font-size: 0.92rem;
       }
       .faq-content p {
-        font-size: 0.94rem;
-        padding-bottom: 18px;
+        font-size: 0.84rem;
+        padding-bottom: 14px;
+        line-height: 1.55;
+      }
+    }
+    @media (max-width: 420px) {
+      .faq-actions-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .faq-actions-row .btn-primary,
+      .faq-actions-row .btn-secondary {
+        font-size: 0.74rem;
+        padding: 8px 6px;
       }
     }
   </style>
@@ -228,8 +256,8 @@
       </div>
 
       <nav class="site-nav" aria-label="Main Navigation">
-        <a href="#repositories" class="nav-link" id="navReposLink">Repositories</a>
-        <a href="#collective" class="nav-link" id="navBuildersLink">Developers</a>
+        <a href="#repositories" class="nav-link" id="navReposLink">Repositories [6]</a>
+        <a href="#collective" class="nav-link" id="navBuildersLink">Developers [30]</a>
         <a href="#faqs" class="nav-link" id="navFaqLink">FAQ</a>
         <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="nav-link">GitHub</a>
       </nav>
@@ -245,16 +273,32 @@
           <span class="cmd-k-kbd">⌘K</span>
         </button>
 
-        <!-- Dynamic RBAC Auth Trigger -->
+        <!-- Dynamic RBAC Auth Trigger with Frame-0 Synchronous Hydration -->
         <div id="authHeaderWidget">
           <button id="openLoginBtn" class="btn-auth" onclick="window.RagetechApp.openLoginModal()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
-            <span>Developer Login</span>
+            <span class="auth-label-full">Developer Login</span>
+            <span class="auth-label-short">Login</span>
           </button>
         </div>
+        <script>
+          (function() {
+            try {
+              var s = localStorage.getItem('ragetech_session');
+              if (s) {
+                var u = JSON.parse(s).user;
+                if (u) {
+                  var r = (u.account_role || 'dev').toUpperCase();
+                  var url = u.account_role === 'admin' ? 'admin.html' : (u.account_role === 'lead' ? 'lead.html' : 'developer-studio.html');
+                  document.getElementById('authHeaderWidget').innerHTML = '<div style="display:flex;align-items:center;gap:6px;"><a href="' + url + '" class="btn-auth auth-active" style="text-decoration:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="auth-label-full">Dashboard [' + r + ']</span><span class="auth-label-short">' + r + '</span></a><button class="btn-icon-action" onclick="window.RagetechApp ? window.RagetechApp.handleLogout() : (localStorage.removeItem(\'ragetech_session\'),location.reload())" title="Sign Out"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button></div>';
+                }
+              }
+            } catch(e) {}
+          })();
+        </script>
       </div>
     </div>
   </header>
@@ -269,7 +313,7 @@
       </h1>
 
       <p class="hero-subtitle" id="heroSubtitleText">
-        Ragetech is the primary hub indexing academic research, AI & computer vision models, and enterprise systems engineered for real-world impact.
+        Ragetech is the primary hub indexing 6 academic theses, AI & computer vision models, and enterprise systems by 30 verified developers.
       </p>
 
       <div class="hero-actions">
@@ -289,26 +333,62 @@
           </svg>
         </a>
       </div>
+    </section>
 
-      <!-- Live Real-Time Telemetry & Database Metrics Ribbon -->
+    <!-- ======================================================================
+         2b. Secondary Hero Section: Platform Telemetry & Metrics (4 Box Grid)
+         ====================================================================== -->
+    <section id="platform-metrics" class="secondary-hero-section app-container" aria-label="Platform Telemetry & Metrics">
+      <!-- Live Real-Time Telemetry & Database Metrics Ribbon (Pre-rendered for 0ms Startup) -->
       <div class="edge-metrics-ribbon">
         <div class="metric-card">
-          <div class="metric-val" id="metricProjects">--<span> repos</span></div>
+          <div class="metric-val" id="metricProjects">6<span> repos</span></div>
           <div class="metric-label">Cataloged Projects & Theses</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val" id="metricDevelopers">--<span> active</span></div>
+          <div class="metric-val" id="metricDevelopers">30<span> active</span></div>
           <div class="metric-label">Active Verified Developers</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val" id="metricDomains">--<span> domains</span></div>
+          <div class="metric-val" id="metricDomains">5<span> domains</span></div>
           <div class="metric-label">AI, Vision & Systems Domains</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val" id="metricLatency">--<span>ms</span></div>
+          <div class="metric-val" id="metricLatency">12<span>ms</span></div>
           <div class="metric-label">Live Edge Response Latency</div>
         </div>
       </div>
+      <script>
+        (function() {
+          try {
+            var c = localStorage.getItem('ragetech_platform_cache');
+            if (c) {
+              var d = JSON.parse(c);
+              if (Array.isArray(d.projects) && d.projects.length) {
+                var p = document.getElementById('metricProjects');
+                if (p) p.innerHTML = d.projects.length + '<span> repos</span>';
+                var nP = document.getElementById('navReposLink');
+                if (nP) nP.textContent = 'Repositories [' + d.projects.length + ']';
+                var catSet = {};
+                d.projects.forEach(function(item) { if (item.category) catSet[item.category] = true; });
+                var catCount = Object.keys(catSet).length || 5;
+                var domEl = document.getElementById('metricDomains');
+                if (domEl) domEl.innerHTML = catCount + '<span> domains</span>';
+              }
+              if (Array.isArray(d.developers) && d.developers.length) {
+                var devEl = document.getElementById('metricDevelopers');
+                if (devEl) devEl.innerHTML = d.developers.length + '<span> active</span>';
+                var nD = document.getElementById('navBuildersLink');
+                if (nD) nD.textContent = 'Developers [' + d.developers.length + ']';
+              }
+              if (Array.isArray(d.projects) && Array.isArray(d.developers)) {
+                var sub = document.getElementById('heroSubtitleText');
+                if (sub) sub.textContent = 'Ragetech is the primary hub indexing ' + d.projects.length + ' academic theses, AI & computer vision models, and enterprise systems by ' + d.developers.length + ' verified developers.';
+              }
+            }
+          } catch(e) {}
+        })();
+      </script>
     </section>
 
     <!-- ======================================================================
@@ -457,29 +537,51 @@
        6. Edge Telemetry HUD Footer
        ====================================================================== -->
   <footer class="site-footer">
-    <div class="app-container footer-row">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-weight: 700; letter-spacing: 0.05em; font-size: 0.9rem;">RAGETECH</span>
-        <span style="color: var(--text-faint);">|</span>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">© 2026 Sovereign Systems Engineering Collective</span>
+    <div class="app-container">
+      <div class="footer-minimal-wrap">
+        <!-- Brand & Mission Info -->
+        <div class="footer-minimal-brand">
+          <div class="brand-mark" style="gap: 10px;">
+            <div class="brand-icon" style="width: 28px; height: 28px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <span class="brand-name" style="font-size: 1rem; font-weight: 800; letter-spacing: 0.05em;">RAGETECH</span>
+          </div>
+          <p class="footer-minimal-desc">
+            Central directory for academic theses, intelligent systems & open-source tools.
+          </p>
+        </div>
+
+        <!-- Telemetry HUD Bar (Live Ping, Edge & D1 Status) -->
+        <div class="telemetry-hud-bar" id="telemetryHudBar">
+          <div class="hud-item">
+            <span class="hud-dot" aria-hidden="true"></span>
+            <span id="hudColo">EDGE: LOCAL-POP</span>
+          </div>
+          <div class="hud-item">
+            <span>PING:</span>
+            <span id="hudLatency" style="color: var(--text-primary);">12ms</span>
+          </div>
+          <div class="hud-item">
+            <span>D1:</span>
+            <span id="hudD1Status" style="color: var(--accent-emerald);">SYNCED</span>
+          </div>
+          <div class="hud-item">
+            <span id="hudProtocol">HTTP/3 QUIC</span>
+          </div>
+        </div>
       </div>
 
-      <!-- Real-Time Telemetry Bar -->
-      <div class="telemetry-hud-bar" id="telemetryHudBar">
-        <div class="hud-item">
-          <span class="hud-dot" aria-hidden="true"></span>
-          <span id="hudColo">EDGE: LOCAL-POP</span>
+      <div class="footer-minimal-bottom">
+        <div class="footer-copy-text">
+          © 2026 Sovereign Systems Engineering Collective. All rights reserved.
         </div>
-        <div class="hud-item">
-          <span>PING:</span>
-          <span id="hudLatency" style="color: var(--text-primary);">12ms</span>
-        </div>
-        <div class="hud-item">
-          <span>D1:</span>
-          <span id="hudD1Status" style="color: var(--accent-emerald);">SYNCED</span>
-        </div>
-        <div class="hud-item">
-          <span id="hudProtocol">HTTP/3 QUIC</span>
+        <div class="footer-meta-links">
+          <span>SHA-256 Cryptographic Identity</span>
+          <span>•</span>
+          <span>Cloudflare Edge D1</span>
         </div>
       </div>
     </div>
@@ -521,7 +623,7 @@
     </div>
   </div>
 
-  <!-- Builder Login Modal -->
+  <!-- Developer Login Modal -->
   <div id="loginModal" class="modal-backdrop" aria-hidden="true" inert role="dialog" aria-modal="true" onclick="if (event.target === this) window.RagetechApp.closeLoginModal()">
     <div class="modal-dialog" style="max-width: 440px;">
       <button class="modal-close-btn" onclick="window.RagetechApp.closeLoginModal()" aria-label="Close modal">
@@ -536,13 +638,13 @@
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
         </div>
-        <h3 style="font-size: 1.35rem; font-weight: 800;">Builder Authentication</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Sign in with your collective credentials</p>
+        <h3 style="font-size: 1.35rem; font-weight: 800;">Developer Authentication</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Sign in with your verified developer credentials</p>
       </div>
 
       <form id="loginForm" onsubmit="window.RagetechApp.handleLogin(event)" autocomplete="off">
         <div class="form-group">
-          <label class="form-label" for="loginHandle">Builder Handle or Email</label>
+          <label class="form-label" for="loginHandle">Developer Handle or Email</label>
           <input type="text" id="loginHandle" class="form-input" placeholder="handle or email@ragetech.dev" autocomplete="username" required>
         </div>
         <div class="form-group">

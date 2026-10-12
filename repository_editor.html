@@ -186,6 +186,16 @@
     </div>
   </header>
 
+  <!-- Mobile Studio Segmented View Switcher -->
+  <div class="mobile-studio-tab-bar">
+    <button type="button" class="mobile-studio-tab active" id="mobTabEditor" onclick="switchMobileStudioTab('editor')">
+      ✏️ Edit Repository
+    </button>
+    <button type="button" class="mobile-studio-tab" id="mobTabPreview" onclick="switchMobileStudioTab('preview')">
+      👁️ Live Preview
+    </button>
+  </div>
+
   <!-- ======================================================================
        Split Workspace: Left (Editor Form) | Right (Real-time Live Preview)
        ====================================================================== -->
@@ -232,22 +242,22 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
           <div class="form-group">
             <label class="form-label" for="editName">Repository Name</label>
-            <input type="text" id="editName" class="form-input" placeholder="e.g. Hyperion" oninput="handleNameInput(this.value)">
+            <input type="text" id="editName" class="form-input" placeholder="e.g. Distributed Consensus Engine" oninput="handleNameInput(this.value)">
           </div>
           <div class="form-group">
             <label class="form-label" for="editSlug">URL Slug</label>
-            <input type="text" id="editSlug" class="form-input" placeholder="e.g. hyperion" oninput="slugManuallyEdited = true; onDataChange()">
+            <input type="text" id="editSlug" class="form-input" placeholder="e.g. distributed-consensus-engine" oninput="slugManuallyEdited = true; onDataChange()">
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
           <div class="form-group">
             <label class="form-label" for="editRepo">GitHub Repository Path</label>
-            <input type="text" id="editRepo" class="form-input" placeholder="ragetech/hyperion" oninput="onDataChange()">
+            <input type="text" id="editRepo" class="form-input" placeholder="organization/repository" oninput="onDataChange()">
           </div>
           <div class="form-group">
             <label class="form-label" for="editBadge">Release Version Tag</label>
-            <input type="text" id="editBadge" class="form-input" placeholder="v0.9.4-alpha" oninput="onDataChange()">
+            <input type="text" id="editBadge" class="form-input" placeholder="e.g. v1.0.0 or Production" oninput="onDataChange()">
           </div>
         </div>
 
@@ -277,12 +287,12 @@
 
         <div class="form-group">
           <label class="form-label" for="editTagline">Short Summary (Shown on Homepage)</label>
-          <input type="text" id="editTagline" class="form-input" placeholder="Ultra-low-latency event streaming engine written in pure Rust..." oninput="onDataChange()">
+          <input type="text" id="editTagline" class="form-input" placeholder="Brief one-sentence summary of the repository..." oninput="onDataChange()">
         </div>
 
         <div class="form-group">
           <label class="form-label" for="editTechStack">Tech Stack Tags (Comma separated)</label>
-          <input type="text" id="editTechStack" class="form-input" placeholder="Rust, Tokio, io_uring, SIMD" oninput="onDataChange()">
+          <input type="text" id="editTechStack" class="form-input" placeholder="e.g. Rust, Go, TypeScript, PyTorch" oninput="onDataChange()">
         </div>
       </div>
 
@@ -343,17 +353,17 @@
         <div id="previewForm_code">
           <div class="form-group">
             <label class="form-label" for="editPreviewTitle">Terminal Header / File Name</label>
-            <input type="text" id="editPreviewTitle" class="form-input" placeholder="telemetry_sink.rs" oninput="onDataChange()">
+            <input type="text" id="editPreviewTitle" class="form-input" placeholder="e.g. main.rs or config.yaml" oninput="onDataChange()">
           </div>
 
           <div class="form-group">
             <label class="form-label" for="editPreviewContent">Code Snippet</label>
-            <textarea id="editPreviewContent" class="form-textarea" rows="8" style="font-family: var(--font-mono); font-size: 0.82rem;" placeholder="// Rust or Go code snippet..." oninput="onDataChange()"></textarea>
+            <textarea id="editPreviewContent" class="form-textarea" rows="8" style="font-family: var(--font-mono); font-size: 0.82rem;" placeholder="// Enter or paste code snippet (e.g. Rust, Go, Python, TypeScript)..." oninput="onDataChange()"></textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="editPreviewMeta">Terminal Footer Note / Dependencies</label>
-            <input type="text" id="editPreviewMeta" class="form-input" placeholder="Cargo.lock: tokio v1.42, io-uring v0.7.4" oninput="onDataChange()">
+            <input type="text" id="editPreviewMeta" class="form-input" placeholder="e.g. Cargo.lock: v1.42 or Production Ready" oninput="onDataChange()">
           </div>
         </div>
 
@@ -387,12 +397,12 @@
         <div id="previewForm_live" style="display: none;">
           <div class="form-group">
             <label class="form-label" for="editPreviewLiveUrl">Live Application / Embed URL</label>
-            <input type="url" id="editPreviewLiveUrl" class="form-input" placeholder="https://hyperion.ragetech.dev" oninput="onDataChange()">
+            <input type="url" id="editPreviewLiveUrl" class="form-input" placeholder="https://example.com" oninput="onDataChange()">
           </div>
 
           <div class="form-group">
             <label class="form-label" for="editPreviewLiveTitle">Mockup Browser Address Bar Text</label>
-            <input type="text" id="editPreviewLiveTitle" class="form-input" placeholder="https://ragetech.dev/hyperion-demo" oninput="onDataChange()">
+            <input type="text" id="editPreviewLiveTitle" class="form-input" placeholder="https://app.example.com" oninput="onDataChange()">
           </div>
 
           <div class="form-group">
@@ -439,10 +449,10 @@
               <span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px; color: var(--accent-emerald); border-color: rgba(16,185,129,0.3);">Permanent • Non-removable</span>
             </div>
             <p style="font-size: 0.77rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">
-              Always links directly to this repository's dossier page: <code id="fixedButtonPathPreview">project.html?id=hyperion</code>
+              Always links directly to this repository's dossier page: <code id="fixedButtonPathPreview">project.html?id=slug</code>
             </p>
           </div>
-          <a id="fixedButtonTestLink" href="project.html?id=hyperion" target="_blank" class="btn-secondary" style="font-size: 0.74rem; padding: 5px 12px; white-space: nowrap; text-decoration: none;">
+          <a id="fixedButtonTestLink" href="project.html" target="_blank" class="btn-secondary" style="font-size: 0.74rem; padding: 5px 12px; white-space: nowrap; text-decoration: none;">
             Preview Page ↗
           </a>
         </div>
@@ -608,7 +618,7 @@
       </div>
 
       <!-- VIEW 1: Homepage Card Preview -->
-      <div id="viewPrevHome" style="padding: 24px;">
+      <div id="viewPrevHome" style="padding: 6px 0 24px; max-width: 1040px; margin: 0 auto;">
         <div style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--accent-cyan); margin-bottom: 14px; text-transform: uppercase;">
           // Exact Landing Page Rendering Preview
         </div>
@@ -616,11 +626,11 @@
           <div class="project-meta-col">
             <div>
               <div class="project-slug-row">
-                <span class="project-slug-tag" id="homePrevRepoTag">ragetech/hyperion</span>
-                <span class="project-status-tag" id="homePrevBadge">v0.9.4-alpha</span>
+                <span class="project-slug-tag" id="homePrevRepoTag">ragetech/slug</span>
+                <span class="project-status-tag" id="homePrevBadge">v1.0.0</span>
               </div>
-              <h3 class="project-h3" id="homePrevName">Hyperion</h3>
-              <p class="project-summary" id="homePrevSummary">Ultra-low-latency event streaming engine written in pure Rust.</p>
+              <h3 class="project-h3" id="homePrevName">Repository Title</h3>
+              <p class="project-summary" id="homePrevSummary">Short description of repository...</p>
               <ul class="spec-list" id="homePrevSpecsList">
                 <!-- Highlights rows -->
               </ul>
@@ -650,7 +660,7 @@
             <span>/</span>
             <span>Repositories</span>
             <span>/</span>
-            <span id="prevBreadcrumb" style="color: var(--text-primary);">Hyperion</span>
+            <span id="prevBreadcrumb" style="color: var(--text-primary);">Repository Title</span>
           </nav>
 
           <header class="article-header" style="margin-bottom: 24px;">
@@ -658,11 +668,11 @@
               <span class="article-category-badge" id="prevCategory">PROJECT</span>
               <span class="article-read-time" id="prevStatus">STATUS: ACTIVE</span>
               <span style="color: var(--text-faint);">•</span>
-              <span class="article-read-time" id="prevReadTime">3 min read</span>
+              <span class="article-read-time" id="prevReadTime">1 min read</span>
             </div>
 
-            <h1 class="article-title" id="prevTitle" style="font-size: 2.2rem; margin-bottom: 8px;">Hyperion</h1>
-            <p class="article-subtitle" id="prevTagline" style="font-size: 1.05rem;">Ultra-low-latency event streaming engine written in pure Rust.</p>
+            <h1 class="article-title" id="prevTitle" style="font-size: 2.2rem; margin-bottom: 8px;">Repository Title</h1>
+            <p class="article-subtitle" id="prevTagline" style="font-size: 1.05rem;">Short description of repository...</p>
           </header>
 
           <div class="article-action-bar" style="margin-bottom: 28px;" id="prevDossierActionButtonsWrap">
@@ -702,19 +712,11 @@
     let currentPreviewTab = 'home';
     let previewType = 'code'; // 'code' | 'image' | 'live' | 'markdown'
     
-    // Project Highlights array
-    let specsData = [
-      { label: 'Throughput', val: '1.42M events/sec / core' },
-      { label: 'Latency (p99)', val: '0.24ms' },
-      { label: 'Memory Overhead', val: '< 16 MB RSS baseline' },
-      { label: 'Runtime Stack', val: 'Rust / Tokio / io_uring' }
-    ];
+    // Project Highlights array (clean placeholder mode)
+    let specsData = [];
 
-    // Action Buttons array
-    let actionButtonsData = [
-      { label: 'Visit Site', url: 'https://hyperion.ragetech.dev', style: 'primary', icon: 'external' },
-      { label: 'Source Code', url: 'https://github.com/ragetech/hyperion', style: 'secondary', icon: 'github' }
-    ];
+    // Action Buttons array (clean placeholder mode)
+    let actionButtonsData = [];
 
     let allDevelopers = [];
 
@@ -850,17 +852,25 @@
 
     function renderSpecsInputs() {
       const container = document.getElementById('specsContainer');
+      if (specsData.length === 0) {
+        container.innerHTML = `
+          <div style="font-size: 0.8rem; color: var(--text-muted); padding: 12px 14px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-subtle); border-radius: var(--radius-sm); text-align: center;">
+            No highlight rows added yet. Click <strong>+ Add Highlight Row</strong> or select a template above.
+          </div>
+        `;
+        return;
+      }
       container.innerHTML = specsData.map((s, idx) => `
         <div style="display: flex; gap: 8px; align-items: center;">
-          <input type="text" class="form-input" style="flex: 1;" placeholder="Label (e.g. Latency)" value="${s.label}" oninput="updateSpec(${idx}, 'label', this.value)">
-          <input type="text" class="form-input" style="flex: 2;" placeholder="Value (e.g. 0.24ms)" value="${s.val}" oninput="updateSpec(${idx}, 'val', this.value)">
+          <input type="text" class="form-input" style="flex: 1;" placeholder="Label (e.g. Throughput)" value="${s.label || ''}" oninput="updateSpec(${idx}, 'label', this.value)">
+          <input type="text" class="form-input" style="flex: 2;" placeholder="Value (e.g. 1.42M events/sec)" value="${s.val || ''}" oninput="updateSpec(${idx}, 'val', this.value)">
           <button type="button" class="btn-icon-action danger" onclick="removeSpec(${idx})" title="Remove">✕</button>
         </div>
       `).join('');
     }
 
     function addSpecRow() {
-      specsData.push({ label: 'Parameter', val: 'Specification details' });
+      specsData.push({ label: '', val: '' });
       renderSpecsInputs();
       onDataChange();
     }
@@ -881,6 +891,14 @@
     // Dynamic Action Buttons
     function renderActionButtonsList() {
       const container = document.getElementById('actionButtonsContainer');
+      if (actionButtonsData.length === 0) {
+        container.innerHTML = `
+          <div style="font-size: 0.8rem; color: var(--text-muted); padding: 12px 14px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-subtle); border-radius: var(--radius-sm); text-align: center;">
+            No extra action buttons added. The permanent <strong>Read More &rarr;</strong> button is active above.
+          </div>
+        `;
+        return;
+      }
       container.innerHTML = actionButtonsData.map((btn, idx) => `
         <div class="action-btn-item">
           <button type="button" class="action-btn-remove" onclick="removeActionButton(${idx})" title="Remove button">✕</button>
@@ -888,11 +906,11 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-right: 24px;">
             <div class="form-group" style="margin: 0;">
               <label class="form-label" style="font-size: 0.72rem;">Button Label</label>
-              <input type="text" class="form-input" placeholder="e.g. Visit Site" value="${btn.label}" oninput="updateActionButton(${idx}, 'label', this.value)">
+              <input type="text" class="form-input" placeholder="e.g. Visit Site" value="${btn.label || ''}" oninput="updateActionButton(${idx}, 'label', this.value)">
             </div>
             <div class="form-group" style="margin: 0;">
               <label class="form-label" style="font-size: 0.72rem;">Destination Link URL</label>
-              <input type="url" class="form-input" placeholder="https://..." value="${btn.url}" oninput="updateActionButton(${idx}, 'url', this.value)">
+              <input type="url" class="form-input" placeholder="https://example.com" value="${btn.url || ''}" oninput="updateActionButton(${idx}, 'url', this.value)">
             </div>
           </div>
 
@@ -934,7 +952,7 @@
     }
 
     function addActionButtonRow() {
-      actionButtonsData.push({ label: 'New Link', url: 'https://', style: 'secondary', icon: 'external' });
+      actionButtonsData.push({ label: '', url: '', style: 'secondary', icon: 'external' });
       renderActionButtonsList();
       onDataChange();
     }
@@ -1457,8 +1475,8 @@ Existing alternatives required significant hardware resources and heavy runtimes
       slugManuallyEdited = true;
       document.getElementById('editName').value = p.name || '';
       document.getElementById('editSlug').value = p.slug || '';
-      document.getElementById('editRepo').value = p.repo || `ragetech/${p.slug}`;
-      document.getElementById('editBadge').value = p.badge || 'v0.9.4-alpha';
+      document.getElementById('editRepo').value = p.repo || (p.slug ? `ragetech/${p.slug}` : '');
+      document.getElementById('editBadge').value = p.badge || '';
       
       const cat = p.category || 'Project';
       document.getElementById('editCategory').value = cat;
@@ -1475,9 +1493,9 @@ Existing alternatives required significant hardware resources and heavy runtimes
       const pType = p.previewType || p.preview_type || 'code';
       setPreviewType(pType);
       
-      document.getElementById('editPreviewTitle').value = p.previewTitle || p.preview_title || 'telemetry_sink.rs';
+      document.getElementById('editPreviewTitle').value = p.previewTitle || p.preview_title || '';
       document.getElementById('editPreviewContent').value = p.previewContent || p.preview_content || '';
-      document.getElementById('editPreviewMeta').value = p.previewMeta || p.preview_meta || 'Active configuration';
+      document.getElementById('editPreviewMeta').value = p.previewMeta || p.preview_meta || '';
       
       if (pType === 'image') {
         document.getElementById('editPreviewImgUrl').value = p.previewUrl || p.preview_url || p.cover_image_url || '';
@@ -1543,14 +1561,14 @@ Existing alternatives required significant hardware resources and heavy runtimes
 
     // Real-time Live Preview Updater
     function onDataChange() {
-      const name = document.getElementById('editName').value || 'Repository Title';
-      const slug = document.getElementById('editSlug').value || 'slug';
-      const repo = document.getElementById('editRepo').value || `ragetech/${slug}`;
-      const badge = document.getElementById('editBadge').value || 'v0.9.4-alpha';
-      const tagline = document.getElementById('editTagline').value || 'Short description of repository...';
-      const category = document.getElementById('editCategory').value || 'Project';
+      const name = document.getElementById('editName').value.trim() || 'Repository Title';
+      const slug = document.getElementById('editSlug').value.trim() || 'repository-slug';
+      const repo = document.getElementById('editRepo').value.trim() || (slug ? `ragetech/${slug}` : 'organization/repository');
+      const badge = document.getElementById('editBadge').value.trim() || 'v1.0.0';
+      const tagline = document.getElementById('editTagline').value.trim() || 'Short description of repository...';
+      const category = document.getElementById('editCategory').value.trim() || 'Project';
       const status = document.getElementById('editStatus').value;
-      const techStack = document.getElementById('editTechStack').value || '';
+      const techStack = document.getElementById('editTechStack').value.trim() || '';
       const coverUrl = document.getElementById('editCoverUrl').value.trim();
       const markdown = document.getElementById('editMarkdown').value;
 
@@ -1561,12 +1579,27 @@ Existing alternatives required significant hardware resources and heavy runtimes
       document.getElementById('homePrevSummary').textContent = tagline;
 
       // Render Highlights
-      document.getElementById('homePrevSpecsList').innerHTML = specsData.map(s => `
-        <li class="spec-list-row">
-          <span class="spec-label">${s.label}</span>
-          <span class="spec-value">${s.val}</span>
-        </li>
-      `).join('');
+      const specsList = document.getElementById('homePrevSpecsList');
+      const validSpecs = specsData.filter(s => (s.label && s.label.trim()) || (s.val && s.val.trim()));
+      if (validSpecs.length > 0) {
+        specsList.innerHTML = validSpecs.map(s => `
+          <li class="spec-list-row">
+            <span class="spec-label">${s.label || 'Parameter'}</span>
+            <span class="spec-value">${s.val || 'Value'}</span>
+          </li>
+        `).join('');
+      } else {
+        specsList.innerHTML = `
+          <li class="spec-list-row" style="opacity: 0.65;">
+            <span class="spec-label">Domain</span>
+            <span class="spec-value">${category}</span>
+          </li>
+          <li class="spec-list-row" style="opacity: 0.65;">
+            <span class="spec-label">Status</span>
+            <span class="spec-value">${status.toUpperCase()}</span>
+          </li>
+        `;
+      }
 
       // Render Assignee Avatars
       const avatarsWrap = document.getElementById('homePrevAvatars');
@@ -1585,22 +1618,24 @@ Existing alternatives required significant hardware resources and heavy runtimes
 
       // Render Homepage Action Buttons
       const homeActionButtonsWrap = document.getElementById('homePrevActionButtonsWrap');
-      const buttonsHtml = actionButtonsData.map(btn => `
-        <span class="${getButtonClass(btn.style)}" style="font-size:0.78rem; padding: 6px 12px; cursor: default; display: inline-flex; align-items: center; gap: 6px;">
-          ${getButtonIconHtml(btn)}
-          <span>${btn.label}</span>
-        </span>
-      `).join('');
-
-      // Update fixed button preview in section 4
-      const fixedSlug = slug || 'project';
+      const fixedSlug = slug || 'repository-slug';
       const fixedPathEl = document.getElementById('fixedButtonPathPreview');
       const fixedLinkEl = document.getElementById('fixedButtonTestLink');
       if (fixedPathEl) fixedPathEl.textContent = `project.html?id=${fixedSlug}`;
       if (fixedLinkEl) fixedLinkEl.href = `project.html?id=${fixedSlug}`;
 
+      const validButtons = actionButtonsData.filter(btn => btn.label && btn.label.trim());
+      const buttonsHtml = validButtons.map(btn => `
+        <span class="${getButtonClass(btn.style)}" style="font-size:0.78rem; padding: 6px 12px; height: 32px; cursor: default; display: inline-flex; align-items: center; gap: 5px;">
+          ${getButtonIconHtml(btn)}
+          <span>${btn.label}</span>
+        </span>
+      `).join('');
+
       homeActionButtonsWrap.innerHTML = `
-        <span class="btn-primary" style="font-size:0.78rem; padding: 6px 14px; cursor: default;">Read More &rarr;</span>
+        <span class="btn-primary" style="font-size:0.78rem; padding: 6px 14px; height: 32px; cursor: default; display: inline-flex; align-items: center; gap: 5px;">
+          <span>Read More</span> &rarr;
+        </span>
         ${buttonsHtml}
       `;
 
@@ -1616,9 +1651,9 @@ Existing alternatives required significant hardware resources and heavy runtimes
           </div>
         `;
       } else if (previewType === 'live') {
-        const liveUrl = document.getElementById('editPreviewLiveUrl').value || 'https://hyperion.ragetech.dev';
-        const liveTitle = document.getElementById('editPreviewLiveTitle').value || `https://ragetech.dev/${slug}`;
-        const liveMeta = document.getElementById('editPreviewLiveMeta').value || 'Interactive Demo';
+        const liveUrl = document.getElementById('editPreviewLiveUrl').value.trim() || 'https://example.com';
+        const liveTitle = document.getElementById('editPreviewLiveTitle').value.trim() || `https://app.example.com`;
+        const liveMeta = document.getElementById('editPreviewLiveMeta').value.trim() || 'Interactive Demo';
         showcaseContainer.innerHTML = `
           <div class="preview-live-wrap">
             <div class="preview-browser-bar">
@@ -1660,12 +1695,15 @@ Existing alternatives required significant hardware resources and heavy runtimes
         `;
       } else {
         // Default: Code Terminal
-        const codeTitle = document.getElementById('editPreviewTitle').value || 'telemetry_sink.rs';
+        const codeTitle = document.getElementById('editPreviewTitle').value.trim() || 'main.rs';
         let codeSnippet = document.getElementById('editPreviewContent').value || '';
-        if (codeSnippet.includes('\\n')) {
+        if (codeSnippet && codeSnippet.includes('\\n')) {
           codeSnippet = codeSnippet.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\t/g, '  ');
         }
-        const codeMeta = document.getElementById('editPreviewMeta').value || 'Cargo.lock: active configuration';
+        if (!codeSnippet) {
+          codeSnippet = '// Enter your code snippet in the editor on the left...\n// Supports Rust, Go, Python, TypeScript, etc.';
+        }
+        const codeMeta = document.getElementById('editPreviewMeta').value.trim() || 'Active configuration';
         showcaseContainer.innerHTML = `
           <div class="preview-window-top">
             <span>${codeTitle}</span>
@@ -2138,6 +2176,35 @@ Existing alternatives required significant hardware resources and heavy runtimes
         );
       }
     })();
+
+    function switchMobileStudioTab(tab) {
+      const isEditor = tab === 'editor';
+      const paneEditor = document.querySelector('.editor-pane-scroll');
+      const panePreview = document.querySelector('.preview-pane-scroll');
+      const tabEditor = document.getElementById('mobTabEditor');
+      const tabPreview = document.getElementById('mobTabPreview');
+      if (tabEditor && tabPreview) {
+        tabEditor.classList.toggle('active', isEditor);
+        tabPreview.classList.toggle('active', !isEditor);
+      }
+      if (paneEditor && panePreview) {
+        if (window.innerWidth <= 960) {
+          paneEditor.style.display = isEditor ? 'block' : 'none';
+          panePreview.style.display = isEditor ? 'none' : 'block';
+        } else {
+          paneEditor.style.display = '';
+          panePreview.style.display = '';
+        }
+      }
+    }
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 960) {
+        const paneEditor = document.querySelector('.editor-pane-scroll');
+        const panePreview = document.querySelector('.preview-pane-scroll');
+        if (paneEditor) paneEditor.style.display = '';
+        if (panePreview) panePreview.style.display = '';
+      }
+    });
   </script>
 </body>
 </html>

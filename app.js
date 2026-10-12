@@ -21,20 +21,247 @@
     cmdKFilteredItems: []
   };
 
+  // Baseline snapshot for frame-0 instant rendering (eliminates split-second startup flash)
+  const INITIAL_PROJECTS_BASELINE = [
+    {
+      id: 'proj-01',
+      slug: 'hyperion',
+      name: 'Hyperion',
+      repo: 'ragetech/hyperion',
+      badge: 'v0.9.4-alpha',
+      tagline: 'Ultra-low-latency event streaming engine written in pure Rust. Built on lock-free memory ring buffers and Linux io_uring kernel bypass.',
+      category: 'System',
+      status: 'active',
+      tech_stack: 'Rust, Tokio, io_uring, SIMD',
+      featured_order: 1,
+      specs: [
+        { label: 'Throughput', val: '1.42M events/sec / core' },
+        { label: 'Latency (p99)', val: '0.24ms' },
+        { label: 'Memory Overhead', val: '< 16 MB RSS baseline' },
+        { label: 'Runtime Stack', val: 'Rust / Tokio / io_uring' }
+      ],
+      previewTitle: 'telemetry_sink.rs',
+      previewContent: '// Socket ring buffer initialization\nlet ring = IoUring::builder()\n    .setup_sqpoll(1000)\n    .build(4096)?;\n\nlet stream = HyperionStream::bind("0.0.0.0:8443")\n    .with_zero_copy()\n    .with_simd_parser::<BatchSize<64>>()\n    .spawn_workers(16);\n\nprintln!("Hyperion worker pool online: 16 rings active");',
+      previewMeta: 'Cargo.lock: tokio v1.42, io-uring v0.7.4',
+      previewType: 'code',
+      assignees: ['reymartchua', 'sora']
+    },
+    {
+      id: 'proj-02',
+      slug: 'pulseos',
+      name: 'PulseOS KV',
+      repo: 'ragetech/pulseos',
+      badge: 'v0.8.1-dev',
+      tagline: 'Distributed key-value store engineered for sovereign edge clusters. Combines Raft consensus with eBPF network acceleration.',
+      category: 'Project',
+      status: 'active',
+      tech_stack: 'Go, Raft, eBPF, RocksDB',
+      featured_order: 2,
+      specs: [
+        { label: 'Consensus', val: 'Multi-Raft v2 with Learner nodes' },
+        { label: 'Cold Boot', val: '12ms on Firecracker microVM' },
+        { label: 'Replication', val: 'Synchronous edge quorum (3 of 5)' },
+        { label: 'Runtime Stack', val: 'Go / Raft / eBPF / RocksDB' }
+      ],
+      previewTitle: 'cluster_state.json',
+      previewContent: '{\n  "cluster_id": "pulse-edge-us-east",\n  "raft_term": 8942,\n  "leader_node": "node-01.ragetech.internal",\n  "quorum_status": "5/5 synchronized",\n  "replication_lag": "< 0.12ms",\n  "ebpf_filter": "ACTIVE (zero-copy socket pass)"\n}',
+      previewMeta: 'Cluster: 5 nodes across 3 availability zones',
+      previewType: 'code',
+      assignees: ['marcus', 'zara']
+    },
+    {
+      id: 'proj-03',
+      slug: 'chimera',
+      name: 'Chimera Runtime',
+      repo: 'ragetech/chimera',
+      badge: 'v0.4.0-preview',
+      tagline: 'Deterministic multi-agent execution kernel. Coordinates asynchronous cognitive workflows with verified memory checkpoints.',
+      category: 'Thesis',
+      status: 'active',
+      tech_stack: 'Python, PyTorch, CUDA, gRPC',
+      featured_order: 3,
+      specs: [
+        { label: 'Execution Model', val: 'Asynchronous DAG with state rewind' },
+        { label: 'Context Engine', val: 'Memory-mapped vector cache (2M tokens)' },
+        { label: 'Inference Target', val: 'Distributed vLLM / TensorRT-LLM' },
+        { label: 'Runtime Stack', val: 'Python / PyTorch / CUDA / gRPC' }
+      ],
+      previewTitle: 'dag_trace.log',
+      previewContent: '[00:00:00.012] SPAN: root_dispatch -> worker_pool [16 agents]\n[00:00:00.045] STEP: retrieval_pass (vector_index: 4,096 docs) -> 1.4ms\n[00:00:00.118] STEP: model_inference (batch_size=8) -> 64.2ms\n[00:00:00.134] STEP: verification_gate (schema_assert=PASS)\n[00:00:00.141] RESULT: DAG complete (total: 129ms, memory: 48MB)',
+      previewMeta: 'GPU: CUDA 12.6 / TensorRT 10.4',
+      previewType: 'code',
+      assignees: ['elena', 'ananya']
+    },
+    {
+      id: 'proj-04',
+      slug: 'eclipse',
+      name: 'Eclipse UI',
+      repo: 'ragetech/eclipse-ui',
+      badge: 'v1.1.0-rc3',
+      tagline: 'High-density design token system and zero-runtime component foundation engineered for complex developer tools and monitoring suites.',
+      category: 'Portfolio',
+      status: 'active',
+      tech_stack: 'Vanilla CSS, PostCSS, TypeScript',
+      featured_order: 4,
+      specs: [
+        { label: 'Bundle Size', val: '0 KB runtime overhead' },
+        { label: 'Token Scale', val: 'OKLCH color system with APCA contrast' },
+        { label: 'Primitives', val: '48 accessible, headless components' },
+        { label: 'Runtime Stack', val: 'Vanilla CSS / PostCSS / TypeScript' }
+      ],
+      previewTitle: 'design_tokens.css',
+      previewContent: ':root {\n  /* Hairline precision border scales */\n  --hairline: rgba(255, 255, 255, 0.07);\n  --border-focus: #f4f4f5;\n  \n  /* OKLCH surface scales */\n  --surface-base: oklch(14.5% 0.005 285);\n  --surface-elevated: oklch(17.8% 0.008 285);\n  --accent-cyan: oklch(78.2% 0.142 210);\n}',
+      previewMeta: 'Conforms to WCAG 2.2 AAA contrast standards',
+      previewType: 'code',
+      assignees: ['chloe', 'reymartchua']
+    },
+    {
+      id: 'proj-05',
+      slug: 'vortex',
+      name: 'Vortex Scheduler',
+      repo: 'ragetech/vortex',
+      badge: 'v0.6.2-beta',
+      tagline: 'Sub-millisecond job scheduling daemon for heterogeneous compute workloads. Replaces heavy distributed cron engines.',
+      category: 'System',
+      status: 'active',
+      tech_stack: 'Rust, Tokio, WASM, RocksDB',
+      featured_order: 5,
+      specs: [
+        { label: 'Dispatch Tick', val: '10 microseconds' },
+        { label: 'Capacity', val: '10,000,000 concurrent timers' },
+        { label: 'Failover', val: 'Raft consensus failover < 50ms' },
+        { label: 'Runtime Stack', val: 'Rust / Tokio / WASM / RocksDB' }
+      ],
+      previewTitle: 'schedule_manifest.yaml',
+      previewContent: 'schedule:\n  id: "telemetry-flush-01"\n  cron: "*/5 * * * * *"\n  precision: "sub-millisecond"\n  dispatch:\n    target: "wasm://runtime/metrics-sink"\n    timeout: "250ms"\n    jitter_budget: "50us"\n    retry:\n      max_attempts: 3\n      backoff: exponential',
+      previewMeta: 'Queue status: 0 backlog, 128 workers healthy',
+      previewType: 'code',
+      assignees: ['kai', 'freja']
+    },
+    {
+      id: 'proj-06',
+      slug: 'aether',
+      name: 'Aether P2P',
+      repo: 'ragetech/aether',
+      badge: 'v0.3.5-alpha',
+      tagline: 'P2P collaborative CRDT sync mesh for browser and native applications. Converges distributed states without central servers.',
+      category: 'Hobby Project',
+      status: 'active',
+      tech_stack: 'Rust, WASM, WebRTC, CRDT',
+      featured_order: 6,
+      specs: [
+        { label: 'Peer Latency', val: '< 8ms over encrypted WebRTC' },
+        { label: 'Conflict Rate', val: '0.00% (Automerge CRDT)' },
+        { label: 'Discovery', val: 'Encrypted DHT via libp2p' },
+        { label: 'Runtime Stack', val: 'Rust / WASM / WebRTC / CRDT' }
+      ],
+      previewTitle: 'webrtc_mesh.log',
+      previewContent: '[18:24:02.102] PEER_DISCOVERY: ICE candidate gathered -> 192.88.99.1:51820\n[18:24:02.110] HANDSHAKE: authenticated with Curve25519 key\n[18:24:02.114] CRDT_SYNC: Vector clock synchronized (delta=0)\n[18:24:02.116] STATUS: P2P mesh converged (4 active nodes)',
+      previewMeta: 'Mesh topology: 4 peers connected directly',
+      previewType: 'code',
+      assignees: ['lucas', 'clara']
+    }
+  ];
+
+  const INITIAL_DEVELOPERS_BASELINE = [
+    { id: 'dev-00', handle: 'reymartchua', name: 'Reymart Chua', role: 'Founding Lead & Systems Architect', squad: 'systems', account_role: 'admin', is_verified: 1, sort_order: 1, avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80', bio: 'Lead Systems Architect and Founding Engineer at Ragetech. Overseeing edge runtime orchestration, distributed consensus, and platform governance.', assigned_projects: ['hyperion', 'eclipse'] },
+    { id: 'dev-01', handle: 'sora', name: 'Sora Takahashi', role: 'Founding Systems Architect', squad: 'systems', account_role: 'admin', is_verified: 1, sort_order: 2, avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80', bio: 'Kernel hacker and asynchronous runtime designer. Formerly low-latency distributed systems research lead.', assigned_projects: ['hyperion'] },
+    { id: 'dev-02', handle: 'marcus', name: 'Marcus Vance', role: 'Distributed Consensus Lead', squad: 'edge', account_role: 'lead', is_verified: 1, sort_order: 3, avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80', bio: 'Building deterministic raft consensus engines on NVMe and edge flash storage. Rust & Zig advocate.', assigned_projects: ['pulseos'] },
+    { id: 'dev-03', handle: 'elena', name: 'Dr. Elena Rostova', role: 'Compiler Infrastructure Lead', squad: 'compilers', account_role: 'admin', is_verified: 1, sort_order: 4, avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=280&q=80', bio: 'PhD in Type Theory & SSA optimizations. Creator of optimizing vectorizers for WebAssembly micro-kernels.', assigned_projects: ['chimera'] },
+    { id: 'dev-04', handle: 'kai', name: 'Kai Thorne', role: 'Cryptography & Zero-Knowledge Eng', squad: 'security', account_role: 'lead', is_verified: 1, sort_order: 5, avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=280&q=80', bio: 'Formal verification researcher working on lattice-based cryptography, post-quantum protocols, and constant-time math.', assigned_projects: ['vortex'] },
+    { id: 'dev-05', handle: 'zara', name: 'Zara Chen', role: 'Edge Transport Engineer', squad: 'edge', account_role: 'developer', is_verified: 1, sort_order: 6, avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=280&q=80', bio: 'QUIC packet scheduler tuning and congestion control algorithms for multi-homed edge points of presence.', assigned_projects: ['pulseos'] },
+    { id: 'dev-06', handle: 'devon', name: 'Devon Miller', role: 'Storage Engine Architect', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 7, avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=280&q=80', bio: 'LSM-tree compaction strategies and zero-copy io_uring pipelining across Linux and FreeBSD kernels.', assigned_projects: ['hyperion'] },
+    { id: 'dev-07', handle: 'ananya', name: 'Ananya Patel', role: 'WASM Runtime Specialist', squad: 'compilers', account_role: 'developer', is_verified: 1, sort_order: 8, avatar_url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=280&q=80', bio: 'Wasmtime contributor and component model toolchain architect for embedded deterministic runtimes.', assigned_projects: ['chimera'] },
+    { id: 'dev-08', handle: 'lucas', name: 'Lucas Lindqvist', role: 'P2P Overlay & Mesh Eng', squad: 'edge', account_role: 'developer', is_verified: 1, sort_order: 9, avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=280&q=80', bio: 'Gossip protocols, Kademlia routing tables, and zero-trust WireGuard mesh overlays.', assigned_projects: ['aether'] },
+    { id: 'dev-09', handle: 'maya', name: 'Maya Lin', role: 'Security Operations & Auditing', squad: 'security', account_role: 'developer', is_verified: 1, sort_order: 10, avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=280&q=80', bio: 'Static analysis, fuzz testing with libFuzzer and AFL++, binary exploitation mitigation.', assigned_projects: ['hyperion'] },
+    { id: 'dev-10', handle: 'nikolai', name: 'Nikolai Volkov', role: 'Low-level Networking Specialist', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 11, avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=280&q=80', bio: 'eBPF / XDP packet filtering at 100Gbps line rate. Kernel bypass with DPDK and AF_XDP.', assigned_projects: ['pulseos'] },
+    { id: 'dev-11', handle: 'chloe', name: 'Chloe Dupont', role: 'Interface Systems Designer', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 12, avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80', bio: 'Human interface engineer crafting low-latency developer UX, terminal renderers, and design tokens.', assigned_projects: ['eclipse'] },
+    { id: 'dev-12', handle: 'tariq', name: 'Tariq Al-Mansoor', role: 'Database Internals Engineer', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 13, avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=280&q=80', bio: 'Write-ahead log replication, multi-version concurrency control (MVCC), and snapshot isolation.', assigned_projects: ['pulseos'] },
+    { id: 'dev-13', handle: 'freja', name: 'Freja Nielsen', role: 'JIT Engine Developer', squad: 'compilers', account_role: 'developer', is_verified: 1, sort_order: 14, avatar_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=280&q=80', bio: 'Instruction scheduling and tier-2 JIT optimizing compilers for arm64 and x86_64 targets.', assigned_projects: ['vortex'] },
+    { id: 'dev-14', handle: 'julian', name: 'Julian Ward', role: 'Formal Methods Engineer', squad: 'security', account_role: 'developer', is_verified: 1, sort_order: 15, avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=280&q=80', bio: 'TLA+ specifications and automated model checking for distributed edge consensus protocols.', assigned_projects: ['pulseos'] },
+    { id: 'dev-15', handle: 'hana', name: 'Hana Kim', role: 'Edge Observability Architect', squad: 'edge', account_role: 'developer', is_verified: 1, sort_order: 16, avatar_url: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=280&q=80', bio: 'High-cardinality distributed tracing, eBPF metrics collection, and OpenTelemetry instrumentation.', assigned_projects: ['hyperion'] },
+    { id: 'dev-16', handle: 'mateo', name: 'Mateo Silva', role: 'Concurrent Memory Systems', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 17, avatar_url: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=280&q=80', bio: 'Lock-free algorithms, hazard pointers, epoch-based reclamation, and cache-coherent ring buffers.', assigned_projects: ['hyperion'] },
+    { id: 'dev-17', handle: 'inga', name: 'Inga Lindqvist', role: 'Kernel VMM Engineer', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 18, avatar_url: 'https://images.unsplash.com/photo-1534751516642-a171edd26cb0?auto=format&fit=crop&w=280&q=80', bio: 'MicroVM isolation via KVM and Cloud Hypervisor. Deterministic startup latency under 4ms.', assigned_projects: ['vortex'] },
+    { id: 'dev-18', handle: 'samir', name: 'Samir Kulkarni', role: 'Distributed RPC Specialist', squad: 'edge', account_role: 'developer', is_verified: 1, sort_order: 19, avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=280&q=80', bio: 'FlatBuffers schema evolution and zero-allocation binary serialization over stream sockets.', assigned_projects: ['chimera'] },
+    { id: 'dev-19', handle: 'astrid', name: 'Astrid Blom', role: 'SSA Optimizer Developer', squad: 'compilers', account_role: 'developer', is_verified: 1, sort_order: 20, avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80', bio: 'Loop invariant code motion, polyhedral loop transformations, and dead code elimination passes.', assigned_projects: ['chimera'] },
+    { id: 'dev-20', handle: 'darius', name: 'Darius Reed', role: 'Key Exchange Protocol Eng', squad: 'security', account_role: 'developer', is_verified: 1, sort_order: 21, avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=280&q=80', bio: 'Threshold signature schemes, BLS multi-signatures, and verifiable random functions (VRF).', assigned_projects: ['aether'] },
+    { id: 'dev-21', handle: 'clara', name: 'Clara Hoffmann', role: 'Edge Storage Optimizer', squad: 'edge', account_role: 'developer', is_verified: 1, sort_order: 22, avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=280&q=80', bio: 'CRDT implementations for multi-master SQLite databases and delta-state sync over WebSocket.', assigned_projects: ['aether'] },
+    { id: 'dev-22', handle: 'liam', name: 'Liam Gallagher', role: 'Systems Tooling Developer', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 23, avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=280&q=80', bio: 'Developer CLI tooling, terminal telemetry visualizers, and hermetic build system integration.', assigned_projects: ['hyperion'] },
+    { id: 'dev-23', handle: 'nadia', name: 'Nadia Belkacem', role: 'Vectorized Query Internals', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 24, avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=280&q=80', bio: 'SIMD query execution for analytical workloads, Arrow column layout, and dictionary encoding.', assigned_projects: ['pulseos'] },
+    { id: 'dev-24', handle: 'oscar', name: 'Oscar Berg', role: 'Linker & Binary Format Eng', squad: 'compilers', account_role: 'developer', is_verified: 1, sort_order: 25, avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80', bio: 'ELF/Mach-O/wasm linker optimizations, split debug info, and symbol deduplication engines.', assigned_projects: ['chimera'] },
+    { id: 'dev-25', handle: 'yuki', name: 'Yuki Tanaka', role: 'Zero-Copy IO Architect', squad: 'systems', account_role: 'developer', is_verified: 1, sort_order: 26, avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=280&q=80', bio: 'Linux block layer tuning, NVMe-oF drivers, and high-frequency lock-free ring channels in C++23.', assigned_projects: ['hyperion'] },
+    { id: 'dev-26', handle: 'rachel', name: "Rachel O'Connor", role: 'Cryptographic Hardware Eng', squad: 'security', account_role: 'developer', is_verified: 1, sort_order: 27, avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=280&q=80', bio: 'HSM integration, TPM 2.0 attestation, and Apple Secure Enclave key derivation protocols.', assigned_projects: ['aether'] },
+    { id: 'dev-27', handle: 'arjun', name: 'Arjun Mehta', role: 'Distributed Consensus Researcher', squad: 'edge', account_role: 'developer', is_verified: 1, sort_order: 28, avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=280&q=80', bio: 'Byzantine Fault Tolerance protocols, flexible Paxos variants, and active-active edge synchronization.', assigned_projects: ['pulseos'] },
+    { id: 'dev-28', handle: 'selene', name: 'Selene Moreau', role: 'Type Checker Specialist', squad: 'compilers', account_role: 'developer', is_verified: 1, sort_order: 29, avatar_url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=280&q=80', bio: 'Linear type systems, borrow checking theory, and ownership semantic verification tools.', assigned_projects: ['chimera'] },
+    { id: 'dev-29', handle: 'kofi', name: 'Kofi Mensah', role: 'Edge Mesh Routing Lead', squad: 'edge', account_role: 'lead', is_verified: 1, sort_order: 30, avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80', bio: 'Anycast network routing, BGP peering automation, and latency-minimized geographical packet routing.', assigned_projects: ['vortex'] }
+  ];
+
+  function loadCachedPlatformData() {
+    try {
+      const cached = localStorage.getItem('ragetech_platform_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed.projects) && parsed.projects.length > 0) {
+          state.projects = parsed.projects;
+        }
+        if (Array.isArray(parsed.developers) && parsed.developers.length > 0) {
+          state.developers = parsed.developers;
+        }
+      }
+    } catch (e) {}
+
+    // Fallback baseline to guarantee 0ms instant startup with zero blank flash
+    if (!state.projects || state.projects.length === 0) {
+      state.projects = INITIAL_PROJECTS_BASELINE;
+    }
+    if (!state.developers || state.developers.length === 0) {
+      state.developers = INITIAL_DEVELOPERS_BASELINE;
+    }
+
+    // Apply custom order if saved
+    try {
+      const savedProjOrder = JSON.parse(localStorage.getItem('ragetech_projects_order') || '[]');
+      if (Array.isArray(savedProjOrder) && savedProjOrder.length > 0) {
+        const map = new Map(state.projects.map(p => [String(p.id || p.slug), p]));
+        const reordered = [];
+        savedProjOrder.forEach(key => {
+          const strKey = String(key);
+          const p = map.get(strKey) || state.projects.find(x => String(x.slug) === strKey || String(x.id) === strKey);
+          if (p && !reordered.includes(p)) reordered.push(p);
+        });
+        state.projects.forEach(p => { if (!reordered.includes(p)) reordered.push(p); });
+        state.projects = reordered;
+      }
+    } catch (e) {}
+
+    if (!state.activeProjectSlug && state.projects.length > 0) {
+      state.activeProjectSlug = state.projects[0].slug;
+    }
+  }
+
   // --------------------------------------------------------------------------
   // 1. Initialization & Data Fetching
   // --------------------------------------------------------------------------
-  async function init() {
+  function init() {
     loadSession();
-    await fetchPlatformData();
+    loadCachedPlatformData();
+
+    // Frame-0 Instant Render (Zero flicker, zero split-second startup delay)
     renderHeroMetrics();
     renderRepositoryShowcase();
     renderBuildersGrid();
     setupEqualSpotlightListeners();
     setupCommandPaletteListeners();
     setupFaqListeners();
-    initTelemetryHUD();
     initGSAPAnimations();
+    initTelemetryHUD();
+
+    // Background Non-blocking Live Sync with Cloudflare D1
+    fetchPlatformData().then(() => {
+      renderHeroMetrics();
+      renderRepositoryShowcase();
+      renderBuildersGrid();
+    });
 
     // Real-time synchronization across tabs and windows
     if (window.RagetechSync) {
@@ -120,7 +347,7 @@
       const res = await fetch('/api/projects');
       if (res.ok) {
         const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           state.projects = json.data;
           // Sort strictly by featured_order to maintain admin layout orientation
           state.projects.sort((a, b) => {
@@ -141,7 +368,7 @@
       const res = await fetch('/api/developers');
       if (res.ok) {
         const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           state.developers = json.data;
           // Sort strictly by sort_order to maintain admin layout orientation
           state.developers.sort((a, b) => {
@@ -154,25 +381,57 @@
     } catch (e) {
       console.warn('Network issue fetching developers:', e);
     }
+
+    // Persist latest D1 platform state into client cache
+    try {
+      if (state.projects.length > 0 && state.developers.length > 0) {
+        localStorage.setItem('ragetech_platform_cache', JSON.stringify({
+          projects: state.projects,
+          developers: state.developers,
+          cached_at: Date.now()
+        }));
+      }
+    } catch (e) {}
   }
 
   // --------------------------------------------------------------------------
   // 2. GSAP Entrance Animations
   // --------------------------------------------------------------------------
   function initGSAPAnimations() {
+    // Unconditionally guarantee immediate 100% visibility on all viewports (desktop & mobile)
+    const heroEls = document.querySelectorAll(
+      '.hero-title, .hero-subtitle, .hero-actions, .hero-actions .btn-primary, .hero-actions .btn-secondary, .edge-metrics-ribbon'
+    );
+    heroEls.forEach(el => {
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+    });
+
     if (typeof gsap === 'undefined') return;
 
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    // Mobile: skip GSAP animations to prevent lag and ensure instant touch performance
+    if (window.innerWidth < 768) {
+      heroEls.forEach(el => {
+        el.style.transform = 'none';
+      });
+      return;
+    }
 
-    tl.from('.hero-title', { opacity: 0, y: 24, duration: 0.8 })
-      .from('.hero-subtitle', { opacity: 0, y: 18, duration: 0.7 }, '-=0.4')
-      .from('.hero-actions .btn-primary, .hero-actions .btn-secondary', {
-        opacity: 0,
-        y: 14,
-        stagger: 0.1,
-        duration: 0.5
-      }, '-=0.4')
-      .from('.edge-metrics-ribbon', { opacity: 0, y: 20, duration: 0.6 }, '-=0.3');
+    // Desktop: Safe subtle entrance without opacity trapping (never tween from opacity: 0)
+    try {
+      gsap.from('.hero-title', { y: 20, duration: 0.7, ease: 'power3.out' });
+      gsap.from('.hero-subtitle', { y: 15, duration: 0.6, delay: 0.08, ease: 'power3.out' });
+      gsap.from('.hero-actions .btn-primary, .hero-actions .btn-secondary', {
+        y: 12,
+        stagger: 0.08,
+        duration: 0.5,
+        delay: 0.15,
+        ease: 'power3.out'
+      });
+      gsap.from('.edge-metrics-ribbon', { y: 16, duration: 0.6, delay: 0.22, ease: 'power3.out' });
+    } catch (e) {
+      console.warn('GSAP animation skipped:', e);
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -318,7 +577,7 @@
             The project repository catalog is currently reset in the Cloudflare D1 database. Authenticated maintainers can publish new projects from the dashboard.
           </p>
           <button class="btn-primary" onclick="window.RagetechApp.openLoginModal()" style="margin: 0 auto;">
-            <span>Builder Login</span>
+            <span>Developer Login</span>
           </button>
         </div>
       `;
@@ -381,7 +640,7 @@
       }
 
       const actionButtonsHtml = actionButtons.map(btn => `
-        <a href="${btn.url}" target="_blank" rel="noreferrer" class="${getAppBtnClass(btn.style)}" style="font-size:0.8rem; padding: 7px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+        <a href="${btn.url}" target="_blank" rel="noreferrer" class="${getAppBtnClass(btn.style)}" style="font-size:0.78rem; padding: 6px 12px; height: 32px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
           ${getAppBtnIcon(btn)}
           <span>${btn.label}</span>
         </a>
@@ -494,9 +753,9 @@
                 ${assigneeAvatars}
               </div>
 
-              <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                <a href="project.html?id=${p.slug}" class="btn-primary" style="font-size:0.8rem; padding: 7px 16px; text-decoration: none;">
-                  Read More &rarr;
+              <div class="project-btns-group">
+                <a href="project.html?id=${p.slug}" class="btn-primary" style="font-size:0.78rem; padding: 6px 14px; text-decoration: none; height: 32px; display: inline-flex; align-items: center; gap: 5px;">
+                  <span>Read More</span> &rarr;
                 </a>
                 ${actionButtonsHtml}
               </div>
@@ -830,7 +1089,7 @@
     // 3. System Actions
     const actions = [
       {
-        title: 'Open Builder Authentication Login',
+        title: 'Open Developer Authentication Login',
         subtitle: 'Dynamic RBAC session login',
         action: () => { openLoginModal(); }
       },
@@ -840,8 +1099,8 @@
         action: () => { document.getElementById('repositories')?.scrollIntoView({ behavior: 'smooth' }); }
       },
       {
-        title: `Jump to Builders Collective (${state.developers.length})`,
-        subtitle: 'Scroll to builders section',
+        title: `Jump to Developers Collective (${state.developers.length})`,
+        subtitle: 'Scroll to developers section',
         action: () => { document.getElementById('collective')?.scrollIntoView({ behavior: 'smooth' }); }
       }
     ];
@@ -905,6 +1164,9 @@
 
     const t0 = performance.now();
     let measuredPing = 12;
+    if (heroLatEl && (!heroLatEl.innerHTML || heroLatEl.innerHTML.includes('--'))) {
+      heroLatEl.innerHTML = `12<span>ms</span>`;
+    }
 
     if (window.location.protocol.startsWith('http')) {
       try {
@@ -961,10 +1223,11 @@
       const dashUrl = getDashboardUrl(state.currentUser.account_role);
       const roleBadge = (state.currentUser.account_role || 'DEV').toUpperCase();
       authWidget.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
           <a href="${dashUrl}" class="btn-auth auth-active" style="text-decoration: none;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>Dashboard [${roleBadge}]</span>
+            <span class="auth-label-full">Dashboard [${roleBadge}]</span>
+            <span class="auth-label-short">${roleBadge}</span>
           </a>
           <button class="btn-icon-action" onclick="window.RagetechApp.handleLogout()" title="Sign Out">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -978,7 +1241,8 @@
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          <span>Builder Login</span>
+          <span class="auth-label-full">Developer Login</span>
+          <span class="auth-label-short">Login</span>
         </button>
       `;
     }
@@ -1101,7 +1365,7 @@
 
     // Failed authentication: ensure form is completely scrubbed
     closeLoginModal();
-    alert('Invalid builder credentials. Please verify your access key.');
+    alert('Invalid developer credentials. Please verify your access key.');
   }
 
   function handleLogout() {
