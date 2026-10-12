@@ -1,195 +1,95 @@
--- ========================================================================
--- Ragetech Platform — Comprehensive Seed Data
--- 29 Developers, 6 Collective Repositories, Whitepaper Sections & Assignments
--- ========================================================================
-
--- Clear existing data
 DELETE FROM audit_logs;
 DELETE FROM project_assignments;
 DELETE FROM project_sections;
 DELETE FROM projects;
 DELETE FROM developers;
 
--- ------------------------------------------------------------------------
--- 1. Collective Developers (The 29 Builders)
--- ------------------------------------------------------------------------
-
 INSERT INTO developers (id, handle, name, email, password_hash, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_key, gpg_fingerprint, is_verified) VALUES
 ('dev-01', 'sora', 'Sora Takahashi', 'sora@ragetech.dev', 'hash_admin_sora', 'Founding Systems Architect', 'admin', 'systems', 'Kernel hacker and asynchronous runtime designer. Formerly low-latency distributed systems research lead.', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=280&q=80', 'https://sora.systems', 'https://github.com/soratakahashi', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...SORA...==\n-----END PGP PUBLIC KEY BLOCK-----', '8F4A 2B19 E03C 41FA 98E1', 1),
-
 ('dev-02', 'marcus', 'Marcus Vance', 'marcus@ragetech.dev', 'hash_lead_marcus', 'Distributed Consensus Lead', 'lead', 'edge', 'Building deterministic raft consensus engines on NVMe and edge flash storage. Rust & Zig advocate.', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80', 'https://marcusvance.io', 'https://github.com/marcusvance', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...MARCUS...==\n-----END PGP PUBLIC KEY BLOCK-----', '1B7D 908E F24A C301 774D', 1),
-
 ('dev-03', 'elena', 'Dr. Elena Rostova', 'elena@ragetech.dev', 'hash_admin_elena', 'Compiler Infrastructure Lead', 'admin', 'compilers', 'PhD in Type Theory & SSA optimizations. Creator of optimizing vectorizers for WebAssembly micro-kernels.', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=280&q=80', 'https://rostova.dev', 'https://github.com/erostova', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ELENA...==\n-----END PGP PUBLIC KEY BLOCK-----', '3C99 4410 AB82 12E0 5519', 1),
-
 ('dev-04', 'kai', 'Kai Thorne', 'kai@ragetech.dev', 'hash_dev_kai', 'Cryptography & Zero-Knowledge Eng', 'lead', 'security', 'Formal verification researcher working on lattice-based cryptography, post-quantum protocols, and constant-time math.', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=280&q=80', 'https://kaithorne.net', 'https://github.com/kaithorne', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...KAI...==\n-----END PGP PUBLIC KEY BLOCK-----', '99E2 710F D415 67B9 AA33', 1),
-
 ('dev-05', 'zara', 'Zara Chen', 'zara@ragetech.dev', 'hash_dev_zara', 'Edge Transport Engineer', 'developer', 'edge', 'QUIC packet scheduler tuning and congestion control algorithms for multi-homed edge points of presence.', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=280&q=80', 'https://zarachen.dev', 'https://github.com/zarachen', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ZARA...==\n-----END PGP PUBLIC KEY BLOCK-----', 'A481 CE02 8139 F521 3C77', 1),
-
 ('dev-06', 'devon', 'Devon Miller', 'devon@ragetech.dev', 'hash_dev_devon', 'Storage Engine Architect', 'developer', 'systems', 'LSM-tree compaction strategies and zero-copy io_uring pipelining across Linux and FreeBSD kernels.', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=280&q=80', 'https://devonmiller.io', 'https://github.com/devonmiller', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...DEVON...==\n-----END PGP PUBLIC KEY BLOCK-----', '5510 8829 F41C 73B0 EA91', 1),
-
 ('dev-07', 'ananya', 'Ananya Patel', 'ananya@ragetech.dev', 'hash_dev_ananya', 'WASM Runtime Specialist', 'developer', 'compilers', 'Wasmtime contributor and component model toolchain architect for embedded deterministic runtimes.', 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=280&q=80', 'https://ananyapatel.dev', 'https://github.com/ananyapatel', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ANANYA...==\n-----END PGP PUBLIC KEY BLOCK-----', '77D2 990A 1154 F399 CD04', 1),
-
 ('dev-08', 'lucas', 'Lucas Lindqvist', 'lucas@ragetech.dev', 'hash_dev_lucas', 'P2P Overlay & Mesh Eng', 'developer', 'edge', 'Gossip protocols, Kademlia routing tables, and zero-trust WireGuard mesh overlays.', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=280&q=80', 'https://lucasl.org', 'https://github.com/lucaslindqvist', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...LUCAS...==\n-----END PGP PUBLIC KEY BLOCK-----', '22A1 65FE D091 8847 4410', 1),
-
 ('dev-09', 'maya', 'Maya Lin', 'maya@ragetech.dev', 'hash_dev_maya', 'Security Operations & Auditing', 'developer', 'security', 'Static analysis, fuzz testing with libFuzzer and AFL++, binary exploitation mitigation.', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=280&q=80', 'https://mayalin.security', 'https://github.com/mayalin-sec', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...MAYA...==\n-----END PGP PUBLIC KEY BLOCK-----', '8841 BC90 EF12 3014 9922', 1),
-
 ('dev-10', 'nikolai', 'Nikolai Volkov', 'nikolai@ragetech.dev', 'hash_dev_nikolai', 'Low-level Networking Specialist', 'developer', 'systems', 'eBPF / XDP packet filtering at 100Gbps line rate. Kernel bypass with DPDK and AF_XDP.', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=280&q=80', 'https://nikolaiv.dev', 'https://github.com/nikolaiv', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...NIKOLAI...==\n-----END PGP PUBLIC KEY BLOCK-----', '4410 77E2 1109 AA82 B501', 1),
-
 ('dev-11', 'chloe', 'Chloe Dupont', 'chloe@ragetech.dev', 'hash_dev_chloe', 'Interface Systems Designer', 'developer', 'systems', 'Human interface engineer crafting low-latency developer UX, terminal renderers, and design tokens.', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80', 'https://chloedupont.design', 'https://github.com/chloedupont', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...CHLOE...==\n-----END PGP PUBLIC KEY BLOCK-----', '9102 4477 3311 BB20 EE45', 1),
-
 ('dev-12', 'tariq', 'Tariq Al-Mansoor', 'tariq@ragetech.dev', 'hash_dev_tariq', 'Database Internals Engineer', 'developer', 'systems', 'Write-ahead log replication, multi-version concurrency control (MVCC), and snapshot isolation.', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=280&q=80', 'https://tariqmansoor.io', 'https://github.com/tariqmansoor', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...TARIQ...==\n-----END PGP PUBLIC KEY BLOCK-----', '66E1 2290 88FA 1144 0092', 1),
-
 ('dev-13', 'freja', 'Freja Nielsen', 'freja@ragetech.dev', 'hash_dev_freja', 'JIT Engine Developer', 'developer', 'compilers', 'Instruction scheduling and tier-2 JIT optimizing compilers for arm64 and x86_64 targets.', 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=280&q=80', 'https://frejanielsen.dk', 'https://github.com/frejanielsen', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...FREJA...==\n-----END PGP PUBLIC KEY BLOCK-----', '33B0 9944 7711 CC82 5501', 1),
-
 ('dev-14', 'julian', 'Julian Ward', 'julian@ragetech.dev', 'hash_dev_julian', 'Formal Methods Engineer', 'developer', 'security', 'TLA+ specifications and automated model checking for distributed edge consensus protocols.', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=280&q=80', 'https://julianward.tech', 'https://github.com/julianward', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...JULIAN...==\n-----END PGP PUBLIC KEY BLOCK-----', 'EE41 8820 1199 DD45 7710', 1),
-
 ('dev-15', 'hana', 'Hana Kim', 'hana@ragetech.dev', 'hash_dev_hana', 'Edge Observability Architect', 'developer', 'edge', 'High-cardinality distributed tracing, eBPF metrics collection, and OpenTelemetry instrumentation.', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=280&q=80', 'https://hanakim.kr', 'https://github.com/hanakim-edge', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...HANA...==\n-----END PGP PUBLIC KEY BLOCK-----', '7711 0022 44AA EE99 8831', 1),
-
 ('dev-16', 'mateo', 'Mateo Silva', 'mateo@ragetech.dev', 'hash_dev_mateo', 'Concurrent Memory Systems', 'developer', 'systems', 'Lock-free algorithms, hazard pointers, epoch-based reclamation, and cache-coherent ring buffers.', 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=280&q=80', 'https://mateosilva.dev', 'https://github.com/mateosilva', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...MATEO...==\n-----END PGP PUBLIC KEY BLOCK-----', '5522 9911 33CC 77EE 4400', 1),
-
 ('dev-17', 'inga', 'Inga Lindqvist', 'inga@ragetech.dev', 'hash_dev_inga', 'Kernel VMM Engineer', 'developer', 'systems', 'MicroVM isolation via KVM and Cloud Hypervisor. Deterministic startup latency under 4ms.', 'https://images.unsplash.com/photo-1534751516642-a171edd26cb0?auto=format&fit=crop&w=280&q=80', 'https://ingalind.se', 'https://github.com/ingalind', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...INGA...==\n-----END PGP PUBLIC KEY BLOCK-----', '1100 4488 99FF 2211 EE33', 1),
-
 ('dev-18', 'samir', 'Samir Kulkarni', 'samir@ragetech.dev', 'hash_dev_samir', 'Distributed RPC Specialist', 'developer', 'edge', 'FlatBuffers schema evolution and zero-allocation binary serialization over stream sockets.', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=280&q=80', 'https://samirk.io', 'https://github.com/samirkulkarni', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...SAMIR...==\n-----END PGP PUBLIC KEY BLOCK-----', 'AA99 1100 5544 CC33 7722', 1),
-
 ('dev-19', 'astrid', 'Astrid Blom', 'astrid@ragetech.dev', 'hash_dev_astrid', 'SSA Optimizer Developer', 'developer', 'compilers', 'Loop invariant code motion, polyhedral loop transformations, and dead code elimination passes.', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=280&q=80', 'https://astridblom.dev', 'https://github.com/astridblom', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ASTRID...==\n-----END PGP PUBLIC KEY BLOCK-----', 'CC77 4411 9900 22BB EE11', 1),
-
 ('dev-20', 'darius', 'Darius Reed', 'darius@ragetech.dev', 'hash_dev_darius', 'Key Exchange Protocol Eng', 'developer', 'security', 'Threshold signature schemes, BLS multi-signatures, and verifiable random functions (VRF).', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=280&q=80', 'https://dariusreed.org', 'https://github.com/dariusreed', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...DARIUS...==\n-----END PGP PUBLIC KEY BLOCK-----', '8833 2211 44EE 9900 11AA', 1),
-
 ('dev-21', 'clara', 'Clara Hoffmann', 'clara@ragetech.dev', 'hash_dev_clara', 'Edge Storage Optimizer', 'developer', 'edge', 'CRDT implementations for multi-master SQLite databases and delta-state sync over WebSocket.', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=280&q=80', 'https://clarahoffmann.de', 'https://github.com/clarahoffmann', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...CLARA...==\n-----END PGP PUBLIC KEY BLOCK-----', '33AA 7788 1122 FF44 9900', 1),
-
 ('dev-22', 'liam', 'Liam Gallagher', 'liam@ragetech.dev', 'hash_dev_liam', 'Systems Tooling Developer', 'developer', 'systems', 'Developer CLI tooling, terminal telemetry visualizers, and hermetic build system integration.', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=280&q=80', 'https://liamg.sh', 'https://github.com/liamgallagher', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...LIAM...==\n-----END PGP PUBLIC KEY BLOCK-----', '55FF 1100 4422 99AA 7733', 1),
-
 ('dev-23', 'nadia', 'Nadia Belkacem', 'nadia@ragetech.dev', 'hash_dev_nadia', 'Vectorized Query Internals', 'developer', 'systems', 'SIMD query execution for analytical workloads, Arrow column layout, and dictionary encoding.', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=280&q=80', 'https://nadiabelkacem.com', 'https://github.com/nadiabelkacem', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...NADIA...==\n-----END PGP PUBLIC KEY BLOCK-----', '7722 0011 8899 EE44 33BB', 1),
-
 ('dev-24', 'oscar', 'Oscar Berg', 'oscar@ragetech.dev', 'hash_dev_oscar', 'Linker & Binary Format Eng', 'developer', 'compilers', 'ELF/Mach-O/wasm linker optimizations, split debug info, and symbol deduplication engines.', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80', 'https://oscarberg.dev', 'https://github.com/oscarberg', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...OSCAR...==\n-----END PGP PUBLIC KEY BLOCK-----', '9911 44EE 22AA 7700 8833', 1),
-
 ('dev-25', 'yuki', 'Yuki Tanaka', 'yuki@ragetech.dev', 'hash_dev_yuki', 'Zero-Copy IO Architect', 'developer', 'systems', 'Linux block layer tuning, NVMe-oF drivers, and high-frequency lock-free ring channels in C++23.', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=280&q=80', 'https://yukitanaka.jp', 'https://github.com/yukitanaka', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...YUKI...==\n-----END PGP PUBLIC KEY BLOCK-----', '1188 9900 44CC 33AA EE77', 1),
-
 ('dev-26', 'rachel', 'Rachel O''Connor', 'rachel@ragetech.dev', 'hash_dev_rachel', 'Cryptographic Hardware Eng', 'developer', 'security', 'HSM integration, TPM 2.0 attestation, and Apple Secure Enclave key derivation protocols.', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=280&q=80', 'https://racheloconnor.ie', 'https://github.com/racheloconnor', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...RACHEL...==\n-----END PGP PUBLIC KEY BLOCK-----', '44CC 8811 77EE 9900 22AA', 1),
-
 ('dev-27', 'arjun', 'Arjun Mehta', 'arjun@ragetech.dev', 'hash_dev_arjun', 'Distributed Consensus Researcher', 'developer', 'edge', 'Byzantine Fault Tolerance protocols, flexible Paxos variants, and active-active edge synchronization.', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=280&q=80', 'https://arjunmehta.tech', 'https://github.com/arjunmehta', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ARJUN...==\n-----END PGP PUBLIC KEY BLOCK-----', 'EE00 4422 99AA 1188 77CC', 1),
-
 ('dev-28', 'selene', 'Selene Moreau', 'selene@ragetech.dev', 'hash_dev_selene', 'Type Checker Specialist', 'developer', 'compilers', 'Linear type systems, borrow checking theory, and ownership semantic verification tools.', 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=280&q=80', 'https://seleneprogramming.fr', 'https://github.com/seleneprog', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...SELENE...==\n-----END PGP PUBLIC KEY BLOCK-----', '22BB 9900 4411 EE88 33CC', 1),
-
 ('dev-29', 'kofi', 'Kofi Mensah', 'kofi@ragetech.dev', 'hash_dev_kofi', 'Edge Mesh Routing Lead', 'lead', 'edge', 'Anycast network routing, BGP peering automation, and latency-minimized geographical packet routing.', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80', 'https://kofimensah.gh', 'https://github.com/kofimensah', '-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...KOFI...==\n-----END PGP PUBLIC KEY BLOCK-----', '8811 2299 77CC 44EE 00AA', 1);
-
--- ------------------------------------------------------------------------
--- 2. Collective Projects (The 6 Sovereign Repositories)
--- ------------------------------------------------------------------------
 
 INSERT INTO projects (id, slug, name, tagline, description, category, status, live_url, github_url, tech_stack, stats_json, is_published, featured_order) VALUES
 ('proj-01', 'aether-runtime', 'Aether Runtime', 'Deterministic zero-overhead WebAssembly execution sandbox at the edge', 'A lightweight WebAssembly micro-runtime designed for multi-tenant edge isolation. Executes untrusted binaries with zero-copy I/O, nanosecond cold starts, and linear memory safety.', 'Distributed Runtimes', 'active', 'https://aether.ragetech.dev', 'https://github.com/ragetech/aether-runtime', 'Rust, WebAssembly, Cranelift, io_uring', '{"cold_start": "0.18ms", "memory_overhead": "28KB", "stars": 3410, "license": "Apache-2.0"}', 1, 1),
-
 ('proj-02', 'vortex-db', 'Vortex DB', 'Decentralized transactional SQLite replication engine across global edge nodes', 'Global SQLite state replication engine with causal consistency, multi-region snapshot isolation, and delta CRDT sync over stream websockets. Zero config, sub-millisecond local reads.', 'Distributed Runtimes', 'active', 'https://vortex.ragetech.dev', 'https://github.com/ragetech/vortex-db', 'C++23, SQLite3, Raft, QUIC', '{"read_latency": "0.4ms", "sync_window": "12ms", "stars": 2890, "license": "MIT"}', 1, 2),
-
 ('proj-03', 'prism-compiler', 'Prism Compiler', 'Zero-allocation optimizing IR compiler for edge micro-kernels', 'An optimizing intermediate representation (IR) compiler transforming high-level domain languages into bare-metal micro-kernels. Features vectorization, dead-code elimination, and register allocation.', 'Compilers', 'active', 'https://prism.ragetech.dev', 'https://github.com/ragetech/prism-compiler', 'Zig, LLVM 18, SIMD, x86-64/arm64', '{"binary_size": "<400KB", "compile_rate": "85k lines/s", "stars": 2150, "license": "MIT"}', 1, 3),
-
 ('proj-04', 'hyperion-mesh', 'Hyperion Mesh', 'Peer-to-peer authenticated BGP and WireGuard overlay network', 'Decentralized overlay mesh establishing zero-trust WireGuard tunnels between server nodes and edge pops. Automatic NAT hole-punching, dynamic path selection, and end-to-end packet encryption.', 'Kernel & Systems', 'active', 'https://hyperion.ragetech.dev', 'https://github.com/ragetech/hyperion-mesh', 'Go, WireGuard, eBPF, Linux XDP', '{"throughput": "94.2 Gbps", "reconnect_time": "<80ms", "stars": 1940, "license": "BSD-3"}', 1, 4),
-
 ('proj-05', 'cipher-vault', 'Cipher Vault', 'Post-quantum cryptographic state coordinator and verifiable key authority', 'State-of-the-art cryptographic coordinator providing Kyber-1024 and Dilithium-5 authenticated identity tokens for microservices. Constant-time execution resistant to cache timing attacks.', 'Cryptography', 'active', 'https://cipher.ragetech.dev', 'https://github.com/ragetech/cipher-vault', 'Rust, Kyber, Dilithium, Constant-Time', '{"security_level": "NIST Cat 5", "verify_latency": "1.1ms", "stars": 1680, "license": "Apache-2.0"}', 1, 5),
-
 ('proj-06', 'nexus-protocol', 'Nexus Protocol', 'High-throughput binary RPC over QUIC with stream multiplexing', 'Compact binary communication layer designed as an ultra-fast alternative to gRPC. Zero serialization overhead via FlatBuffers layouts and bidirectional UDP streaming.', 'Kernel & Systems', 'active', 'https://nexus.ragetech.dev', 'https://github.com/ragetech/nexus-protocol', 'Rust, QUIC, FlatBuffers, Tokio', '{"latency_p99": "0.8ms", "rps": "1.8M req/s", "stars": 2420, "license": "MIT"}', 1, 6);
 
--- ------------------------------------------------------------------------
--- 3. Project Whitepaper Sections (Tailark Quartz Blog Article Format)
--- ------------------------------------------------------------------------
-
--- Sections for Aether Runtime
 INSERT INTO project_sections (id, project_id, section_title, section_content, sort_order) VALUES
 ('sec-01', 'proj-01', '1. Abstract & Motivation', 'Modern serverless runtimes suffer from heavyweight container virtualization, multi-megabyte memory footprints, and multi-millisecond cold starts. Aether Runtime reimagines the edge execution layer by stripping away guest operating systems, running native WebAssembly bytecode inside sandboxed memory arenas managed directly by the host kernel. By eliminating filesystem overhead and implementing deterministic memory bounds, Aether executes thousands of concurrent tenant tasks within a single operating system process.', 1),
-
 ('sec-02', 'proj-01', '2. Memory Isolation & Cranelift JIT', 'Each tenant task is allocated an isolated 4GB 32-bit linear memory space with guard pages that cause immediate segmentation fault traps on out-of-bounds access. The Cranelift optimizing compiler compiles WASM modules directly into machine code in single-digit milliseconds. Linear memory pages are lazily mapped using kernel copy-on-write (COW) semantics, ensuring tenant instances initialize with an effective RSS footprint of less than 28 Kilobytes.', 2),
-
 ('sec-03', 'proj-01', '3. Zero-Copy Asynchronous I/O', 'Traditional network proxies incur significant CPU cycles copying bytes between kernel socket buffers and user-space runtime buffers. Aether interfaces directly with Linux `io_uring` ring buffers to establish zero-copy memory transfers. Network packets flow directly from network interface card (NIC) descriptors into the WebAssembly tenant memory buffer without intermediate serialization.', 3),
-
-('sec-04', 'proj-01', '4. Production Benchmarks & Edge Verification', 'Under synthetic benchmark load testing across 10 global Cloudflare edge POPs, Aether achieved median cold-start latencies of 180 microseconds, handling 2,400,000 requests per second per node with a 99.9th percentile response time of 1.4 milliseconds.', 4);
-
--- Sections for Vortex DB
-INSERT INTO project_sections (id, project_id, section_title, section_content, sort_order) VALUES
+('sec-04', 'proj-01', '4. Production Benchmarks & Edge Verification', 'Under synthetic benchmark load testing across 10 global Cloudflare edge POPs, Aether achieved median cold-start latencies of 180 microseconds, handling 2,400,000 requests per second per node with a 99.9th percentile response time of 1.4 milliseconds.', 4),
 ('sec-05', 'proj-02', '1. The Edge State Dilemma', 'Centralized relational databases force geographically distributed users to incur hundreds of milliseconds of transatlantic round-trip network delays. Vortex DB solves this by embedding an asynchronous SQLite transaction coordinator into every edge point of presence, decoupling read transactions from write coordinator consensus.', 1),
-
 ('sec-06', 'proj-02', '2. Multi-Region Replication Architecture', 'Vortex DB employs an optimized Raft log pipeline with adaptive batch pipelining. Write operations are committed to the local NVMe write-ahead log (WAL) and propagated to consensus quorums over multiplexed QUIC streams. Reads are served from local in-memory SQLite snapshots with zero network hops.', 2),
-
-('sec-07', 'proj-02', '3. Conflict Resolution via State CRDTs', 'For collaborative write scenarios across edge partitions, Vortex implements delta state-based conflict-free replicated data types (CRDTs). Schema alterations and row-level operations merge deterministically using vector clocks, guaranteeing convergence across network nets without split-brain anomalies.', 3);
-
--- Sections for Prism Compiler
-INSERT INTO project_sections (id, project_id, section_title, section_content, sort_order) VALUES
+('sec-07', 'proj-02', '3. Conflict Resolution via State CRDTs', 'For collaborative write scenarios across edge partitions, Vortex implements delta state-based conflict-free replicated data types (CRDTs). Schema alterations and row-level operations merge deterministically using vector clocks, guaranteeing convergence across network nets without split-brain anomalies.', 3),
 ('sec-08', 'proj-03', '1. High-Performance Static Analysis', 'Prism was engineered from the ground up in Zig to provide sub-second compilation cycles for systems micro-kernels. Unlike massive compilation frameworks that require gigabytes of RAM, Prism processes abstract syntax trees in a single pass with cache-friendly flat arena allocators.', 1),
-
-('sec-09', 'proj-03', '2. Polyhedral Loop Optimization & SIMD', 'The Prism optimization pipeline analyzes nested loops to identify data parallelism, automatically emitting AVX-512 and ARM Neon vector instructions. Memory allocations within the inner execution loops are statically proven and promoted into CPU registers.', 2);
-
--- Sections for Hyperion Mesh
-INSERT INTO project_sections (id, project_id, section_title, section_content, sort_order) VALUES
+('sec-09', 'proj-03', '2. Polyhedral Loop Optimization & SIMD', 'The Prism optimization pipeline analyzes nested loops to identify data parallelism, automatically emitting AVX-512 and ARM Neon vector instructions. Memory allocations within the inner execution loops are statically proven and promoted into CPU registers.', 2),
 ('sec-10', 'proj-04', '1. Autonomous Overlay Routing', 'Hyperion establishes an intelligent mesh overlay across edge infrastructure. Using continuous eBPF telemetry, nodes dynamically measure jitter, packet loss, and latency along every available internet path, dynamically steering packets over the fastest available WireGuard peer.', 1),
-
-('sec-11', 'proj-04', '2. Kernel Bypass via eBPF XDP', 'Encrypted tunnel headers are parsed directly at the network card driver level using eBPF eXpress Data Path (XDP). Packets that do not belong to established cryptographic sessions are dropped in hardware with zero CPU consumption.', 2);
-
--- Sections for Cipher Vault
-INSERT INTO project_sections (id, project_id, section_title, section_content, sort_order) VALUES
+('sec-11', 'proj-04', '2. Kernel Bypass via eBPF XDP', 'Encrypted tunnel headers are parsed directly at the network card driver level using eBPF eXpress Data Path (XDP). Packets that do not belong to established cryptographic sessions are dropped in hardware with zero CPU consumption.', 2),
 ('sec-12', 'proj-05', '1. Post-Quantum Cryptographic Posture', 'Anticipating quantum computing decryption capabilities against traditional RSA and Elliptic Curve algorithms, Cipher Vault deploys NIST-approved Crystals-Kyber for key encapsulation and Crystals-Dilithium for digital signatures.', 1),
-
-('sec-13', 'proj-05', '2. Side-Channel Immunity', 'All cryptographic primitives in Cipher Vault are audited and formally verified for constant-time execution. Arithmetic operations avoid branch instructions conditioned on secret key bits, neutralizing timing attack vectors.', 2);
-
--- Sections for Nexus Protocol
-INSERT INTO project_sections (id, project_id, section_title, section_content, sort_order) VALUES
+('sec-13', 'proj-05', '2. Side-Channel Immunity', 'All cryptographic primitives in Cipher Vault are audited and formally verified for constant-time execution. Arithmetic operations avoid branch instructions conditioned on secret key bits, neutralizing timing attack vectors.', 2),
 ('sec-14', 'proj-06', '1. Next-Generation Binary Streaming', 'Nexus eliminates the header bloat and framing penalties of HTTP/2 and Protobuf. By utilizing FlatBuffers binary layouts, serialized structs can be accessed in-place directly from network socket memory buffers without decompression or pointer swizzling.', 1),
-
 ('sec-15', 'proj-06', '2. Bidirectional QUIC Multiplexing', 'Operating over native UDP with modern loss recovery mechanisms, Nexus streams maintain independent packet sequence numbers, completely eliminating head-of-line blocking during packet loss bursts.', 2);
 
--- ------------------------------------------------------------------------
--- 4. Maintainer Assignments (Mapping Developers to Repositories)
--- ------------------------------------------------------------------------
-
--- Aether Runtime Maintainers
 INSERT INTO project_assignments (id, project_id, developer_id, contribution_role) VALUES
 ('as-01', 'proj-01', 'dev-01', 'Lead Architect'),
 ('as-02', 'proj-01', 'dev-07', 'WASM Runtime Engineer'),
 ('as-03', 'proj-01', 'dev-16', 'Memory Systems Engineer'),
 ('as-04', 'proj-01', 'dev-17', 'VMM Specialist'),
-('as-05', 'proj-01', 'dev-25', 'Zero-Copy IO Lead');
-
--- Vortex DB Maintainers
-INSERT INTO project_assignments (id, project_id, developer_id, contribution_role) VALUES
+('as-05', 'proj-01', 'dev-25', 'Zero-Copy IO Lead'),
 ('as-06', 'proj-02', 'dev-02', 'Consensus Lead'),
 ('as-07', 'proj-02', 'dev-06', 'Storage Engine Architect'),
 ('as-08', 'proj-02', 'dev-12', 'Database Internals Lead'),
 ('as-09', 'proj-02', 'dev-21', 'CRDT Specialist'),
-('as-10', 'proj-02', 'dev-27', 'BFT Protocol Researcher');
-
--- Prism Compiler Maintainers
-INSERT INTO project_assignments (id, project_id, developer_id, contribution_role) VALUES
+('as-10', 'proj-02', 'dev-27', 'BFT Protocol Researcher'),
 ('as-11', 'proj-03', 'dev-03', 'Compiler Lead'),
 ('as-12', 'proj-03', 'dev-13', 'JIT Engine Architect'),
 ('as-13', 'proj-03', 'dev-19', 'SSA Optimization Eng'),
 ('as-14', 'proj-03', 'dev-24', 'Linker Specialist'),
-('as-15', 'proj-03', 'dev-28', 'Type System Architect');
-
--- Hyperion Mesh Maintainers
-INSERT INTO project_assignments (id, project_id, developer_id, contribution_role) VALUES
+('as-15', 'proj-03', 'dev-28', 'Type System Architect'),
 ('as-16', 'proj-04', 'dev-08', 'Mesh Architect'),
 ('as-17', 'proj-04', 'dev-10', 'eBPF / XDP Engineer'),
 ('as-18', 'proj-04', 'dev-22', 'Tooling Specialist'),
-('as-19', 'proj-04', 'dev-29', 'Edge Routing Lead');
-
--- Cipher Vault Maintainers
-INSERT INTO project_assignments (id, project_id, developer_id, contribution_role) VALUES
+('as-19', 'proj-04', 'dev-29', 'Edge Routing Lead'),
 ('as-20', 'proj-05', 'dev-04', 'Cryptography Lead'),
 ('as-21', 'proj-05', 'dev-09', 'Security Auditor'),
 ('as-22', 'proj-05', 'dev-14', 'Formal Methods Lead'),
 ('as-23', 'proj-05', 'dev-20', 'Key Protocol Eng'),
-('as-24', 'proj-05', 'dev-26', 'Hardware Security Eng');
-
--- Nexus Protocol Maintainers
-INSERT INTO project_assignments (id, project_id, developer_id, contribution_role) VALUES
+('as-24', 'proj-05', 'dev-26', 'Hardware Security Eng'),
 ('as-25', 'proj-06', 'dev-05', 'Transport Architect'),
 ('as-26', 'proj-06', 'dev-11', 'Interface Lead'),
 ('as-27', 'proj-06', 'dev-15', 'Telemetry Architect'),
 ('as-28', 'proj-06', 'dev-18', 'Binary RPC Lead'),
 ('as-29', 'proj-06', 'dev-23', 'Vector Engine Eng');
-
--- ------------------------------------------------------------------------
--- 5. Audit Log Seed Entries
--- ------------------------------------------------------------------------
 
 INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details, timestamp) VALUES
 ('aud-01', 'sora', 'PUBLISH', 'project', 'proj-01', 'Published Aether Runtime v2.4.0 whitepaper', '2026-10-10 08:30:00'),
