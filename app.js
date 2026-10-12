@@ -505,9 +505,10 @@
 
     gridEl.innerHTML = state.developers.map(dev => {
       const assignedNames = (dev.assigned_projects && dev.assigned_projects.length > 0)
-        ? dev.assigned_projects.map(slug => {
-            const p = state.projects.find(proj => proj.slug === slug);
-            return p ? p.name : slug;
+        ? dev.assigned_projects.map(item => {
+            const slug = typeof item === 'object' ? (item.slug || item.id) : item;
+            const p = state.projects.find(proj => proj.slug === slug || proj.id === slug);
+            return p ? p.name : (typeof item === 'object' ? (item.name || item.slug || 'Project') : slug);
           }).slice(0, 2)
         : ['Core Systems'];
 
@@ -549,8 +550,8 @@
     if (!modal || !content) return;
 
     // Find assigned repositories
-    const assignedSlugs = dev.assigned_projects || [];
-    const matchedProjects = state.projects.filter(p => assignedSlugs.includes(p.slug));
+    const assignedSlugs = (dev.assigned_projects || []).map(item => typeof item === 'object' ? (item.slug || item.id) : item);
+    const matchedProjects = state.projects.filter(p => assignedSlugs.includes(p.slug) || (p.maintainer_handles || []).some(h => String(h).toLowerCase() === dev.handle.toLowerCase()));
 
     content.innerHTML = `
       <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">

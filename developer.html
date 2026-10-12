@@ -3,11 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Builder Dossier — Ragetech Collective</title>
-  <meta name="description" content="Verified builder dossier and cryptographic coordinates from the Ragetech sovereign systems collective.">
+  <title>Engineer Dossier — Ragetech Collective</title>
+  <meta name="description" content="Verified engineer dossier, architecture assignments, and codebase telemetry from the Ragetech sovereign systems collective.">
   
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
   <link rel="stylesheet" href="styles.css?v=20261012-mobile">
+  <style>
+    /* Scoped Developer Page Enhancements */
+    .assigned-repos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .assigned-repos-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .repo-assigned-card {
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.25s ease;
+      position: relative;
+    }
+
+    .repo-assigned-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(6, 182, 212, 0.4);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(6, 182, 212, 0.12);
+    }
+
+    .repo-assigned-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      background: rgba(6, 182, 212, 0.08);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-sans);
+    }
+
+    .repo-assigned-badge-btn:hover {
+      background: rgba(6, 182, 212, 0.18);
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+  </style>
 </head>
 <body>
 
@@ -27,12 +75,11 @@
           </div>
           <span class="brand-name">RAGETECH</span>
         </a>
-        <span class="brand-badge">Builder Dossier</span>
+        <span class="brand-badge">Engineer Dossier</span>
       </div>
 
       <nav class="site-nav">
         <a href="index.html#repositories" class="nav-link">Repositories</a>
-        <a href="index.html#collective" class="nav-link">Builders Guild</a>
         <a href="index.html#faqs" class="nav-link">FAQ</a>
       </nav>
 
@@ -42,7 +89,7 @@
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>All Builders</span>
+          <span>All Engineers</span>
         </a>
       </div>
     </div>
@@ -51,39 +98,37 @@
   <!-- Developer Dossier Layout -->
   <main class="developer-page-wrap">
     <!-- Breadcrumbs -->
-    <nav class="article-breadcrumbs" aria-label="Breadcrumb">
+    <nav class="article-breadcrumbs" aria-label="Breadcrumb" style="margin-bottom: 24px;">
       <a href="index.html">Ragetech</a>
       <span>/</span>
-      <a href="index.html#collective">Builders Guild</a>
-      <span>/</span>
-      <span id="breadcrumbDevName" style="color: var(--text-primary);">Loading Profile...</span>
+      <span id="breadcrumbDevName" style="color: var(--accent-cyan); font-weight: 600;">Loading Profile...</span>
     </nav>
 
     <!-- Profile Header Card -->
     <div class="spotlight-card dev-profile-header">
       <div class="spotlight-card-content">
         <div class="dev-profile-top">
-          <img src="" alt="" id="devAvatar" class="dev-profile-avatar">
+          <img src="" alt="" id="devAvatar" class="dev-profile-avatar" style="box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);">
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <h1 class="dev-profile-name" id="devName">Loading Builder...</h1>
-              <span class="verified-icon-chip" style="font-size: 0.8rem; padding: 3px 8px; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-full); border: 1px solid rgba(16, 185, 129, 0.25);">
+              <h1 class="dev-profile-name" id="devName" style="margin: 0;">Loading Engineer...</h1>
+              <span class="verified-icon-chip" style="font-size: 0.78rem; padding: 4px 10px; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-full); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; font-weight: 600;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Verified Maintainer</span>
               </span>
             </div>
-            <div class="dev-profile-handle" id="devHandle">@handle</div>
-            <div class="dev-profile-role" id="devRole">Systems Engineering Lead</div>
+            <div class="dev-profile-handle" id="devHandle" style="margin-top: 4px;">@handle</div>
+            <div class="dev-profile-role" id="devRole" style="margin-top: 6px; font-weight: 500;">Systems Engineering Lead</div>
           </div>
-          <div id="devAssignedBadges" style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
-            <!-- Dynamic assigned repository badges -->
+          <div id="devAssignedBadges" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-self: flex-start;">
+            <!-- Clickable Assigned Repository Pills (Rendered dynamically) -->
           </div>
         </div>
 
         <p class="dev-bio-text" id="devBio">Loading biographical overview from Cloudflare D1...</p>
 
-        <!-- Coordinates Bar -->
-        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;">
+        <!-- Social & Web Coordinates Bar -->
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
           <a href="#" target="_blank" rel="noreferrer" class="btn-primary" id="devWebsiteBtn" style="padding: 8px 18px; font-size: 0.85rem;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             <span>Personal Website</span>
@@ -93,25 +138,26 @@
             <span>GitHub Profile</span>
           </a>
         </div>
-
-        <!-- Cryptographic GPG Public Key Widget -->
-        <div class="gpg-key-widget">
-          <div class="gpg-widget-header">
-            <span>CRYPTOGRAPHIC GPG FINGERPRINT</span>
-            <button class="btn-secondary" id="copyGpgBtn" onclick="copyGpgFingerprint()" style="padding: 3px 10px; font-size: 0.72rem;">
-              <span>Copy Fingerprint</span>
-            </button>
-          </div>
-          <div class="gpg-fingerprint" id="devFingerprint">8F4A 2B19 E03C 41FA 98E1</div>
-        </div>
       </div>
     </div>
 
     <!-- Assigned Sovereign Repositories Section -->
     <section style="margin-top: 48px;">
-      <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Assigned Collective Repositories</h2>
-      <div class="repo-nav-list" id="assignedProjectsList">
-        <!-- Rendered dynamically -->
+      <div style="margin-bottom: 22px;">
+        <h2 style="font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>Assigned Collective Repositories</span>
+        </h2>
+        <p style="font-size: 0.90rem; color: var(--text-secondary); margin: 0;">
+          Active codebase repositories and platform architectures assigned to <span id="devNameSub" style="color: var(--text-primary); font-weight: 600;">this engineer</span>. Click any repository to view its architecture overview.
+        </p>
+      </div>
+
+      <!-- Repositories Grid -->
+      <div class="assigned-repos-grid" id="assignedProjectsList">
+        <div style="grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--text-muted); background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">
+          Loading assigned engineering repositories...
+        </div>
       </div>
     </section>
 
@@ -119,7 +165,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 60px; padding-top: 30px; border-top: 1px solid var(--border-subtle);">
       <a href="index.html#collective" class="btn-secondary">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        <span>Back to All Builders</span>
+        <span>Back to All Engineers</span>
       </a>
       <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="btn-secondary">
         <span>Back to Top</span>
@@ -128,34 +174,138 @@
     </div>
   </main>
 
+  <!-- Repository Overview Modal / Popup -->
+  <div id="repoOverviewModal" class="modal-backdrop" aria-hidden="true" inert role="dialog" aria-modal="true" onclick="if (event.target === this) closeRepoOverviewModal()">
+    <div class="modal-dialog" style="max-width: 620px; padding: 32px;" onclick="event.stopPropagation()">
+      <button class="modal-close-btn" onclick="closeRepoOverviewModal()" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div id="repoModalContent">
+        <!-- Rendered dynamically by openRepoOverviewModal -->
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="app-container footer-row">
       <span style="font-size: 0.8rem; color: var(--text-muted);">© 2026 Sovereign Systems Engineering Collective</span>
-      <span style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--accent-emerald);">● VERIFIED CRYPTOGRAPHIC DOSSIER</span>
+      <span style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--accent-emerald);">● VERIFIED ENGINEER PROFILE</span>
     </div>
   </footer>
 
   <!-- Scripts -->
   <script src="api-bridge.js?v=20261012-d1"></script>
   <script>
-    let currentFingerprint = "";
+    let currentDev = null;
+    let cachedProjects = [];
 
-    function copyGpgFingerprint() {
-      if (currentFingerprint) {
-        navigator.clipboard.writeText(currentFingerprint);
-        const btn = document.getElementById('copyGpgBtn');
-        btn.querySelector('span').textContent = 'Copied!';
-        setTimeout(() => { btn.querySelector('span').textContent = 'Copy Fingerprint'; }, 2000);
+    // Open Interactive Repository Overview Popup
+    function openRepoOverviewModal(slug, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
       }
+
+      const proj = cachedProjects.find(p => (p.slug || '').toLowerCase() === String(slug).toLowerCase() || (p.id || '').toLowerCase() === String(slug).toLowerCase());
+      if (!proj) return;
+
+      const modal = document.getElementById('repoOverviewModal');
+      const content = document.getElementById('repoModalContent');
+      if (!modal || !content) return;
+
+      const techStackPills = (proj.tech_stack || '').split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `<span class="stack-pill" style="font-size: 0.74rem; padding: 3px 9px; color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.06);">${t}</span>`)
+        .join('');
+
+      content.innerHTML = `
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 18px; margin-bottom: 22px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
+              <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-primary); margin: 0;">${proj.name}</h2>
+              <span class="stack-pill" style="color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); font-size: 0.70rem; font-weight: 700;">
+                ${proj.status || 'Active'}
+              </span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.80rem; color: var(--accent-cyan);">
+              ragetech/${proj.slug}
+            </div>
+          </div>
+          <span class="stack-pill" style="font-size: 0.74rem; color: var(--text-secondary); border-color: var(--border-subtle); white-space: nowrap;">
+            ${proj.category || 'Repository'}
+          </span>
+        </div>
+
+        <div style="margin-bottom: 22px;">
+          <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Architecture Synopsis</div>
+          <p style="font-size: 1.05rem; font-weight: 600; color: #f4f4f5; line-height: 1.55; margin: 0 0 12px;">
+            ${proj.tagline || 'Core distributed systems architecture and sovereign execution primitives.'}
+          </p>
+          <div style="font-size: 0.88rem; color: #a1a1aa; line-height: 1.65; background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            ${proj.description || proj.tagline || 'This repository is actively developed and maintained by the Ragetech collective engineering collective.'}
+          </div>
+        </div>
+
+        <div style="margin-bottom: 22px;">
+          <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;">Technology Stack</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            ${techStackPills || '<span style="color: var(--text-muted); font-size: 0.8rem;">Standard Systems Infrastructure</span>'}
+          </div>
+        </div>
+
+        <!-- Maintainer Badge Ribbon -->
+        <div style="padding: 12px 14px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: var(--radius-md); margin-bottom: 26px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            ${currentDev && currentDev.avatar_url ? `
+              <img src="${currentDev.avatar_url}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle);" alt="${currentDev.name}">
+            ` : ''}
+            <div style="font-size: 0.82rem; color: #d4d4d8;">
+              Assigned Maintainer: <strong style="color: var(--text-primary);">${currentDev ? currentDev.name : 'Verified Maintainer'}</strong> (<span style="font-family: var(--font-mono); color: var(--accent-cyan);">@${currentDev ? currentDev.handle : ''}</span>)
+            </div>
+          </div>
+          <span class="stack-pill" style="font-size: 0.68rem; font-weight: 700; color: var(--accent-cyan); border-color: rgba(6,182,212,0.3);">CODEBASE ASSIGNEE</span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
+          <button type="button" class="btn-secondary" onclick="closeRepoOverviewModal()" style="font-size: 0.82rem; padding: 8px 16px;">
+            Close
+          </button>
+          <a href="project.html?id=${proj.slug}" class="btn-primary" style="font-size: 0.82rem; padding: 8px 18px; text-decoration: none;">
+            <span>Explore Dedicated Showcase →</span>
+          </a>
+        </div>
+      `;
+
+      modal.classList.add('open');
+      modal.removeAttribute('inert');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     }
+
+    function closeRepoOverviewModal() {
+      const modal = document.getElementById('repoOverviewModal');
+      if (!modal) return;
+      modal.classList.remove('open');
+      modal.setAttribute('inert', '');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeRepoOverviewModal();
+    });
 
     async function loadDeveloperDetails() {
       const urlParams = new URLSearchParams(window.location.search);
-      const handle = urlParams.get('id') || urlParams.get('handle') || 'reymartchua';
+      const handle = urlParams.get('id') || urlParams.get('handle') || 'johnrey';
 
       let dev = null;
 
-      // 1. D1 API query
+      // 1. Fetch Developer from D1
       try {
         const res = await fetch(`/api/developers/${handle}`);
         if (res.ok) {
@@ -173,69 +323,176 @@
         document.getElementById('devName').textContent = 'Developer Not Found';
         document.getElementById('devRole').textContent = 'This profile does not exist in the database catalog.';
         document.getElementById('devBio').textContent = 'The requested engineer dossier was removed or has not been registered.';
+        const assignedList = document.getElementById('assignedProjectsList');
+        if (assignedList) {
+          assignedList.innerHTML = `<p style="color: var(--text-muted); grid-column: 1 / -1; text-align: center;">No assigned repositories found.</p>`;
+        }
         return;
       }
 
-      document.title = `${dev.name} (@${dev.handle}) — Developer Dossier | Ragetech`;
+      currentDev = dev;
+
+      document.title = `${dev.name} (@${dev.handle}) — Engineer Dossier | Ragetech`;
       document.getElementById('breadcrumbDevName').textContent = `@${dev.handle}`;
       document.getElementById('devName').textContent = dev.name;
+      const subNameEl = document.getElementById('devNameSub');
+      if (subNameEl) subNameEl.textContent = dev.name;
       document.getElementById('devHandle').textContent = `@${dev.handle}`;
       document.getElementById('devRole').textContent = dev.role;
       document.getElementById('devBio').textContent = dev.bio;
       document.getElementById('devAvatar').src = dev.avatar_url;
       document.getElementById('devAvatar').alt = dev.name;
-      
-      const badgesContainer = document.getElementById('devAssignedBadges');
-      if (badgesContainer) {
-        const assignedSlugs = dev.assigned_projects || [];
-        if (assignedSlugs.length > 0) {
-          badgesContainer.innerHTML = assignedSlugs.map(slug => `<span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${slug}</span>`).join('');
-        } else {
-          badgesContainer.innerHTML = `<span class="stack-pill" style="color: var(--text-muted); font-size: 0.75rem;">Core Platform</span>`;
-        }
-      }
-
-      currentFingerprint = dev.gpg_fingerprint || "8F4A 2B19 E03C 41FA 98E1";
-      document.getElementById('devFingerprint').textContent = currentFingerprint;
 
       const webBtn = document.getElementById('devWebsiteBtn');
-      if (dev.website_url) { webBtn.href = dev.website_url; } else { webBtn.style.display = 'none'; }
+      if (dev.website_url) { webBtn.href = dev.website_url; webBtn.style.display = 'inline-flex'; } else { webBtn.style.display = 'none'; }
 
       const ghBtn = document.getElementById('devGithubBtn');
-      if (dev.github_url) { ghBtn.href = dev.github_url; } else { ghBtn.style.display = 'none'; }
+      if (dev.github_url) { ghBtn.href = dev.github_url; ghBtn.style.display = 'inline-flex'; } else { ghBtn.style.display = 'none'; }
 
-      // Assigned Projects List (Query D1 directly)
-      const assignedList = document.getElementById('assignedProjectsList');
+      // 2. Fetch Projects Catalog
       let allProjects = [];
-
       try {
         const pRes = await fetch('/api/projects');
         if (pRes.ok) {
           const pJson = await pRes.json();
           if (Array.isArray(pJson.data)) allProjects = pJson.data;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to fetch projects list:', e);
+      }
 
-      const assignedSlugs = dev.assigned_projects || [];
-      const matchedProjects = allProjects.filter(p => assignedSlugs.includes(p.slug));
+      // 3. Robust Matching for Assigned Repositories
+      // Handles:
+      // - dev.assigned_projects as array of objects [{ id, slug, name, ... }]
+      // - dev.assigned_projects as array of strings ['hyperion', ...]
+      // - allProjects maintainer_handles / assignees matching dev.handle or dev.id
+      let assignedRaw = Array.isArray(dev.assigned_projects) ? dev.assigned_projects : [];
+      const assignedKeys = new Set();
 
-      if (matchedProjects.length > 0) {
-        assignedList.innerHTML = matchedProjects.map(p => `
-          <div class="spotlight-card repo-nav-card" onclick="window.location.href='project.html?id=${p.slug}'">
-            <div class="spotlight-card-content">
-              <div class="repo-card-top">
-                <span class="repo-name">${p.name}</span>
-                <span class="repo-status-badge">${p.category}</span>
+      assignedRaw.forEach(item => {
+        if (typeof item === 'string') {
+          assignedKeys.add(item.toLowerCase().trim());
+        } else if (item && typeof item === 'object') {
+          if (item.slug) assignedKeys.add(String(item.slug).toLowerCase().trim());
+          if (item.id) assignedKeys.add(String(item.id).toLowerCase().trim());
+        }
+      });
+
+      let matchedProjects = allProjects.filter(p => {
+        const pSlug = (p.slug || '').toLowerCase().trim();
+        const pId = (p.id || '').toLowerCase().trim();
+        const isAssignedDirect = assignedKeys.has(pSlug) || assignedKeys.has(pId);
+        
+        const maintainers = Array.isArray(p.maintainer_handles) ? p.maintainer_handles : 
+                           (Array.isArray(p.assignees) ? p.assignees : []);
+        const isMaintainer = maintainers.some(h => 
+          String(h).toLowerCase().trim() === dev.handle.toLowerCase().trim() ||
+          String(h).toLowerCase().trim() === (dev.id || '').toLowerCase().trim()
+        );
+        return isAssignedDirect || isMaintainer;
+      });
+
+      // Fallback: If allProjects didn't return full details but assignedRaw has objects, synthesize them
+      if (matchedProjects.length === 0 && assignedRaw.length > 0) {
+        matchedProjects = assignedRaw.map(item => {
+          if (typeof item === 'object' && item !== null) {
+            return {
+              id: item.id || item.slug,
+              slug: item.slug || item.id,
+              name: item.name || item.slug,
+              tagline: item.tagline || 'Sovereign distributed engineering repository.',
+              category: item.category || 'Core Platform',
+              status: item.status || 'Active',
+              tech_stack: item.tech_stack || 'Rust, Cloudflare D1',
+              description: item.description || item.tagline || 'Repository managed by Ragetech collective engineering.'
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      }
+
+      cachedProjects = matchedProjects.length > 0 ? matchedProjects : allProjects;
+
+      // 4. Render Profile Header Badges (Replacing [object Object])
+      const badgesContainer = document.getElementById('devAssignedBadges');
+      if (badgesContainer) {
+        if (matchedProjects.length > 0) {
+          badgesContainer.innerHTML = matchedProjects.map(p => `
+            <button type="button" 
+                    onclick="openRepoOverviewModal('${p.slug}', event)" 
+                    class="repo-assigned-badge-btn" 
+                    title="Click to view ${p.name} architecture overview">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>${p.name || p.slug}</span>
+            </button>
+          `).join('');
+        } else {
+          badgesContainer.innerHTML = `<span class="stack-pill" style="color: var(--text-muted); font-size: 0.75rem;">Core Platform</span>`;
+        }
+      }
+
+      // 5. Render Assigned Repositories Grid
+      const assignedList = document.getElementById('assignedProjectsList');
+      if (assignedList) {
+        if (matchedProjects.length > 0) {
+          assignedList.innerHTML = matchedProjects.map(p => {
+            const stackPills = (p.tech_stack || '').split(',')
+              .map(t => t.trim())
+              .filter(Boolean)
+              .map(t => `<span class="stack-pill" style="font-size: 0.70rem; padding: 2px 7px;">${t}</span>`)
+              .join('');
+
+            return `
+              <div class="spotlight-card repo-assigned-card" onclick="openRepoOverviewModal('${p.slug}', event)" title="Click to view overview">
+                <div class="spotlight-card-content" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 38px; height: 38px; border-radius: var(--radius-sm); background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan); flex-shrink: 0;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        </div>
+                        <div>
+                          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0 0 2px;">${p.name}</h3>
+                          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan);">ragetech/${p.slug}</span>
+                        </div>
+                      </div>
+                      <span class="stack-pill" style="font-size: 0.68rem; font-weight: 700; color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); white-space: nowrap;">
+                        ${p.category || 'Repository'}
+                      </span>
+                    </div>
+
+                    <p style="font-size: 0.88rem; color: #d4d4d8; line-height: 1.55; margin-bottom: 16px;">
+                      ${p.tagline || p.description || 'Core distributed systems architecture and sovereign execution primitives.'}
+                    </p>
+
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;">
+                      ${stackPills}
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-top: auto;">
+                    <button type="button" class="btn-primary" style="padding: 7px 16px; font-size: 0.78rem;" onclick="openRepoOverviewModal('${p.slug}', event)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <span>Overview</span>
+                    </button>
+                    <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 7px 14px; font-size: 0.78rem; text-decoration: none;" onclick="event.stopPropagation()">
+                      <span>Whitepaper →</span>
+                    </a>
+                  </div>
+                </div>
               </div>
-              <p class="repo-tagline">${p.tagline}</p>
-              <div class="repo-stack-pills">
-                ${(p.tech_stack || '').split(',').map(t => `<span class="stack-pill">${t.trim()}</span>`).join('')}
-              </div>
+            `;
+          }).join('');
+        } else {
+          assignedList.innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 40px 24px; text-align: center; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">
+              <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Core Platform Assignment</div>
+              <p style="font-size: 0.86rem; color: var(--text-muted); max-width: 460px; margin: 0 auto;">
+                ${dev.name} operates across sovereign core infrastructure and global distributed runtime components.
+              </p>
             </div>
-          </div>
-        `).join('');
-      } else {
-        assignedList.innerHTML = `<p style="color: var(--text-muted);">Assigned to collective core infrastructure.</p>`;
+          `;
+        }
       }
     }
 
