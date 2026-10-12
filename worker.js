@@ -533,25 +533,63 @@ export default {
     }
 
     // DELETE /api/manage/projects/:id — Remove project
-    if (pathname.startsWith('/api/manage/projects/') && request.method === 'DELETE') {
+    if (pathname.startsWith('/api/manage/projects') && request.method === 'DELETE') {
       try {
-        const idOrSlug = pathname.replace('/api/manage/projects/', '').trim();
-        if (env.DB) {
-          const proj = await env.DB.prepare('SELECT id, name FROM projects WHERE id = ? OR slug = ?').bind(idOrSlug, idOrSlug).first();
-          if (proj) {
-            await env.DB.prepare('DELETE FROM project_assignments WHERE project_id = ?').bind(proj.id).run();
-            await env.DB.prepare('DELETE FROM project_sections WHERE project_id = ?').bind(proj.id).run();
-            await env.DB.prepare('DELETE FROM projects WHERE id = ?').bind(proj.id).run();
+        let idOrSlug = pathname.replace('/api/manage/projects', '').replace(/^\/+|\/+$/g, '').trim();
+        if (!idOrSlug) {
+          idOrSlug = url.searchParams.get('id') || url.searchParams.get('slug') || '';
+        }
+        if (!idOrSlug) {
+          try {
+            const body = await request.json();
+            idOrSlug = body.id || body.slug || '';
+          } catch (e) {}
+        }
+        idOrSlug = decodeURIComponent(idOrSlug).trim();
 
+        if (!idOrSlug) {
+          return jsonResponse({ success: false, message: 'Missing project id or slug' }, corsHeaders, 400);
+        }
+
+        if (env.DB) {
+          // Look up project first
+          const proj = await env.DB.prepare(`
+            SELECT id, slug, name FROM projects 
+            WHERE id = ? OR slug = ? OR lower(id) = lower(?) OR lower(slug) = lower(?)
+          `).bind(idOrSlug, idOrSlug, idOrSlug, idOrSlug).first();
+
+          const targetId = proj ? proj.id : idOrSlug;
+          const targetSlug = proj ? proj.slug : idOrSlug;
+
+          // Perform robust atomic deletion across all related tables
+          await env.DB.batch([
+            env.DB.prepare('DELETE FROM project_assignments WHERE project_id = ? OR project_id = ? OR lower(project_id) = lower(?)').bind(targetId, targetSlug, targetId),
+            env.DB.prepare('DELETE FROM project_sections WHERE project_id = ? OR project_id = ? OR lower(project_id) = lower(?)').bind(targetId, targetSlug, targetId),
+            env.DB.prepare('DELETE FROM projects WHERE id = ? OR slug = ? OR lower(id) = lower(?) OR lower(slug) = lower(?)').bind(targetId, targetSlug, targetId, targetSlug)
+          ]);
+
+          try {
+            await env.DB.prepare(`
+              INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
+              VALUES (?, 'admin', 'PROJECT_DELETE', 'project', ?, ?)
+            `).bind(`aud-${Date.now()}`, targetId, `Project ${proj?.name || idOrSlug} deleted from D1`).run();
+          } catch (e) {}
+
+          // Invalidate edge cache
+          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
             try {
-              await env.DB.prepare(`
-                INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-                VALUES (?, 'admin', 'PROJECT_DELETE', 'project', ?, ?)
-              `).bind(`aud-${Date.now()}`, proj.id, `Project ${proj.name || idOrSlug} deleted from D1`).run();
+              const origin = url.origin;
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/projects`)));
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/projects/${targetSlug}`)));
             } catch (e) {}
           }
 
-          return jsonResponse({ success: true, message: 'Project deleted from Cloudflare D1' }, corsHeaders);
+          return jsonResponse({ 
+            success: true, 
+            message: `Project ${proj?.name || idOrSlug} permanently deleted from Cloudflare D1`,
+            deletedId: targetId,
+            deletedSlug: targetSlug
+          }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Project deleted (offline mode)' }, corsHeaders);
       } catch (err) {
@@ -651,24 +689,55 @@ export default {
     }
 
     // DELETE /api/manage/developers/:id — Remove developer
-    if (pathname.startsWith('/api/manage/developers/') && request.method === 'DELETE') {
+    if (pathname.startsWith('/api/manage/developers') && request.method === 'DELETE') {
       try {
-        const idOrHandle = pathname.replace('/api/manage/developers/', '').trim();
-        if (env.DB) {
-          const dev = await env.DB.prepare('SELECT id, handle FROM developers WHERE id = ? OR lower(handle) = ?').bind(idOrHandle, idOrHandle.toLowerCase()).first();
-          if (dev) {
-            await env.DB.prepare('DELETE FROM project_assignments WHERE developer_id = ?').bind(dev.id).run();
-            await env.DB.prepare('DELETE FROM developers WHERE id = ?').bind(dev.id).run();
+        let idOrHandle = pathname.replace('/api/manage/developers', '').replace(/^\/+|\/+$/g, '').trim();
+        if (!idOrHandle) {
+          idOrHandle = url.searchParams.get('id') || url.searchParams.get('handle') || '';
+        }
+        if (!idOrHandle) {
+          try {
+            const body = await request.json();
+            idOrHandle = body.id || body.handle || '';
+          } catch (e) {}
+        }
+        idOrHandle = decodeURIComponent(idOrHandle).trim();
 
+        if (!idOrHandle) {
+          return jsonResponse({ success: false, message: 'Missing developer id or handle' }, corsHeaders, 400);
+        }
+
+        if (env.DB) {
+          const dev = await env.DB.prepare(`
+            SELECT id, handle FROM developers 
+            WHERE id = ? OR lower(handle) = lower(?) OR lower(id) = lower(?)
+          `).bind(idOrHandle, idOrHandle, idOrHandle).first();
+
+          const targetId = dev ? dev.id : idOrHandle;
+          const targetHandle = dev ? dev.handle : idOrHandle;
+
+          await env.DB.batch([
+            env.DB.prepare('DELETE FROM project_assignments WHERE developer_id = ? OR lower(developer_id) = lower(?)').bind(targetId, targetId),
+            env.DB.prepare('DELETE FROM developers WHERE id = ? OR lower(handle) = lower(?) OR lower(id) = lower(?)').bind(targetId, targetHandle, targetId)
+          ]);
+
+          try {
+            await env.DB.prepare(`
+              INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
+              VALUES (?, 'admin', 'DEVELOPER_DELETE', 'developer', ?, ?)
+            `).bind(`aud-${Date.now()}`, targetId, `Developer @${targetHandle} removed from D1`).run();
+          } catch (e) {}
+
+          // Invalidate edge cache
+          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
             try {
-              await env.DB.prepare(`
-                INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
-                VALUES (?, 'admin', 'DEVELOPER_DELETE', 'developer', ?, ?)
-              `).bind(`aud-${Date.now()}`, dev.id, `Developer @${dev.handle} removed from D1`).run();
+              const origin = url.origin;
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers`)));
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers/${targetHandle}`)));
             } catch (e) {}
           }
 
-          return jsonResponse({ success: true, message: 'Developer removed from Cloudflare D1' }, corsHeaders);
+          return jsonResponse({ success: true, message: 'Developer removed from Cloudflare D1', deletedId: targetId }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Developer removed (offline mode)' }, corsHeaders);
       } catch (err) {

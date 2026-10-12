@@ -619,8 +619,9 @@
       const name = proj ? proj.name : id;
       if (!confirm(`Are you sure you want to permanently delete repository "${name}" and its whitepaper dossier? This cannot be undone.`)) return;
       
+      const targetParam = proj ? (proj.id || proj.slug) : id;
       try {
-        const res = await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/manage/projects/${encodeURIComponent(targetParam)}`, { method: 'DELETE' });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || json.success === false) {
           alert('Failed to delete repository from database: ' + (json.message || `HTTP ${res.status}`));
@@ -631,9 +632,10 @@
         return;
       }
 
-      projectsData = projectsData.filter(p => p.id !== id && p.slug !== id);
-      window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', id });
+      projectsData = projectsData.filter(p => p.id !== id && p.slug !== id && (proj ? p.id !== proj.id && p.slug !== proj.slug : true));
+      window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', id: targetParam });
       renderCurrentView();
+      await loadData();
     }
 
     function togglePasswordVisibility(inputId, btn) {
@@ -1048,16 +1050,6 @@
             newPassword: pass
           })
         });
-
-        // Update local storage
-        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        const idx = customDevs.findIndex(d => d.id === devId || d.handle === handle);
-        if (idx >= 0) {
-          customDevs[idx] = { ...customDevs[idx], password_hash: newHash };
-        } else if (dev) {
-          customDevs.push({ ...dev, password_hash: newHash });
-        }
-        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
 
         if (dev) dev.password_hash = newHash;
 

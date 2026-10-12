@@ -371,7 +371,8 @@
 
       // 1. D1 API DELETE
       try {
-        const res = await fetch(`/api/manage/projects/${proj.id || proj.slug}`, { method: 'DELETE' });
+        const targetParam = proj.id || proj.slug;
+        const res = await fetch(`/api/manage/projects/${encodeURIComponent(targetParam)}`, { method: 'DELETE' });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || json.success === false) {
           alert('Failed to delete repository from database: ' + (json.message || `HTTP ${res.status}`));
