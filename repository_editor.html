@@ -49,7 +49,7 @@
           <polyline points="15 3 21 3 21 9"></polyline>
           <line x1="10" y1="14" x2="21" y2="3"></line>
         </svg>
-        <span>View on repository.html</span>
+        <span>View on project.html</span>
       </button>
 
       <button id="saveRepoBtn" class="btn-primary" style="padding: 7px 18px; font-size: 0.82rem;" onclick="handleSaveRepository()">
@@ -130,7 +130,7 @@
           <span>Assignable Action Button (Default: "Visit Site")</span>
         </div>
         <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
-          Configure the primary call-to-action button rendered on <code>repository.html</code>. Default is <strong>"Visit Site"</strong>, but you can assign it for any purpose (e.g., "Read Documentation", "Launch Sandbox", "Join Discord", "Request Access").
+          Configure the primary call-to-action button rendered on <code>project.html</code>. Default is <strong>"Visit Site"</strong>, but you can assign it for any purpose (e.g., "Read Documentation", "Launch Sandbox", "Join Discord", "Request Access").
         </p>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
@@ -213,14 +213,14 @@
       </div>
     </div>
 
-    <!-- RIGHT PANE: Synchronized Live Preview of repository.html -->
+    <!-- RIGHT PANE: Synchronized Live Preview of project.html -->
     <div class="preview-pane-scroll" id="livePreviewPane">
       
       <!-- Top Sticky Preview HUD -->
       <div class="preview-badge-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span class="hud-dot"></span>
-          <span>LIVE PREVIEW — EXACT repository.html RENDERING</span>
+          <span>LIVE PREVIEW — EXACT project.html RENDERING</span>
         </div>
         <div style="font-size: 0.72rem; color: var(--text-muted);" id="previewWordCount">0 words • 0 min read</div>
       </div>
@@ -750,7 +750,7 @@ impl CoreExecutionArena {
 
     function viewLiveRenderer() {
       const slug = document.getElementById('editSlug').value || 'aether-runtime';
-      window.open(`repository.html?id=${slug}`, '_blank');
+      window.open(`project.html?id=${slug}`, '_blank');
     }
 
     function showToast(msg) {

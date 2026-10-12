@@ -447,10 +447,10 @@ export default {
     // ------------------------------------------------------------------------
 
     // Friendly URL Rewrites:
-    // /r/:slug, /repository/:slug, /p/:slug -> /repository.html?id=:slug
+    // /r/:slug, /repository/:slug, /p/:slug -> /project.html?id=:slug
     if (pathname.startsWith('/r/') || pathname.startsWith('/repository/') || pathname.startsWith('/p/')) {
       const slug = pathname.replace('/repository/', '').replace('/r/', '').replace('/p/', '');
-      const redirectUrl = new URL(`/repository.html?id=${slug}`, request.url);
+      const redirectUrl = new URL(`/project.html?id=${slug}`, request.url);
       return env.ASSETS.fetch(new Request(redirectUrl, request));
     }
 

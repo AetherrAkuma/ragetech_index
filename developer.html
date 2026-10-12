@@ -75,8 +75,8 @@
             <div class="dev-profile-handle" id="devHandle">@handle</div>
             <div class="dev-profile-role" id="devRole">Systems Engineering Lead</div>
           </div>
-          <div>
-            <span class="squad-badge systems" id="devSquadBadge" style="font-size: 0.82rem; padding: 4px 12px;">SYSTEMS SQUAD</span>
+          <div id="devAssignedBadges" style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+            <!-- Dynamic assigned repository badges -->
           </div>
         </div>
 
@@ -185,9 +185,15 @@
       document.getElementById('devAvatar').src = dev.avatar_url;
       document.getElementById('devAvatar').alt = dev.name;
       
-      const badge = document.getElementById('devSquadBadge');
-      badge.textContent = `${dev.squad.toUpperCase()} SQUAD`;
-      badge.className = `squad-badge ${dev.squad}`;
+      const badgesContainer = document.getElementById('devAssignedBadges');
+      if (badgesContainer) {
+        const assignedSlugs = dev.assigned_projects || [];
+        if (assignedSlugs.length > 0) {
+          badgesContainer.innerHTML = assignedSlugs.map(slug => `<span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${slug}</span>`).join('');
+        } else {
+          badgesContainer.innerHTML = `<span class="stack-pill" style="color: var(--text-muted); font-size: 0.75rem;">Core Platform</span>`;
+        }
+      }
 
       currentFingerprint = dev.gpg_fingerprint || "8F4A 2B19 E03C 41FA 98E1";
       document.getElementById('devFingerprint').textContent = currentFingerprint;
@@ -206,7 +212,7 @@
 
       if (matchedProjects.length > 0) {
         assignedList.innerHTML = matchedProjects.map(p => `
-          <div class="spotlight-card repo-nav-card" onclick="window.location.href='repository.html?id=${p.slug}'">
+          <div class="spotlight-card repo-nav-card" onclick="window.location.href='project.html?id=${p.slug}'">
             <div class="spotlight-card-content">
               <div class="repo-card-top">
                 <span class="repo-name">${p.name}</span>

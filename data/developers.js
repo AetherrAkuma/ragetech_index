@@ -1,9 +1,6 @@
-// ========================================================================
-// Ragetech Collective — Offline Developers Dataset
-// ========================================================================
-
-const rootScope = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
-rootScope.RAGETECH_DEVELOPERS = [
+(function () {
+  const root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
+  root.RAGETECH_DEVELOPERS = [
   {
     id: "dev-00",
     handle: "reymartchua",
@@ -490,3 +487,4 @@ rootScope.RAGETECH_DEVELOPERS = [
     assigned_projects: ["hyperion-mesh"]
   }
 ];
+})();

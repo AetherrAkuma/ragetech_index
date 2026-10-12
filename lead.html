@@ -159,7 +159,7 @@
                   <td>
                     <div class="table-actions">
                       <a href="repository_editor.html?id=${p.slug}" class="btn-icon-action">Edit Dossier</a>
-                      <a href="repository.html?id=${p.slug}" class="btn-icon-action">View</a>
+                      <a href="project.html?id=${p.slug}" class="btn-icon-action">View</a>
                     </div>
                   </td>
                 </tr>
@@ -185,7 +185,7 @@
             <thead>
               <tr>
                 <th>Maintainer</th>
-                <th>Role & Squad</th>
+                <th>Role & Assigned Projects</th>
                 <th>Fingerprint</th>
                 <th>Profile</th>
               </tr>
@@ -199,7 +199,14 @@
                       <span style="font-weight: 600;">${d.name} (@${d.handle})</span>
                     </div>
                   </td>
-                  <td><span class="squad-badge ${d.squad}">${d.squad}</span> ${d.role}</td>
+                  <td>
+                    <div style="font-weight: 600;">${d.role}</div>
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                      ${(d.assigned_projects && d.assigned_projects.length > 0)
+                        ? d.assigned_projects.map(slug => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 6px;">${slug}</span>`).join('')
+                        : '<span style="font-size: 0.72rem; color: var(--text-muted);">None</span>'}
+                    </div>
+                  </td>
                   <td><code>${(d.gpg_fingerprint || '').slice(0, 16)}</code></td>
                   <td><a href="developer.html?id=${d.handle}" class="btn-icon-action">View Dossier</a></td>
                 </tr>

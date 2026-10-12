@@ -136,15 +136,7 @@
               <label class="form-label">Engineering Role / Title</label>
               <input type="text" id="devRoleTitle" class="form-input" required value="${currentDev.role}">
             </div>
-            <div class="form-group">
-              <label class="form-label">Squad Specialization</label>
-              <select id="devSquadSelect" class="form-select">
-                <option value="systems" ${currentDev.squad === 'systems' ? 'selected' : ''}>Systems</option>
-                <option value="edge" ${currentDev.squad === 'edge' ? 'selected' : ''}>Edge</option>
-                <option value="compilers" ${currentDev.squad === 'compilers' ? 'selected' : ''}>Compilers</option>
-                <option value="security" ${currentDev.squad === 'security' ? 'selected' : ''}>Security</option>
-              </select>
-            </div>
+
             <div class="form-group">
               <label class="form-label">Bio / Technical Focus</label>
               <textarea id="devBioInput" class="form-textarea" rows="4" required>${currentDev.bio || ''}</textarea>
@@ -177,7 +169,6 @@
       e.preventDefault();
       currentDev.name = document.getElementById('devFullName').value;
       currentDev.role = document.getElementById('devRoleTitle').value;
-      currentDev.squad = document.getElementById('devSquadSelect').value;
       currentDev.bio = document.getElementById('devBioInput').value;
       currentDev.avatar_url = document.getElementById('devAvatarInput').value;
       currentDev.website_url = document.getElementById('devWebsiteInput').value;
@@ -217,7 +208,7 @@
               <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 6px;">${p.name}</div>
               <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">${p.tagline}</div>
               <div style="display: flex; gap: 8px;">
-                <a href="repository.html?id=${p.slug}" class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">Dossier</a>
+                <a href="project.html?id=${p.slug}" class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">Dossier</a>
                 ${p.live_url ? `<a href="${p.live_url}" target="_blank" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Live Website</a>` : ''}
               </div>
             </div>

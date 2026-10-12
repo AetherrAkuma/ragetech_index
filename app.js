@@ -32,50 +32,43 @@
     renderBuildersGrid();
     setupEqualSpotlightListeners();
     setupCommandPaletteListeners();
-    setupFilterListeners();
     initTelemetryHUD();
     initGSAPAnimations();
   }
 
   // Fetch from D1 API or gracefully fallback to offline registry
   async function fetchPlatformData() {
-    // 1. Repositories
-    try {
-      const res = await fetch('/api/projects');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data && json.data.length > 0) {
-          state.projects = json.data;
-        }
-      }
-    } catch (e) {
-      // Fallback
-    }
-
-    if (!state.projects || state.projects.length === 0) {
-      state.projects = window.RAGETECH_PROJECTS || [];
-    }
-
-    // Set default active repo
-    if (state.projects.length > 0) {
+    // 1. Immediately hydrate from offline registry
+    if (window.RAGETECH_PROJECTS && window.RAGETECH_PROJECTS.length > 0) {
+      state.projects = [...window.RAGETECH_PROJECTS];
       state.activeProjectSlug = state.projects[0].slug;
     }
-
-    // 2. Collective Developers
-    try {
-      const res = await fetch('/api/developers');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data && json.data.length > 0) {
-          state.developers = json.data;
-        }
-      }
-    } catch (e) {
-      // Fallback
+    if (window.RAGETECH_DEVELOPERS && window.RAGETECH_DEVELOPERS.length > 0) {
+      state.developers = [...window.RAGETECH_DEVELOPERS];
     }
 
-    if (!state.developers || state.developers.length === 0) {
-      state.developers = window.RAGETECH_DEVELOPERS || [];
+    // 2. Query Cloudflare D1 API if served via HTTP
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const res = await fetch('/api/projects');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data && json.data.length > 0) {
+            state.projects = json.data;
+            if (!state.activeProjectSlug) state.activeProjectSlug = state.projects[0].slug;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch('/api/developers');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data && json.data.length > 0) {
+            state.developers = json.data;
+          }
+        }
+      } catch (e) {}
     }
   }
 
@@ -135,18 +128,16 @@
     const listEl = document.getElementById('repoNavList');
     if (!listEl) return;
 
-    // Filter projects
-    const filteredProjects = state.activeCategoryFilter === 'all'
-      ? state.projects
-      : state.projects.filter(p => p.category.toLowerCase().includes(state.activeCategoryFilter.toLowerCase()));
-
-    // Make sure active slug exists in filtered list
-    if (filteredProjects.length > 0 && !filteredProjects.some(p => p.slug === state.activeProjectSlug)) {
-      state.activeProjectSlug = filteredProjects[0].slug;
+    if (!state.projects || state.projects.length === 0) {
+      if (window.RAGETECH_PROJECTS) state.projects = [...window.RAGETECH_PROJECTS];
     }
 
-    // Render left selector cards with equal spotlight
-    listEl.innerHTML = filteredProjects.map(proj => {
+    if (state.projects.length > 0 && (!state.activeProjectSlug || !state.projects.some(p => p.slug === state.activeProjectSlug))) {
+      state.activeProjectSlug = state.projects[0].slug;
+    }
+
+    // Render all repository selector cards without category filter
+    listEl.innerHTML = state.projects.map(proj => {
       const isActive = proj.slug === state.activeProjectSlug;
       return `
         <div class="spotlight-card repo-nav-card ${isActive ? 'active' : ''}" 
@@ -219,7 +210,7 @@
 
       <!-- Actions -->
       <div class="preview-actions-row">
-        <a href="repository.html?id=${activeProj.slug}" class="btn-primary">
+        <a href="project.html?id=${activeProj.slug}" class="btn-primary">
           <span>Read Full Whitepaper</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
@@ -245,22 +236,6 @@
     }
   }
 
-  function setupFilterListeners() {
-    const filterBar = document.getElementById('repoFilterBar');
-    if (!filterBar) return;
-
-    filterBar.addEventListener('click', (e) => {
-      const btn = e.target.closest('.filter-tab-btn');
-      if (!btn) return;
-
-      filterBar.querySelectorAll('.filter-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      state.activeCategoryFilter = btn.getAttribute('data-filter');
-      renderRepositoryShowcase();
-    });
-  }
-
   // --------------------------------------------------------------------------
   // 6. The 29 Builders Grid (@tailark/blocks/quartz/team)
   // --------------------------------------------------------------------------
@@ -268,27 +243,38 @@
     const gridEl = document.getElementById('teamCardsGrid');
     if (!gridEl) return;
 
-    gridEl.innerHTML = state.developers.map(dev => `
-      <div class="spotlight-card builder-card" onclick="window.RagetechApp.openDeveloperModal('${dev.handle}')">
-        <div class="spotlight-card-content">
-          <div class="builder-card-header">
-            <img src="${dev.avatar_url}" alt="${dev.name}" class="builder-avatar" loading="lazy">
-            <div class="builder-name-wrap">
-              <div class="builder-name">${dev.name}</div>
-              <div class="builder-handle">@${dev.handle}</div>
+    gridEl.innerHTML = state.developers.map(dev => {
+      const assignedNames = (dev.assigned_projects && dev.assigned_projects.length > 0)
+        ? dev.assigned_projects.map(slug => {
+            const p = state.projects.find(proj => proj.slug === slug);
+            return p ? p.name : slug;
+          }).slice(0, 2)
+        : ['Core Systems'];
+
+      return `
+        <div class="spotlight-card builder-card" onclick="window.RagetechApp.openDeveloperModal('${dev.handle}')">
+          <div class="spotlight-card-content">
+            <div class="builder-card-header">
+              <img src="${dev.avatar_url}" alt="${dev.name}" class="builder-avatar" loading="lazy">
+              <div class="builder-name-wrap">
+                <div class="builder-name">${dev.name}</div>
+                <div class="builder-handle">@${dev.handle}</div>
+              </div>
+            </div>
+            <div class="builder-role">${dev.role}</div>
+            <div class="builder-meta-row" style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                ${assignedNames.map(name => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px;">${name}</span>`).join('')}
+              </div>
+              <span class="verified-icon-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Verified</span>
+              </span>
             </div>
           </div>
-          <div class="builder-role">${dev.role}</div>
-          <div class="builder-meta-row">
-            <span class="squad-badge ${dev.squad}">${dev.squad}</span>
-            <span class="verified-icon-chip">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <span>Verified</span>
-            </span>
-          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   // --------------------------------------------------------------------------
@@ -345,7 +331,7 @@
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           ${matchedProjects.length > 0 ? matchedProjects.map(p => `
-            <a href="repository.html?id=${p.slug}" class="maintainer-avatar-chip" style="padding: 6px 12px;">
+            <a href="project.html?id=${p.slug}" class="maintainer-avatar-chip" style="padding: 6px 12px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
               <span>${p.name}</span>
             </a>
@@ -483,7 +469,7 @@
           type: 'repository',
           title: p.name,
           subtitle: p.category,
-          action: () => { window.location.href = `repository.html?id=${p.slug}`; }
+          action: () => { window.location.href = `project.html?id=${p.slug}`; }
         });
       }
     });
@@ -570,23 +556,29 @@
   // 9. Real-Time Telemetry HUD & Colo Ping
   // --------------------------------------------------------------------------
   async function initTelemetryHUD() {
-    try {
-      const res = await fetch('/api/telemetry');
-      if (res.ok) {
-        const data = await res.json();
-        const coloEl = document.getElementById('hudColo');
-        const latEl = document.getElementById('hudLatency');
-        const protoEl = document.getElementById('hudProtocol');
-        const d1El = document.getElementById('hudD1Status');
+    const coloEl = document.getElementById('hudColo');
+    const latEl = document.getElementById('hudLatency');
+    const protoEl = document.getElementById('hudProtocol');
+    const d1El = document.getElementById('hudD1Status');
 
-        if (coloEl) coloEl.textContent = `EDGE: ${data.colo}`;
-        if (latEl) latEl.textContent = `${data.edgeLatencyMs || 14}ms`;
-        if (protoEl) protoEl.textContent = data.httpProtocol || 'HTTP/3 QUIC';
-        if (d1El && data.d1Status === 'healthy') d1El.textContent = `D1: ${data.d1QueryLatencyMs}ms`;
-      }
-    } catch (e) {
-      // Keep static display
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const res = await fetch('/api/telemetry');
+        if (res.ok) {
+          const data = await res.json();
+          if (coloEl) coloEl.textContent = `EDGE: ${data.colo || 'SJC'}`;
+          if (latEl) latEl.textContent = `${data.edgeLatencyMs || 12}ms`;
+          if (protoEl) protoEl.textContent = data.httpProtocol || 'HTTP/3 QUIC';
+          if (d1El && data.d1Status === 'healthy') d1El.textContent = `D1: ${data.d1QueryLatencyMs || 4}ms`;
+          return;
+        }
+      } catch (e) {}
     }
+
+    if (coloEl) coloEl.textContent = 'EDGE: SJC';
+    if (latEl) latEl.textContent = '12ms';
+    if (protoEl) protoEl.textContent = 'HTTP/3 QUIC';
+    if (d1El) d1El.textContent = 'D1: SYNCED';
   }
 
   // --------------------------------------------------------------------------

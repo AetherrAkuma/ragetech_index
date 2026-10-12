@@ -211,7 +211,7 @@
                     <td>
                       <div class="table-actions">
                         <a href="repository_editor.html?id=${p.slug}" class="btn-icon-action">Edit</a>
-                        <a href="repository.html?id=${p.slug}" class="btn-icon-action">Preview</a>
+                        <a href="project.html?id=${p.slug}" class="btn-icon-action">Preview</a>
                         <button class="btn-icon-action danger" onclick="deleteProject('${p.id || p.slug}')">Delete</button>
                       </div>
                     </td>
@@ -238,7 +238,7 @@
               <thead>
                 <tr>
                   <th>Builder</th>
-                  <th>Role & Squad</th>
+                  <th>Role & Assigned Repositories</th>
                   <th>Account Role</th>
                   <th>Fingerprint</th>
                   <th>Verified</th>
@@ -258,8 +258,12 @@
                       </div>
                     </td>
                     <td>
-                      <div>${d.role}</div>
-                      <span class="squad-badge ${d.squad}">${d.squad}</span>
+                      <div style="font-weight: 600;">${d.role}</div>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px;">
+                        ${(d.assigned_projects && d.assigned_projects.length > 0)
+                          ? d.assigned_projects.map(slug => `<span class="stack-pill" style="font-size: 0.68rem; padding: 2px 7px;">${slug}</span>`).join('')
+                          : '<span style="font-size: 0.72rem; color: var(--text-muted);">None Assigned</span>'}
+                      </div>
                     </td>
                     <td><span class="badge-role ${d.account_role || 'developer'}">${(d.account_role || 'developer').toUpperCase()}</span></td>
                     <td><code>${(d.gpg_fingerprint || 'N/A').slice(0, 14)}...</code></td>
@@ -429,13 +433,19 @@
             <input type="text" id="dRole" class="form-input" required value="${dev ? dev.role : ''}">
           </div>
           <div class="form-group">
-            <label class="form-label">Squad</label>
-            <select id="dSquad" class="form-select">
-              <option value="systems" ${dev && dev.squad === 'systems' ? 'selected' : ''}>Systems</option>
-              <option value="edge" ${dev && dev.squad === 'edge' ? 'selected' : ''}>Edge</option>
-              <option value="compilers" ${dev && dev.squad === 'compilers' ? 'selected' : ''}>Compilers</option>
-              <option value="security" ${dev && dev.squad === 'security' ? 'selected' : ''}>Security</option>
-            </select>
+            <label class="form-label">Assigned Projects / Repositories (Dynamic)</label>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;">Select the repositories this engineer is assigned to maintain:</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 180px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+              ${projectsData.map(p => {
+                const isAssigned = dev && dev.assigned_projects && dev.assigned_projects.includes(p.slug);
+                return `
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; cursor: pointer;">
+                    <input type="checkbox" name="builderAssignedRepo" value="${p.slug}" ${isAssigned ? 'checked' : ''} style="accent-color: var(--accent-cyan);">
+                    <span>${p.name}</span>
+                  </label>
+                `;
+              }).join('')}
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Biography</label>
@@ -470,6 +480,7 @@
 
     async function handleSaveDeveloper(e, id) {
       e.preventDefault();
+      const assigned_projects = Array.from(document.querySelectorAll('input[name="builderAssignedRepo"]:checked')).map(cb => cb.value);
       const payload = {
         id: id || `dev-${Date.now()}`,
         name: document.getElementById('dName').value,
@@ -478,7 +489,7 @@
         password: document.getElementById('dPassword').value || undefined,
         account_role: document.getElementById('dAccountRole').value,
         role: document.getElementById('dRole').value,
-        squad: document.getElementById('dSquad').value,
+        assigned_projects,
         bio: document.getElementById('dBio').value,
         avatar_url: document.getElementById('dAvatar').value,
         website_url: document.getElementById('dWebsite').value,

@@ -1,9 +1,6 @@
-// ========================================================================
-// Ragetech Collective — Offline Projects & Whitepaper Sections Dataset
-// ========================================================================
-
-const rootScope = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
-rootScope.RAGETECH_PROJECTS = [
+(function () {
+  const root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
+  root.RAGETECH_PROJECTS = [
   {
     id: "proj-01",
     slug: "aether-runtime",
@@ -330,3 +327,4 @@ Operating over native UDP with modern loss recovery mechanisms, Nexus streams ma
     maintainer_handles: ["zara", "chloe", "hana", "samir", "nadia"]
   }
 ];
+})();

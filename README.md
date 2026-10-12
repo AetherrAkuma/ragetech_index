@@ -26,7 +26,7 @@ A human-crafted, sovereign edge platform and engineering collective website buil
    * Responsive grid of 29 developer cards with squad badges, roles, and verified cryptographic chips.
    * Card click opens the **Developer Modal Dossier** featuring their bio, GPG fingerprint, and assigned repositories linking to project pages.
 
-5. **Templated Repository Dossier Renderer (`repository.html`)**:
+5. **Templated Repository Dossier Renderer (`project.html`)**:
    * Modeled after **Tailark Quartz Blog Article** (`blog-article/one`).
    * Clean technical whitepaper layout with category badge, lifecycle status, read time, and monumental title.
    * **Assignable Primary Action Bar**: Configurable button for any purpose (default: `Visit Site`) with dynamic URL, plus `Source Code` (GitHub).
@@ -37,7 +37,7 @@ A human-crafted, sovereign edge platform and engineering collective website buil
 6. **Dedicated Repository Dossier Studio (`repository_editor.html`)**:
    * Full-page management studio with side-by-side split screen and real-time live preview.
    * Form controls for metadata, assignable action button (label & URL), cover diagram, markdown editor with formatting toolbar, and maintainer checkboxes.
-   * Live preview on the right renders identically to `repository.html` with zero keystroke lag.
+   * Live preview on the right renders identically to `project.html` with zero keystroke lag.
    * Saves directly to Cloudflare D1 with offline fallback parity.
 
 7. **Dedicated Developer Dossier (`developer.html`)**:
