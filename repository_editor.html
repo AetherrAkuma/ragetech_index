@@ -1661,29 +1661,7 @@ Existing alternatives required significant hardware resources and heavy runtimes
         }
       }
 
-      // 1. Sync to Local Dynamic Cache
-      try {
-        let customProjects = [];
-        const stored = localStorage.getItem('ragetech_custom_projects');
-        if (stored) customProjects = JSON.parse(stored);
-        const idx = customProjects.findIndex(p => p.slug === slug || p.id === payload.id);
-        if (idx >= 0) {
-          customProjects[idx] = { ...customProjects[idx], ...payload };
-        } else {
-          customProjects.push(payload);
-        }
-        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
-        localStorage.setItem(`ragetech_project_${slug}`, JSON.stringify(payload));
-      } catch (e) {}
-
-      // 2. Sync to in-memory window
-      if (window.RAGETECH_PROJECTS) {
-        const pIdx = window.RAGETECH_PROJECTS.findIndex(p => p.slug === slug || p.id === payload.id);
-        if (pIdx >= 0) window.RAGETECH_PROJECTS[pIdx] = { ...window.RAGETECH_PROJECTS[pIdx], ...payload };
-        else window.RAGETECH_PROJECTS.push(payload);
-      }
-
-      // 3. Post to Cloudflare D1 Edge API
+      // Post to Cloudflare D1 Edge API (Direct Database Mode)
       let d1Success = false;
       let d1ErrorMsg = '';
       try {
@@ -1779,45 +1757,28 @@ Existing alternatives required significant hardware resources and heavy runtimes
 
       // 1. D1 Edge API call
       try {
-        await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
-      } catch (e) {}
-
-      // 2. Remove from LocalStorage custom projects & record tombstone
+      // 1. D1 Edge API call
       try {
-        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects = customProjects.filter(p => p.id !== id && p.slug !== slug && p.id !== slug);
-        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
-        localStorage.removeItem(`ragetech_project_${slug}`);
-
-        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-        if (!deleted.includes(id)) deleted.push(id);
-        if (!deleted.includes(slug)) deleted.push(slug);
-        localStorage.setItem('ragetech_deleted_projects', JSON.stringify(deleted));
-      } catch (e) {}
+        const res = await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to delete repository from database: ' + (json.message || `HTTP ${res.status}`));
+          if (delBtn) {
+            delBtn.disabled = false;
+            delBtn.innerHTML = `<span>Delete Repository</span>`;
+          }
+          return;
+        }
+      } catch (e) {
+        alert('Network error connecting to database API: ' + e.message);
+        if (delBtn) {
+          delBtn.disabled = false;
+          delBtn.innerHTML = `<span>Delete Repository</span>`;
+        }
+        return;
+      }
 
       window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', id, slug });
-
-      // 3. Remove from Lead's assigned projects in session if lead
-      if (isLead && currentSessionUser.assigned_projects) {
-        currentSessionUser.assigned_projects = currentSessionUser.assigned_projects.filter(s => s !== slug && s !== id);
-        try {
-          const sess = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
-          sess.user = currentSessionUser;
-          localStorage.setItem('ragetech_session', JSON.stringify(sess));
-
-          let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-          const dIdx = customDevs.findIndex(d => d.id === currentSessionUser.id || d.handle === currentSessionUser.handle);
-          if (dIdx >= 0) {
-            customDevs[dIdx].assigned_projects = currentSessionUser.assigned_projects;
-            localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-          }
-        } catch (e) {}
-      }
-
-      // 4. Remove from in-memory window
-      if (window.RAGETECH_PROJECTS) {
-        window.RAGETECH_PROJECTS = window.RAGETECH_PROJECTS.filter(p => p.slug !== slug && p.id !== id);
-      }
 
       alert(`Repository "${name}" was successfully deleted.`);
       window.location.href = isAdmin ? 'admin.html' : 'lead.html';
@@ -1933,17 +1894,8 @@ Existing alternatives required significant hardware resources and heavy runtimes
       } catch (e) {}
 
       if (!found) {
-        try {
-          const custom = localStorage.getItem('ragetech_custom_projects');
-          if (custom) {
-            const list = JSON.parse(custom);
-            found = list.find(p => p.slug === slug || p.id === slug);
-          }
-        } catch (e) {}
-      }
-
-      if (!found && window.RAGETECH_PROJECTS) {
-        found = window.RAGETECH_PROJECTS.find(p => p.slug === slug || p.id === slug);
+        showAccessDenied('Repository Not Found', `The repository "<code>${slug}</code>" does not exist or has been deleted from the database.`);
+        return;
       }
 
       if (found) {

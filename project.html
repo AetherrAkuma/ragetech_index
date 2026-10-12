@@ -237,35 +237,26 @@
 
       let project = null;
 
-      // 1. Query Cloudflare D1 Edge API first if online (uses Edge Memory Cache & conditional ETag)
-      if (window.location.protocol.startsWith('http')) {
-        try {
-          const res = await fetch(`/api/projects/${slug}`);
-          if (res.ok) {
-            const json = await res.json();
-            if (json.success && json.data) {
-              project = json.data;
-            }
+      // 1. Query Cloudflare D1 Edge API directly
+      try {
+        const res = await fetch(`/api/projects/${slug}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            project = json.data;
           }
-        } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('Network issue fetching project:', e);
       }
 
-      // 2. Check LocalStorage for recent local edits
       if (!project) {
-        try {
-          const localUpdated = localStorage.getItem(`ragetech_project_${slug}`);
-          if (localUpdated) {
-            project = JSON.parse(localUpdated);
-          }
-        } catch (e) {}
+        document.title = 'Repository Not Found — Ragetech';
+        document.getElementById('repoTitle').textContent = 'Repository Not Found';
+        document.getElementById('repoTagline').textContent = 'This repository does not exist or has been removed from the catalog.';
+        document.getElementById('markdownContent').innerHTML = '<p style="color:var(--text-muted); padding: 24px 0;">The requested whitepaper dossier has been removed or is not available in the database catalog.</p>';
+        return;
       }
-
-      // 3. Fallback to Isomorphic Offline Dataset
-      if (!project && window.RAGETECH_PROJECTS) {
-        project = window.RAGETECH_PROJECTS.find(p => p.slug === slug);
-      }
-
-      if (!project) return;
 
       // Update Document Metadata
       document.title = `${project.name} — Technical Specification | Ragetech`;

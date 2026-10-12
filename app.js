@@ -68,80 +68,33 @@
     }, 45000);
   }
 
-  // Fetch from D1 API or gracefully fallback to offline registry
+  // Fetch directly from Cloudflare D1 API (single source of truth)
   async function fetchPlatformData() {
-    // 1. Immediately hydrate from offline registry + local dynamic changes
-    let customProjects = [];
-    let customDevs = [];
-    let deletedProj = [];
-    let deletedDevs = [];
     try {
-      const storedP = localStorage.getItem('ragetech_custom_projects');
-      if (storedP) customProjects = JSON.parse(storedP);
-      const storedD = localStorage.getItem('ragetech_custom_developers');
-      if (storedD) customDevs = JSON.parse(storedD);
-      deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-      deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
-    } catch (e) {}
-
-    if (window.RAGETECH_PROJECTS && window.RAGETECH_PROJECTS.length > 0) {
-      state.projects = window.RAGETECH_PROJECTS.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
-      // Overlay custom project changes
-      customProjects.forEach(cp => {
-        if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
-        const idx = state.projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
-        if (idx >= 0) state.projects[idx] = { ...state.projects[idx], ...cp };
-        else state.projects.push(cp);
-      });
-      state.activeProjectSlug = state.projects[0]?.slug;
-    }
-
-    if (window.RAGETECH_DEVELOPERS && window.RAGETECH_DEVELOPERS.length > 0) {
-      state.developers = window.RAGETECH_DEVELOPERS.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
-      customDevs.forEach(cd => {
-        if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
-        const idx = state.developers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-        if (idx >= 0) state.developers[idx] = { ...state.developers[idx], ...cd };
-        else state.developers.push(cd);
-      });
-    }
-
-    // 2. Query Cloudflare D1 API if served via HTTP
-    if (window.location.protocol.startsWith('http')) {
-      try {
-        const res = await fetch('/api/projects');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data && json.data.length > 0) {
-            state.projects = json.data.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
-            customProjects.forEach(cp => {
-              if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
-              const idx = state.projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
-              if (idx >= 0) state.projects[idx] = { ...state.projects[idx], ...cp };
-              else state.projects.push(cp);
-            });
-            if (!state.activeProjectSlug && state.projects.length > 0) {
-              state.activeProjectSlug = state.projects[0].slug;
-            }
+      const res = await fetch('/api/projects');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          state.projects = json.data;
+          if (!state.activeProjectSlug || !state.projects.some(p => p.slug === state.activeProjectSlug)) {
+            state.activeProjectSlug = state.projects[0]?.slug || null;
           }
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.warn('Network issue fetching projects:', e);
+    }
 
-      try {
-        const res = await fetch('/api/developers');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data && json.data.length > 0) {
-            state.developers = json.data.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
-            customDevs.forEach(cd => {
-              if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
-              const idx = state.developers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-              if (idx >= 0) state.developers[idx] = { ...state.developers[idx], ...cd };
-              else state.developers.push(cd);
-            });
-          }
+    try {
+      const res = await fetch('/api/developers');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          state.developers = json.data;
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.warn('Network issue fetching developers:', e);
     }
   }
 
@@ -190,11 +143,10 @@
   function renderHeroMetrics() {
     const buildersEl = document.getElementById('metricBuilders');
     if (buildersEl) {
-      buildersEl.innerHTML = `${state.developers.length}<span>/29</span>`;
+      buildersEl.innerHTML = `${state.developers.length}<span> active</span>`;
     }
   }
 
-  // --------------------------------------------------------------------------
   // --------------------------------------------------------------------------
   // 5. Repositories Sticky Scroll Section (Tailark Dusk Features 5)
   // --------------------------------------------------------------------------
@@ -239,7 +191,8 @@
     if (!nav) return;
 
     if (!state.projects || state.projects.length === 0) {
-      if (window.RAGETECH_PROJECTS) state.projects = [...window.RAGETECH_PROJECTS];
+      nav.innerHTML = '<div style="color:var(--text-muted); font-size:0.75rem; padding: 12px;">No active repositories.</div>';
+      return;
     }
 
     nav.innerHTML = state.projects.map((p, idx) => `
@@ -259,7 +212,8 @@
     if (!container) return;
 
     if (!state.projects || state.projects.length === 0) {
-      if (window.RAGETECH_PROJECTS) state.projects = [...window.RAGETECH_PROJECTS];
+      container.innerHTML = '<div style="color:var(--text-muted); padding: 60px 24px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;">No active repositories published in database.</div>';
+      return;
     }
 
     const ICON_SVGS = {
@@ -504,6 +458,11 @@
   function renderBuildersGrid() {
     const gridEl = document.getElementById('teamCardsGrid');
     if (!gridEl) return;
+
+    if (!state.developers || state.developers.length === 0) {
+      gridEl.innerHTML = '<div style="grid-column: 1 / -1; color:var(--text-muted); padding: 60px 24px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;">No collective builders registered in platform database.</div>';
+      return;
+    }
 
     gridEl.innerHTML = state.developers.map(dev => {
       const assignedNames = (dev.assigned_projects && dev.assigned_projects.length > 0)

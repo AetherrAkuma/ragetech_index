@@ -122,46 +122,24 @@
         const pRes = await fetch('/api/projects');
         if (pRes.ok) {
           const json = await pRes.json();
-          if (json.data && json.data.length > 0) d1Projects = json.data;
+          if (Array.isArray(json.data)) d1Projects = json.data;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error fetching /api/projects:', e);
+      }
 
       try {
         const dRes = await fetch('/api/developers');
         if (dRes.ok) {
           const json = await dRes.json();
-          if (json.data && json.data.length > 0) d1Devs = json.data;
+          if (Array.isArray(json.data)) d1Devs = json.data;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error fetching /api/developers:', e);
+      }
 
-      let baseProjects = d1Projects.length > 0 ? d1Projects : (window.RAGETECH_PROJECTS || []);
-      try {
-        const deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-        baseProjects = baseProjects.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
-        const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects.forEach(cp => {
-          if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
-          const idx = baseProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
-          if (idx >= 0) baseProjects[idx] = { ...baseProjects[idx], ...cp };
-          else baseProjects.push(cp);
-        });
-      } catch (e) {}
-      projectsList = baseProjects;
-
-      let baseDevs = d1Devs.length > 0 ? d1Devs : (window.RAGETECH_DEVELOPERS || []);
-      try {
-        const deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
-        baseDevs = baseDevs.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
-        const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        customDevs.forEach(cd => {
-          if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
-          const idx = baseDevs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-          if (idx >= 0) baseDevs[idx] = { ...baseDevs[idx], ...cd };
-          else baseDevs.push(cd);
-        });
-      } catch (e) {}
-      developersList = baseDevs;
-
+      projectsList = d1Projects;
+      developersList = d1Devs;
       renderLeadProjects();
     }
 
@@ -395,23 +373,20 @@
 
       // 1. D1 API DELETE
       try {
-        await fetch(`/api/manage/projects/${proj.id || proj.slug}`, { method: 'DELETE' });
-      } catch (e) {}
-
-      // 2. Remove from LocalStorage custom projects & record tombstone
-      try {
-        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects = customProjects.filter(p => p.id !== proj.id && p.slug !== proj.slug);
-        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
-        localStorage.removeItem(`ragetech_project_${proj.slug}`);
-
-        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-        if (!deleted.includes(proj.id)) deleted.push(proj.id);
-        if (!deleted.includes(proj.slug)) deleted.push(proj.slug);
-        localStorage.setItem('ragetech_deleted_projects', JSON.stringify(deleted));
-      } catch (e) {}
+        const res = await fetch(`/api/manage/projects/${proj.id || proj.slug}`, { method: 'DELETE' });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to delete repository from database: ' + (json.message || `HTTP ${res.status}`));
+          return;
+        }
+      } catch (e) {
+        alert('Network error connecting to database API: ' + e.message);
+        return;
+      }
 
       window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', id: proj.id, slug: proj.slug });
+      projectsList = projectsList.filter(p => p.id !== proj.id && p.slug !== proj.slug);
+      renderLeadProjects();
 
       // 3. Remove from Lead's assigned projects in session if present
       if (currentLead && currentLead.assigned_projects) {

@@ -171,7 +171,7 @@
 
       let dev = null;
 
-      // 1. D1 API query (benefits from edge memory cache & ETag)
+      // 1. D1 API query
       try {
         const res = await fetch(`/api/developers/${handle}`);
         if (res.ok) {
@@ -181,23 +181,16 @@
           }
         }
       } catch (e) {
-        // Fall through
+        console.warn('Network error loading developer:', e);
       }
 
-      // 2. Check LocalStorage for custom developers
       if (!dev) {
-        try {
-          const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-          dev = customDevs.find(d => d.handle === handle || d.id === handle);
-        } catch (e) {}
+        document.title = 'Developer Not Found — Ragetech';
+        document.getElementById('devName').textContent = 'Developer Not Found';
+        document.getElementById('devRole').textContent = 'This profile does not exist in the database catalog.';
+        document.getElementById('devBio').textContent = 'The requested engineer dossier was removed or has not been registered.';
+        return;
       }
-
-      // 3. Offline dataset fallback
-      if (!dev && window.RAGETECH_DEVELOPERS) {
-        dev = window.RAGETECH_DEVELOPERS.find(d => d.handle === handle);
-      }
-
-      if (!dev) return;
 
       document.title = `${dev.name} (@${dev.handle}) — Developer Dossier | Ragetech`;
       document.getElementById('breadcrumbDevName').textContent = `@${dev.handle}`;
@@ -227,35 +220,17 @@
       const ghBtn = document.getElementById('devGithubBtn');
       if (dev.github_url) { ghBtn.href = dev.github_url; } else { ghBtn.style.display = 'none'; }
 
-      // Assigned Projects List (Query D1 + LocalStorage, filtering deleted tombstones)
+      // Assigned Projects List (Query D1 directly)
       const assignedList = document.getElementById('assignedProjectsList');
       let allProjects = [];
-      let deletedProj = [];
-      try {
-        deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-      } catch (e) {}
 
       try {
         const pRes = await fetch('/api/projects');
         if (pRes.ok) {
           const pJson = await pRes.json();
-          if (pJson.data && pJson.data.length > 0) allProjects = pJson.data;
+          if (Array.isArray(pJson.data)) allProjects = pJson.data;
         }
       } catch (e) {}
-
-      if (allProjects.length === 0 && window.RAGETECH_PROJECTS) {
-        allProjects = [...window.RAGETECH_PROJECTS];
-      }
-      try {
-        const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects.forEach(cp => {
-          const idx = allProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
-          if (idx >= 0) allProjects[idx] = { ...allProjects[idx], ...cp };
-          else allProjects.push(cp);
-        });
-      } catch (e) {}
-
-      allProjects = allProjects.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
 
       const assignedSlugs = dev.assigned_projects || [];
       const matchedProjects = allProjects.filter(p => assignedSlugs.includes(p.slug));

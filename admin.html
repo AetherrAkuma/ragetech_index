@@ -195,59 +195,33 @@
       window.location.href = 'index.html';
     }
 
-    // Dynamic Data Loader (Edge D1 + LocalStorage Parity)
+    // Dynamic Data Loader (Direct Cloudflare D1 Database)
     async function loadData() {
       let d1Projects = [];
       let d1Devs = [];
 
-      // 1. Fetch Projects from D1 Edge API if available
       try {
         const pRes = await fetch('/api/projects');
         if (pRes.ok) {
           const json = await pRes.json();
-          if (json.data && json.data.length > 0) d1Projects = json.data;
+          if (Array.isArray(json.data)) d1Projects = json.data;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error fetching /api/projects:', e);
+      }
 
-      // 2. Fetch Developers from D1 Edge API if available
       try {
         const dRes = await fetch('/api/developers');
         if (dRes.ok) {
           const json = await dRes.json();
-          if (json.data && json.data.length > 0) d1Devs = json.data;
+          if (Array.isArray(json.data)) d1Devs = json.data;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error fetching /api/developers:', e);
+      }
 
-      // 3. Merge with LocalStorage Custom Projects (filtering deleted tombstones)
-      let baseProjects = d1Projects.length > 0 ? d1Projects : (window.RAGETECH_PROJECTS || []);
-      try {
-        const deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-        baseProjects = baseProjects.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
-        const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects.forEach(cp => {
-          if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
-          const idx = baseProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
-          if (idx >= 0) baseProjects[idx] = { ...baseProjects[idx], ...cp };
-          else baseProjects.push(cp);
-        });
-      } catch (e) {}
-      projectsData = baseProjects;
-
-      // 4. Merge with LocalStorage Custom Developers (filtering deleted tombstones)
-      let baseDevs = d1Devs.length > 0 ? d1Devs : (window.RAGETECH_DEVELOPERS || []);
-      try {
-        const deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
-        baseDevs = baseDevs.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
-        const customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        customDevs.forEach(cd => {
-          if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
-          const idx = baseDevs.findIndex(d => d.handle === cd.handle || d.id === cd.id);
-          if (idx >= 0) baseDevs[idx] = { ...baseDevs[idx], ...cd };
-          else baseDevs.push(cd);
-        });
-      } catch (e) {}
-      developersData = baseDevs;
-
+      projectsData = d1Projects;
+      developersData = d1Devs;
       renderCurrentView();
     }
 
@@ -665,35 +639,26 @@
       }
     }
 
-    // Delete Project (Syncs D1 + LocalStorage)
+    // Delete Project (Direct Cloudflare D1)
     async function deleteProject(id) {
       const proj = projectsData.find(p => p.id === id || p.slug === id);
       const name = proj ? proj.name : id;
       if (!confirm(`Are you sure you want to permanently delete repository "${name}" and its whitepaper dossier? This cannot be undone.`)) return;
       
       try {
-        await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
-      } catch (e) {}
-
-      // Update LocalStorage custom projects and record tombstone
-      try {
-        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects = customProjects.filter(p => p.id !== id && p.slug !== id);
-        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
-        localStorage.removeItem(`ragetech_project_${id}`);
-
-        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
-        if (!deleted.includes(id)) deleted.push(id);
-        if (proj && proj.slug && !deleted.includes(proj.slug)) deleted.push(proj.slug);
-        if (proj && proj.id && !deleted.includes(proj.id)) deleted.push(proj.id);
-        localStorage.setItem('ragetech_deleted_projects', JSON.stringify(deleted));
-      } catch (e) {}
-
-      if (window.RAGETECH_PROJECTS) {
-        window.RAGETECH_PROJECTS = window.RAGETECH_PROJECTS.filter(p => p.id !== id && p.slug !== id);
+        const res = await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to delete repository from database: ' + (json.message || `HTTP ${res.status}`));
+          return;
+        }
+      } catch (e) {
+        alert('Network error connecting to database API: ' + e.message);
+        return;
       }
 
       projectsData = projectsData.filter(p => p.id !== id && p.slug !== id);
+      window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', id });
       renderCurrentView();
     }
 
@@ -996,80 +961,22 @@
 
       // 1. Send to Cloudflare D1
       try {
-        await fetch('/api/manage/developers', {
+        const dRes = await fetch('/api/manage/developers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-      } catch (err) {}
+        const dJson = await dRes.json().catch(() => ({}));
+        if (!dRes.ok || dJson.success === false) {
+          alert('Failed to save developer to database: ' + (dJson.message || `HTTP ${dRes.status}`));
+          return;
+        }
+      } catch (err) {
+        alert('Network error connecting to database API: ' + err.message);
+        return;
+      }
 
-      // Clean plain password before storing locally
       delete payload.password;
-
-      // 2. Persist to LocalStorage for multi-page instant parity
-      try {
-        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        const idx = customDevs.findIndex(d => d.id === payload.id || d.handle === payload.handle);
-        if (idx >= 0) {
-          customDevs[idx] = { ...customDevs[idx], ...payload };
-        } else {
-          customDevs.push(payload);
-        }
-        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-      } catch (err) {}
-
-      // 3. Update In-Memory Developers and active session
-      const devIdx = developersData.findIndex(d => d.id === payload.id || d.handle === payload.handle);
-      if (devIdx !== -1) {
-        developersData[devIdx] = { ...developersData[devIdx], ...payload };
-      } else {
-        developersData.push(payload);
-      }
-
-      if (window.RAGETECH_DEVELOPERS) {
-        const memIdx = window.RAGETECH_DEVELOPERS.findIndex(d => d.id === payload.id || d.handle === payload.handle);
-        if (memIdx >= 0) window.RAGETECH_DEVELOPERS[memIdx] = { ...window.RAGETECH_DEVELOPERS[memIdx], ...payload };
-        else window.RAGETECH_DEVELOPERS.push(payload);
-      }
-
-      // If updating currently logged in admin session, keep session in sync
-      try {
-        const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || 'null');
-        if (savedSession && savedSession.user && (savedSession.user.id === payload.id || savedSession.user.handle === payload.handle)) {
-          savedSession.user = { ...savedSession.user, ...payload };
-          localStorage.setItem('ragetech_session', JSON.stringify(savedSession));
-          if (document.getElementById('adminName')) document.getElementById('adminName').textContent = payload.name;
-          if (payload.avatar_url && document.getElementById('adminAvatar')) document.getElementById('adminAvatar').src = payload.avatar_url;
-        }
-      } catch (e) {}
-
-      // 4. Update Projects Maintainers List Dynamically
-      projectsData.forEach(p => {
-        let handles = p.assignees || p.maintainer_handles || [];
-        if (assigned_projects.includes(p.slug)) {
-          if (!handles.includes(payload.handle)) handles.push(payload.handle);
-        } else {
-          handles = handles.filter(h => h !== payload.handle);
-        }
-        p.assignees = handles;
-        p.maintainer_handles = handles;
-      });
-
-      // Update LocalStorage Projects maintainers
-      try {
-        let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
-        customProjects.forEach(cp => {
-          let handles = cp.assignees || cp.maintainer_handles || [];
-          if (assigned_projects.includes(cp.slug)) {
-            if (!handles.includes(payload.handle)) handles.push(payload.handle);
-          } else {
-            handles = handles.filter(h => h !== payload.handle);
-          }
-          cp.assignees = handles;
-          cp.maintainer_handles = handles;
-        });
-        localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
-      } catch (e) {}
 
       if (passVal) {
         try {
@@ -1188,35 +1095,25 @@
       }
     }
 
-    // Delete Developer (Cloudflare D1 + LocalStorage Sync)
+    // Delete Developer (Direct Cloudflare D1)
     async function deleteDeveloper(id) {
       const dev = developersData.find(d => d.id === id || d.handle === id);
       const name = dev ? `${dev.name} (@${dev.handle})` : id;
       if (!confirm(`Are you sure you want to permanently remove ${name} from the collective? This cannot be undone.`)) return;
       
       try {
-        await fetch(`/api/manage/developers/${id}`, { method: 'DELETE' });
-      } catch (e) {}
-
-      // Update LocalStorage custom developers and record tombstone
-      try {
-        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
-        customDevs = customDevs.filter(d => d.id !== id && d.handle !== id);
-        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
-
-        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
-        if (!deleted.includes(id)) deleted.push(id);
-        if (dev && dev.handle && !deleted.includes(dev.handle)) deleted.push(dev.handle);
-        if (dev && dev.id && !deleted.includes(dev.id)) deleted.push(dev.id);
-        localStorage.setItem('ragetech_deleted_developers', JSON.stringify(deleted));
-      } catch (e) {}
-
-      if (window.RAGETECH_DEVELOPERS) {
-        window.RAGETECH_DEVELOPERS = window.RAGETECH_DEVELOPERS.filter(d => d.id !== id && d.handle !== id);
+        const res = await fetch(`/api/manage/developers/${id}`, { method: 'DELETE' });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to remove developer from database: ' + (json.message || `HTTP ${res.status}`));
+          return;
+        }
+      } catch (e) {
+        alert('Network error connecting to database API: ' + e.message);
+        return;
       }
 
       window.RagetechSync?.broadcast({ type: 'DEVELOPER_DELETED', id, handle: dev ? dev.handle : id });
-
       developersData = developersData.filter(d => d.id !== id && d.handle !== id);
       renderCurrentView();
     }
