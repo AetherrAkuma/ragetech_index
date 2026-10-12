@@ -514,7 +514,7 @@ export default {
 
           // Record audit log with deduplication and write throttling
           await recordAuditLog(env, {
-            actor_handle: body.created_by || 'admin',
+            actor_handle: body.actor_handle || body.created_by || (request.headers.get('x-actor-handle') || 'admin'),
             action: existing ? 'PROJECT_UPDATE' : 'PROJECT_CREATE',
             target_type: 'project',
             target_id: existing ? existing.id : targetId,
@@ -667,7 +667,7 @@ export default {
           }
 
           await recordAuditLog(env, {
-            actor_handle: 'admin',
+            actor_handle: body.actor_handle || body.created_by || (request.headers.get('x-actor-handle') || 'admin'),
             action: existing ? 'DEVELOPER_UPDATE' : 'DEVELOPER_CREATE',
             target_type: 'developer',
             target_id: devId,

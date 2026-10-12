@@ -1050,10 +1050,223 @@
       }
     }
 
+    // Global Audit State
+    let allAuditLogs = [];
+    let currentAuditSearch = '';
+    let currentAuditEventFilter = 'ALL';
+
+    // Helper: Resolve Actor Full Name, Handle & Avatar
+    function getActorInfo(rawActor) {
+      const actorStr = String(rawActor || 'system').trim();
+      const clean = actorStr.replace(/^@/, '').toLowerCase();
+
+      // 1. Direct match in developersData
+      const match = developersData.find(d => 
+        (d.handle && d.handle.toLowerCase() === clean) ||
+        (d.id && d.id.toLowerCase() === clean) ||
+        (d.name && d.name.toLowerCase() === clean)
+      );
+      if (match) {
+        return {
+          fullName: match.name,
+          handle: match.handle,
+          avatar: match.avatar_url
+        };
+      }
+
+      // 2. Check current logged-in admin user
+      if (currentAdminUser) {
+        if ((currentAdminUser.handle && currentAdminUser.handle.toLowerCase() === clean) ||
+            (currentAdminUser.id && currentAdminUser.id.toLowerCase() === clean)) {
+          return {
+            fullName: currentAdminUser.name,
+            handle: currentAdminUser.handle,
+            avatar: currentAdminUser.avatar_url
+          };
+        }
+      }
+
+      // 3. Fallback for 'admin'
+      if (clean === 'admin') {
+        if (currentAdminUser && currentAdminUser.name) {
+          return {
+            fullName: currentAdminUser.name,
+            handle: currentAdminUser.handle || 'admin',
+            avatar: currentAdminUser.avatar_url
+          };
+        }
+        const adminDev = developersData.find(d => d.account_role === 'admin');
+        if (adminDev) {
+          return {
+            fullName: adminDev.name,
+            handle: adminDev.handle,
+            avatar: adminDev.avatar_url
+          };
+        }
+        return { fullName: 'Administrator', handle: 'admin', avatar: '' };
+      }
+
+      if (clean === 'system') {
+        return { fullName: 'Automated System', handle: 'system', avatar: '' };
+      }
+
+      // 4. Default: Capitalize handle
+      const formatted = clean.charAt(0).toUpperCase() + clean.slice(1);
+      return { fullName: formatted, handle: clean, avatar: '' };
+    }
+
+    // Helper: Map Raw Event Codes to Clear, Friendly Labels & Badges
+    function getEventDisplay(action) {
+      const code = (action || 'EVENT').toUpperCase();
+      const defs = {
+        'PROJECT_CREATE': { label: 'Project Created', color: '#10b981', border: 'rgba(16, 185, 129, 0.3)', bg: 'rgba(16, 185, 129, 0.1)', icon: '✨' },
+        'PROJECT_UPDATE': { label: 'Project Updated', color: '#06b6d4', border: 'rgba(6, 182, 212, 0.3)', bg: 'rgba(6, 182, 212, 0.1)', icon: '📝' },
+        'PROJECT_DELETE': { label: 'Project Deleted', color: '#f87171', border: 'rgba(239, 68, 68, 0.3)', bg: 'rgba(239, 68, 68, 0.1)', icon: '🗑️' },
+        'DEVELOPER_CREATE': { label: 'Developer Added', color: '#10b981', border: 'rgba(16, 185, 129, 0.3)', bg: 'rgba(16, 185, 129, 0.1)', icon: '👤' },
+        'DEVELOPER_UPDATE': { label: 'Profile Updated', color: '#06b6d4', border: 'rgba(6, 182, 212, 0.3)', bg: 'rgba(6, 182, 212, 0.1)', icon: '⚙️' },
+        'DEVELOPER_DELETE': { label: 'Developer Removed', color: '#f87171', border: 'rgba(239, 68, 68, 0.3)', bg: 'rgba(239, 68, 68, 0.1)', icon: '🚫' },
+        'PASSWORD_CHANGE': { label: 'Access Key Changed', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)', bg: 'rgba(245, 158, 11, 0.1)', icon: '🔑' },
+        'LOGIN': { label: 'Admin Signed In', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.3)', bg: 'rgba(139, 92, 246, 0.1)', icon: '🔓' },
+        'AUTH_LOGIN': { label: 'Admin Signed In', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.3)', bg: 'rgba(139, 92, 246, 0.1)', icon: '🔓' },
+        'D1 SYNC': { label: 'Cloudflare Sync', color: '#34d399', border: 'rgba(52, 211, 153, 0.3)', bg: 'rgba(52, 211, 153, 0.1)', icon: '⚡' },
+        'SECURITY': { label: 'Security Override', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)', bg: 'rgba(245, 158, 11, 0.1)', icon: '🛡️' }
+      };
+      if (defs[code]) return defs[code];
+      const pretty = code.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+      return { label: pretty, color: '#38bdf8', border: 'rgba(56, 189, 248, 0.3)', bg: 'rgba(56, 189, 248, 0.1)', icon: '📋' };
+    }
+
+    // Helper: Resolve Target to Clear Human-Readable Titles
+    function getTargetDisplay(log) {
+      const tId = (log.target_id || '').trim();
+      const tType = (log.target_type || '').toLowerCase();
+      const details = log.details || '';
+
+      // Check Developer match
+      if (tType === 'developer' || tId.startsWith('dev-')) {
+        const dev = developersData.find(d => 
+          d.id === tId || 
+          (d.handle && d.handle.toLowerCase() === tId.toLowerCase())
+        );
+        if (dev) {
+          return {
+            category: 'Developer',
+            title: dev.name,
+            meta: `@${dev.handle}`
+          };
+        }
+        const handleMatch = details.match(/@([a-zA-Z0-9_-]+)/);
+        if (handleMatch) {
+          const h = handleMatch[1].toLowerCase();
+          const devByH = developersData.find(d => d.handle && d.handle.toLowerCase() === h);
+          if (devByH) {
+            return {
+              category: 'Developer',
+              title: devByH.name,
+              meta: `@${devByH.handle}`
+            };
+          }
+          return {
+            category: 'Developer',
+            title: handleMatch[1],
+            meta: `@${handleMatch[1]}`
+          };
+        }
+      }
+
+      // Check Project match
+      if (tType === 'project' || tId.startsWith('proj-') || tId.startsWith('p-')) {
+        const proj = projectsData.find(p => 
+          p.id === tId || 
+          p.slug === tId || 
+          (p.slug && tId.includes(p.slug))
+        );
+        if (proj) {
+          return {
+            category: 'Repository',
+            title: proj.name,
+            meta: proj.slug
+          };
+        }
+        const repoMatch = details.match(/Repository\s+([^(]+)\s*\(([^)]+)\)/i) || details.match(/Project\s+([^\s]+)/i);
+        if (repoMatch) {
+          return {
+            category: 'Repository',
+            title: repoMatch[1].trim(),
+            meta: repoMatch[2] ? repoMatch[2].trim() : ''
+          };
+        }
+      }
+
+      // System / Generic
+      if (!tId || tId === '-' || tId === 'system' || tType === 'system') {
+        return {
+          category: 'System',
+          title: 'Platform System',
+          meta: 'Global Service'
+        };
+      }
+
+      return {
+        category: tType ? (tType.charAt(0).toUpperCase() + tType.slice(1)) : 'Resource',
+        title: tId,
+        meta: ''
+      };
+    }
+
+    // Helper: Plain-English, Natural Activity Description
+    function getFriendlyDescription(log, actor, target) {
+      const act = (log.action || '').toUpperCase();
+      const det = log.details || '';
+
+      if (act === 'LOGIN' || act === 'AUTH_LOGIN') {
+        return `Signed in to administrative dashboard session.`;
+      }
+      if (act === 'PROJECT_CREATE') {
+        return `Published new repository showcase for ${target.title}.`;
+      }
+      if (act === 'PROJECT_UPDATE') {
+        return `Updated showcase configuration and repository details for ${target.title}.`;
+      }
+      if (act === 'PROJECT_DELETE') {
+        return `Deleted repository ${target.title} and cleared maintainer assignments.`;
+      }
+      if (act === 'DEVELOPER_CREATE') {
+        return `Added ${target.title} to team directory with public dossier.`;
+      }
+      if (act === 'DEVELOPER_UPDATE') {
+        return `Updated bio, job title, and project assignments for ${target.title}.`;
+      }
+      if (act === 'DEVELOPER_DELETE') {
+        return `Removed ${target.title} from team directory and revoked access key.`;
+      }
+      if (act === 'PASSWORD_CHANGE') {
+        return `Updated and secured SHA-256 access key for ${target.title}.`;
+      }
+      if (act === 'D1 SYNC') {
+        return `Synchronized platform records across Cloudflare D1 distributed edge.`;
+      }
+      if (act === 'SECURITY') {
+        return `Updated master security credentials or permissions.`;
+      }
+
+      if (det) {
+        return det.replace(/saved to D1 database/gi, 'saved successfully')
+                  .replace(/saved to D1/gi, 'saved successfully')
+                  .replace(/hashed via SHA-256/gi, 'secured with SHA-256')
+                  .replace(/from D1/gi, 'from database');
+      }
+
+      return 'Administrative event logged successfully.';
+    }
+
     // Dynamic Activity & Database Audit Logger (Direct D1 Query)
     async function renderAuditView() {
       const main = document.getElementById('dashMain');
       if (!main) return;
+
+      currentAuditSearch = '';
+      currentAuditEventFilter = 'ALL';
 
       main.innerHTML = `
         <div class="dash-header-row">
@@ -1079,15 +1292,36 @@
           <span class="stack-pill" style="color: #10b981; border-color: rgba(16,185,129,0.3); font-size: 0.7rem; font-weight: 700;">WRITE-CONSERVING MODE</span>
         </div>
 
+        <!-- Search and Filter Toolbar -->
+        <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap;">
+          <div style="position: relative; flex: 1; min-width: 260px; max-width: 480px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="auditSearchInput" class="form-input" style="padding-left: 36px; padding-right: 32px; font-size: 0.84rem; height: 38px;" placeholder="Search logs by actor, event, target, or details..." oninput="handleAuditSearch(this.value)">
+            <button type="button" id="clearAuditSearchBtn" onclick="clearAuditSearch()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Clear search">✕</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="auditCountBadge" style="font-size: 0.78rem; color: var(--text-muted);">Loading logs...</span>
+            <select id="auditEventFilter" class="form-select" style="font-size: 0.8rem; height: 38px; width: auto; padding: 6px 28px 6px 12px;" onchange="handleAuditEventFilter(this.value)">
+              <option value="ALL">All Events</option>
+              <option value="PROJECT">Projects</option>
+              <option value="DEVELOPER">Developers</option>
+              <option value="PASSWORD_CHANGE">Key Pass Changes</option>
+              <option value="LOGIN">Sign-Ins</option>
+            </select>
+          </div>
+        </div>
+
         <div class="data-table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Timestamp (UTC)</th>
-                <th>Event</th>
-                <th>Actor</th>
-                <th>Target</th>
-                <th>Description</th>
+                <th style="min-width: 140px;">Timestamp (UTC)</th>
+                <th style="min-width: 140px;">Event</th>
+                <th style="min-width: 170px;">Actor (User)</th>
+                <th style="min-width: 160px;">Target</th>
+                <th style="min-width: 250px;">Description</th>
               </tr>
             </thead>
             <tbody id="auditTableBody">
@@ -1102,43 +1336,149 @@
       try {
         const res = await fetch('/api/manage/audit');
         const json = await res.json();
-        const logs = (json.success && Array.isArray(json.data)) ? json.data : [];
-        const tbody = document.getElementById('auditTableBody');
-        if (!tbody) return;
-
-        if (logs.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">No activity logged yet. Platform events will appear here in real time.</td></tr>`;
-          return;
-        }
-
-        const BADGE_COLORS = {
-          'PROJECT_CREATE': '#10b981',
-          'PROJECT_UPDATE': '#06b6d4',
-          'PROJECT_DELETE': '#f87171',
-          'DEVELOPER_CREATE': '#10b981',
-          'DEVELOPER_UPDATE': '#06b6d4',
-          'DEVELOPER_DELETE': '#f87171',
-          'AUTH_LOGIN': '#8b5cf6',
-          'D1 SYNC': '#34d399',
-          'SECURITY': '#f59e0b'
-        };
-
-        tbody.innerHTML = logs.map(l => {
-          const color = BADGE_COLORS[l.action] || '#06b6d4';
-          return `
-            <tr>
-              <td><code>${(l.timestamp || '').replace('T', ' ').slice(0, 19)}</code></td>
-              <td><span class="stack-pill" style="color: ${color}; border-color: ${color}40; font-size: 0.72rem; font-weight: 700;">${l.action || 'EVENT'}</span></td>
-              <td><span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">@${l.actor_handle || 'system'}</span></td>
-              <td><span style="font-family: var(--font-mono); font-size: 0.8rem;">${l.target_id || l.target_type || '-'}</span></td>
-              <td style="color: #d4d4d8; font-size: 0.84rem;">${l.details || ''}</td>
-            </tr>
-          `;
-        }).join('');
+        allAuditLogs = (json.success && Array.isArray(json.data)) ? json.data : [];
+        filterAndRenderAuditLogs();
       } catch (err) {
         const tbody = document.getElementById('auditTableBody');
         if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171; padding: 24px;">Failed to fetch audit logs: ${err.message}</td></tr>`;
       }
+    }
+
+    function handleAuditSearch(val) {
+      currentAuditSearch = (val || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('clearAuditSearchBtn');
+      if (clearBtn) clearBtn.style.display = currentAuditSearch ? 'block' : 'none';
+      filterAndRenderAuditLogs();
+    }
+
+    function clearAuditSearch() {
+      const input = document.getElementById('auditSearchInput');
+      if (input) input.value = '';
+      currentAuditSearch = '';
+      const clearBtn = document.getElementById('clearAuditSearchBtn');
+      if (clearBtn) clearBtn.style.display = 'none';
+      filterAndRenderAuditLogs();
+    }
+
+    function handleAuditEventFilter(filterVal) {
+      currentAuditEventFilter = filterVal || 'ALL';
+      filterAndRenderAuditLogs();
+    }
+
+    function filterAndRenderAuditLogs() {
+      const tbody = document.getElementById('auditTableBody');
+      const countBadge = document.getElementById('auditCountBadge');
+      if (!tbody) return;
+
+      if (!allAuditLogs || allAuditLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">No activity logged yet. Platform events will appear here in real time.</td></tr>`;
+        if (countBadge) countBadge.textContent = '0 events';
+        return;
+      }
+
+      // Pre-compute resolved metadata for each log item
+      const enrichedLogs = allAuditLogs.map(l => {
+        const actor = getActorInfo(l.actor_handle);
+        const eventDisplay = getEventDisplay(l.action);
+        const target = getTargetDisplay(l);
+        const description = getFriendlyDescription(l, actor, target);
+        const formattedDate = (l.timestamp || '').replace('T', ' ').slice(0, 19);
+        return {
+          raw: l,
+          actor,
+          eventDisplay,
+          target,
+          description,
+          formattedDate
+        };
+      });
+
+      // Filter by Event dropdown
+      let filtered = enrichedLogs;
+      if (currentAuditEventFilter !== 'ALL') {
+        filtered = filtered.filter(item => {
+          const act = (item.raw.action || '').toUpperCase();
+          if (currentAuditEventFilter === 'PROJECT') return act.startsWith('PROJECT_');
+          if (currentAuditEventFilter === 'DEVELOPER') return act.startsWith('DEVELOPER_');
+          if (currentAuditEventFilter === 'PASSWORD_CHANGE') return act === 'PASSWORD_CHANGE';
+          if (currentAuditEventFilter === 'LOGIN') return act === 'LOGIN' || act === 'AUTH_LOGIN';
+          return true;
+        });
+      }
+
+      // Filter by Search Query
+      if (currentAuditSearch) {
+        const q = currentAuditSearch;
+        filtered = filtered.filter(item => {
+          return item.formattedDate.toLowerCase().includes(q) ||
+                 item.eventDisplay.label.toLowerCase().includes(q) ||
+                 item.actor.fullName.toLowerCase().includes(q) ||
+                 item.actor.handle.toLowerCase().includes(q) ||
+                 item.target.title.toLowerCase().includes(q) ||
+                 (item.target.meta && item.target.meta.toLowerCase().includes(q)) ||
+                 item.target.category.toLowerCase().includes(q) ||
+                 item.description.toLowerCase().includes(q) ||
+                 (item.raw.target_id && item.raw.target_id.toLowerCase().includes(q));
+        });
+      }
+
+      // Update count badge
+      if (countBadge) {
+        if (currentAuditSearch || currentAuditEventFilter !== 'ALL') {
+          countBadge.textContent = `Showing ${filtered.length} of ${allAuditLogs.length} events`;
+        } else {
+          countBadge.textContent = `${allAuditLogs.length} events logged`;
+        }
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 36px 16px;">
+              <div style="font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">No logs match your search</div>
+              <div style="font-size: 0.82rem; margin-bottom: 12px;">Try adjusting your search terms or filter selection.</div>
+              <button class="btn-secondary" onclick="clearAuditSearch()" style="font-size: 0.76rem; padding: 5px 12px;">Clear Search</button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        return `
+          <tr>
+            <td>
+              <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap;">${item.formattedDate}</div>
+            </td>
+            <td>
+              <span class="stack-pill" style="color: ${item.eventDisplay.color}; border-color: ${item.eventDisplay.border || item.eventDisplay.color + '40'}; background: ${item.eventDisplay.bg || item.eventDisplay.color + '12'}; font-size: 0.72rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+                <span>${item.eventDisplay.icon || '●'}</span>
+                <span>${item.eventDisplay.label}</span>
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                ${item.actor.avatar ? `
+                  <img src="${item.actor.avatar}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle); flex-shrink: 0;" alt="${item.actor.fullName}" onerror="this.style.display='none'">
+                ` : ''}
+                <div>
+                  <div style="font-weight: 700; font-size: 0.86rem; color: var(--text-primary); white-space: nowrap;">${item.actor.fullName}</div>
+                  <div style="font-family: var(--font-mono); font-size: 0.70rem; color: var(--accent-cyan);">@${item.actor.handle}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div>
+                <div style="font-weight: 700; font-size: 0.86rem; color: var(--text-primary);">${item.target.title}</div>
+                <div style="font-size: 0.70rem; color: var(--text-muted);">${item.target.category}${item.target.meta ? ` • ${item.target.meta}` : ''}</div>
+              </div>
+            </td>
+            <td>
+              <div style="color: #d4d4d8; font-size: 0.84rem; line-height: 1.45;">${item.description}</div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     async function handleClearAuditLogs() {
