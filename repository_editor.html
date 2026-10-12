@@ -1618,16 +1618,16 @@ Existing alternatives required significant hardware resources and heavy runtimes
         maintainer_handles: Array.from(selectedMaintainers)
       };
 
-      // If user is a lead or creator, ensure they are in assignees
-      if (currentSessionUser && !payload.assignees.includes(currentSessionUser.handle)) {
+      // If user is a LEAD creating the repo, ensure the lead is included in assignees
+      if (currentSessionUser && currentSessionUser.account_role === 'lead' && !payload.assignees.includes(currentSessionUser.handle)) {
         if (!currentProject || currentProject.created_by === currentSessionUser.handle) {
           payload.assignees.push(currentSessionUser.handle);
           payload.maintainer_handles.push(currentSessionUser.handle);
         }
       }
 
-      // Sync user's assigned_projects list in session
-      if (currentSessionUser) {
+      // Sync lead's assigned_projects list in session if assigned
+      if (currentSessionUser && currentSessionUser.account_role === 'lead' && payload.assignees.includes(currentSessionUser.handle)) {
         if (!currentSessionUser.assigned_projects) currentSessionUser.assigned_projects = [];
         if (!currentSessionUser.assigned_projects.includes(slug)) {
           currentSessionUser.assigned_projects.push(slug);
@@ -1791,9 +1791,15 @@ Existing alternatives required significant hardware resources and heavy runtimes
           return;
         }
 
-        // Lead or Admin: Initialize default blueprint and assign creator
+        // Initialize default blueprint
         insertSystemsRfcBlueprint();
-        selectedMaintainers.add(currentSessionUser.handle);
+
+        // If Lead is creating: automatically assign the lead as maintainer
+        if (userRole === 'lead') {
+          selectedMaintainers.add(currentSessionUser.handle);
+        }
+        // If Admin is creating: do not automatically assign admin; maintainers start clean for custom assignment
+
         renderMaintainersPicker();
         onDataChange();
         return;
