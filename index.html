@@ -16,7 +16,194 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=20261012-mobile">
+  <link rel="stylesheet" href="styles.css?v=20261012-v3">
+  <style>
+    /* Scoped Tailark FAQs-1 Dusk Accordion */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.35fr;
+      gap: 56px;
+      align-items: flex-start;
+    }
+    .faq-intro-col {
+      position: sticky;
+      top: 96px;
+    }
+    .faq-heading {
+      font-size: clamp(2rem, 3.8vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin: 12px 0 16px;
+      text-wrap: balance;
+    }
+    .faq-subtext {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 28px;
+    }
+    .faq-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .faq-accordion-col {
+      width: 100%;
+    }
+    .faq-accordion {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .faq-item {
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+      transition: border-color 0.2s ease;
+    }
+    .faq-item:first-child {
+      border-top: 1px dashed rgba(255, 255, 255, 0.12);
+    }
+    .faq-item:hover {
+      border-bottom-color: rgba(255, 255, 255, 0.25);
+    }
+    .faq-item.is-open {
+      border-bottom-color: rgba(6, 182, 212, 0.45);
+    }
+    .faq-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 4px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: color 0.15s ease;
+      user-select: none;
+    }
+    .faq-trigger:hover {
+      color: var(--accent-cyan);
+    }
+    .faq-trigger:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 4px;
+      border-radius: var(--radius-sm);
+    }
+    .faq-question-text {
+      font-size: 1.08rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.4;
+      color: inherit;
+    }
+    .faq-chevron {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+    }
+    .faq-item.is-open .faq-chevron {
+      transform: rotate(180deg);
+      color: var(--accent-cyan);
+    }
+    .faq-collapse {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .faq-item.is-open .faq-collapse {
+      grid-template-rows: 1fr;
+    }
+    .faq-content {
+      min-height: 0;
+      overflow: hidden;
+    }
+    .faq-content p {
+      padding: 0 4px 22px;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .faq-content code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--accent-cyan);
+    }
+    .faq-support-text {
+      margin-top: 28px;
+      padding: 0 4px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .faq-support-link {
+      color: var(--text-primary);
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.15s ease;
+    }
+    .faq-support-link:hover {
+      color: var(--accent-cyan);
+    }
+    .faq-support-action {
+      display: inline-block;
+      color: var(--accent-cyan);
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+    }
+    .faq-support-action:hover {
+      color: #fff;
+    }
+    @media (max-width: 900px) {
+      .faq-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+      .faq-intro-col {
+        position: static;
+      }
+      .faq-heading {
+        font-size: 2rem;
+      }
+      .faq-actions-row {
+        width: 100%;
+      }
+      .faq-actions-row .btn-primary,
+      .faq-actions-row .btn-secondary {
+        flex: 1 1 200px;
+        justify-content: center;
+      }
+    }
+    @media (max-width: 600px) {
+      .faq-trigger {
+        padding: 18px 2px;
+      }
+      .faq-question-text {
+        font-size: 1rem;
+      }
+      .faq-content p {
+        font-size: 0.94rem;
+        padding-bottom: 18px;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -176,94 +363,96 @@
     <!-- ======================================================================
          5. Frequently Asked Questions (Tailark FAQs-1 Dusk Architecture)
          ====================================================================== -->
-    <section id="faqs" class="app-container faq-section">
+    <!-- ======================================================================
+         5. Frequently Asked Questions (Tailark FAQs-1 Dusk Architecture)
+         ====================================================================== -->
+    <section id="faqs" class="app-container faq-section" style="padding: 80px 0 40px;">
       <span id="manifesto" style="display: block; position: relative; top: -70px; visibility: hidden;"></span>
-      <div class="faq-container">
-        <div class="faq-grid">
-          <!-- Left Column: Section Title & Mission Context -->
-          <div class="faq-intro-col">
-            <span class="section-tag" style="display: block; margin-bottom: 12px;">// CENTRAL REPOSITORY HUB</span>
-            <h2 class="faq-heading">Frequently Asked Questions</h2>
-            <p class="faq-subtext">
-              Ragetech serves as a centralized directory indexing academic theses, intelligent systems, and open engineering projects built for societal and international impact.
-            </p>
-            <div class="faq-actions-row">
-              <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                </svg>
-                <span>Fork on GitHub</span>
-              </a>
-              <button class="btn-secondary" onclick="window.RagetechApp.openCommandPalette()">
-                <span>Search System (⌘K)</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Right Column: Accordion Group (Tailark Dusk border-dashed style) -->
-          <div class="faq-accordion-col">
-            <div class="faq-accordion" role="region" aria-label="Frequently Asked Questions Accordion">
-
-              <!-- Item 1 (Open by default) -->
-              <div class="faq-item is-open" data-faq-id="faq-1">
-                <button type="button" class="faq-trigger" aria-expanded="true" aria-controls="faq-ans-1" id="faq-q-1">
-                  <span class="faq-question-text">What is Ragetech?</span>
-                  <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
+      <div class="spotlight-card" style="padding: 48px; border-radius: var(--radius-xl);">
+        <div class="spotlight-card-content">
+          <div class="faq-grid">
+            <!-- Left Column: Section Title & Mission Context -->
+            <div class="faq-intro-col">
+              <span class="section-tag" style="display: block; margin-bottom: 12px;">// CENTRAL REPOSITORY HUB</span>
+              <h2 class="faq-heading">Frequently Asked Questions</h2>
+              <p class="faq-subtext">
+                Ragetech serves as a centralized directory indexing academic theses, intelligent systems, and open engineering projects built for societal and international impact.
+              </p>
+              <div class="faq-actions-row">
+                <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="btn-primary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
                   </svg>
+                  <span>Fork on GitHub</span>
+                </a>
+                <button class="btn-secondary" onclick="window.RagetechApp.openCommandPalette()">
+                  <span>Search System (⌘K)</span>
                 </button>
-                <div class="faq-collapse" id="faq-ans-1" role="region" aria-labelledby="faq-q-1">
-                  <div class="faq-content">
-                    <p>
-                      <strong>Ragetech</strong> (<code>ragetech.dev</code>) is the primary hub and centralized directory for curated academic theses, research initiatives, and software engineering projects. It provides developers, students, and organizations with a unified portal to explore architectural blueprints, live systems, and verifiable codebases.
-                    </p>
-                  </div>
-                </div>
               </div>
-
-              <!-- Item 2 -->
-              <div class="faq-item" data-faq-id="faq-2">
-                <button type="button" class="faq-trigger" aria-expanded="false" aria-controls="faq-ans-2" id="faq-q-2">
-                  <span class="faq-question-text">What projects do you cover?</span>
-                  <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-                <div class="faq-collapse" id="faq-ans-2" role="region" aria-labelledby="faq-q-2">
-                  <div class="faq-content">
-                    <p>
-                      Our directory features cutting-edge initiatives across <strong>Artificial Intelligence</strong> (semantic vector retrieval and cross-encoder models), <strong>Computer Vision</strong>, and intelligent <strong>Enterprise Management</strong> platforms. Each system is engineered to solve tangible real-world problems—primarily empowering the Filipino community and public institutions (including accessibility systems for PWDs), while offering scalable utility for international developers and users.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Item 3 -->
-              <div class="faq-item" data-faq-id="faq-3">
-                <button type="button" class="faq-trigger" aria-expanded="false" aria-controls="faq-ans-3" id="faq-q-3">
-                  <span class="faq-question-text">Can I contribute?</span>
-                  <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-                <div class="faq-collapse" id="faq-ans-3" role="region" aria-labelledby="faq-q-3">
-                  <div class="faq-content">
-                    <p>
-                      Yes! Open collaboration is warmly welcomed across all repositories. You can inspect any project in the showcase, propose enhancements or report bugs, and submit a Pull Request on GitHub. Once your PR is reviewed and accepted by the maintaining developers, your contributions will be merged into the project and attributed to your builder profile.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
             </div>
 
-            <!-- Tailark FAQs-1 Support Note Footer -->
-            <p class="faq-support-text">
-              Have questions or want to submit a new thesis or project? Connect with our{' '}
-              <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="faq-support-link">engineering collective on GitHub</a>
-              {' '}or launch the{' '}
-              <button type="button" class="faq-support-action" onclick="window.RagetechApp.openCommandPalette()">Search Palette (⌘K)</button>.
-            </p>
+            <!-- Right Column: Accordion Group (Tailark Dusk border-dashed style) -->
+            <div class="faq-accordion-col">
+              <div class="faq-accordion" role="region" aria-label="Frequently Asked Questions Accordion">
+
+                <!-- Item 1 (Open by default) -->
+                <div class="faq-item is-open" data-faq-id="faq-1">
+                  <button type="button" class="faq-trigger" aria-expanded="true" aria-controls="faq-ans-1" id="faq-q-1">
+                    <span class="faq-question-text">What is Ragetech?</span>
+                    <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  <div class="faq-collapse" id="faq-ans-1" role="region" aria-labelledby="faq-q-1">
+                    <div class="faq-content">
+                      <p>
+                        <strong>Ragetech</strong> (<code>ragetech.dev</code>) is the primary hub and centralized directory for curated academic theses, research initiatives, and software engineering projects. It provides developers, students, and organizations with a unified portal to explore architectural blueprints, live systems, and verifiable codebases.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="faq-item" data-faq-id="faq-2">
+                  <button type="button" class="faq-trigger" aria-expanded="false" aria-controls="faq-ans-2" id="faq-q-2">
+                    <span class="faq-question-text">What projects do you cover?</span>
+                    <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  <div class="faq-collapse" id="faq-ans-2" role="region" aria-labelledby="faq-q-2">
+                    <div class="faq-content">
+                      <p>
+                        Our directory features cutting-edge initiatives across <strong>Artificial Intelligence</strong> (semantic vector retrieval and cross-encoder models), <strong>Computer Vision</strong>, and intelligent <strong>Enterprise Management</strong> platforms. Each system is engineered to solve tangible real-world problems—primarily empowering the Filipino community and public institutions (including accessibility systems for PWDs), while offering scalable utility for international developers and users.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="faq-item" data-faq-id="faq-3">
+                  <button type="button" class="faq-trigger" aria-expanded="false" aria-controls="faq-ans-3" id="faq-q-3">
+                    <span class="faq-question-text">Can I contribute?</span>
+                    <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  <div class="faq-collapse" id="faq-ans-3" role="region" aria-labelledby="faq-q-3">
+                    <div class="faq-content">
+                      <p>
+                        Yes! Open collaboration is warmly welcomed across all repositories. You can inspect any project in the showcase, propose enhancements or report bugs, and submit a Pull Request on GitHub. Once your PR is reviewed and accepted by the maintaining developers, your contributions will be merged into the project and attributed to your builder profile.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Tailark FAQs-1 Support Note Footer -->
+              <p class="faq-support-text">
+                Have questions or want to submit a new thesis or project? Connect with our <a href="https://github.com/ragetech" target="_blank" rel="noreferrer" class="faq-support-link">engineering collective on GitHub</a> or launch the <button type="button" class="faq-support-action" onclick="window.RagetechApp.openCommandPalette()">Search Palette (⌘K)</button>.
+              </p>
+            </div>
           </div>
         </div>
       </div>
