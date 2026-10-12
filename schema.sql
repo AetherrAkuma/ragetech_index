@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS developers (
   email TEXT UNIQUE,
   password_hash TEXT,
   role TEXT NOT NULL,
+  account_role TEXT NOT NULL DEFAULT 'developer',
   squad TEXT NOT NULL DEFAULT 'systems',
   bio TEXT,
   avatar_url TEXT,
