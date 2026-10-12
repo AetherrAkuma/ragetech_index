@@ -42,12 +42,16 @@ A human-crafted, sovereign edge platform and engineering collective website buil
 7. **Global Command Palette (`Cmd + K` / `Ctrl + K`)**:
    * Instant search overlay across all 6 repositories, 29 builders, and quick actions with keyboard navigation (`↑`, `↓`, `Enter`, `Esc`).
 
-8. **Dynamic RBAC Management Studio**:
-   * Role-based access control with roles: `admin`, `lead`, `developer`.
-   * In-app drawer interface with tabs for **Repositories**, **Builders**, and **Audit Log**.
-   * In-place CRUD operations directly persisted to Cloudflare D1.
+8. **Dedicated Role Dashboards & Portals**:
+   * **Admin Console (`admin.html`)**: Complete CRUD portal for administrators (`reymartchua@ragetech.dev`). Allows adding/modifying/deleting repositories, links, builders, assignments, and inspecting audit trails.
+   * **Project Lead Portal (`lead.html`)**: Tailored workspace for project leads to govern assigned blueprints, update live website links, manage whitepaper specifications, and organize maintainer teams.
+   * **Developer Studio (`developer-studio.html`)**: Developer self-service studio to manage public dossiers, bios, external website & GitHub coordinates, GPG keys, and SHA-256 access keys.
 
-9. **Zero-Downtime Offline Fallback**:
+9. **Security & Authentication**:
+   * Standard **SHA-256 cryptographic password hashing** via Web Crypto API.
+   * Pre-configured Administrator account: `reymartchua@ragetech.dev` | `yuichirokanade`.
+
+10. **Zero-Downtime Offline Fallback**:
    * Complete isomorphic datasets in `data/projects.js` and `data/developers.js` guarantee 100% functionality even during offline development or static hosting.
 
 ---

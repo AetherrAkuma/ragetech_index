@@ -291,6 +291,117 @@ export default {
       }
     }
 
+    // DELETE /api/manage/projects/:id — Remove project
+    if (pathname.startsWith('/api/manage/projects/') && request.method === 'DELETE') {
+      try {
+        const id = pathname.replace('/api/manage/projects/', '').trim();
+        if (env.DB) {
+          await env.DB.prepare('DELETE FROM project_assignments WHERE project_id = ?').bind(id).run();
+          await env.DB.prepare('DELETE FROM project_sections WHERE project_id = ?').bind(id).run();
+          await env.DB.prepare('DELETE FROM projects WHERE id = ? OR slug = ?').bind(id, id).run();
+          return jsonResponse({ success: true, message: 'Project deleted' }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Project deleted (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // POST /api/manage/developers — Create or Update developer
+    if (pathname === '/api/manage/developers' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { id, handle, name, email, password, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified } = body;
+
+        if (env.DB) {
+          const existing = await env.DB.prepare('SELECT id, password_hash FROM developers WHERE id = ? OR handle = ?').bind(id, handle).first();
+          let passHash = existing ? existing.password_hash : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+          if (password) {
+            passHash = await sha256Hex(password);
+          }
+
+          if (existing) {
+            await env.DB.prepare(`
+              UPDATE developers 
+              SET name = ?, email = ?, password_hash = ?, role = ?, account_role = ?, squad = ?, bio = ?, avatar_url = ?, website_url = ?, github_url = ?, gpg_fingerprint = ?, is_verified = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(name, email, passHash, role, account_role || 'developer', squad || 'systems', bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified !== undefined ? is_verified : 1, existing.id).run();
+          } else {
+            await env.DB.prepare(`
+              INSERT INTO developers (id, handle, name, email, password_hash, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(id || `dev-${Date.now()}`, handle, name, email, passHash, role, account_role || 'developer', squad || 'systems', bio, avatar_url, website_url, github_url, gpg_fingerprint || '8F4A 2B19 E03C 41FA 98E1', is_verified !== undefined ? is_verified : 1).run();
+          }
+
+          return jsonResponse({ success: true, message: 'Developer profile updated' }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Saved (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // DELETE /api/manage/developers/:id — Remove developer
+    if (pathname.startsWith('/api/manage/developers/') && request.method === 'DELETE') {
+      try {
+        const id = pathname.replace('/api/manage/developers/', '').trim();
+        if (env.DB) {
+          await env.DB.prepare('DELETE FROM project_assignments WHERE developer_id = ?').bind(id).run();
+          await env.DB.prepare('DELETE FROM developers WHERE id = ? OR handle = ?').bind(id, id).run();
+          return jsonResponse({ success: true, message: 'Developer removed' }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Developer removed (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // POST /api/manage/assignments — Assign developer to project
+    if (pathname === '/api/manage/assignments' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { project_id, developer_id, contribution_role } = body;
+        if (env.DB) {
+          await env.DB.prepare(`
+            INSERT OR REPLACE INTO project_assignments (id, project_id, developer_id, contribution_role)
+            VALUES (?, ?, ?, ?)
+          `).bind(`as-${Date.now()}`, project_id, developer_id, contribution_role || 'Maintainer').run();
+          return jsonResponse({ success: true, message: 'Assignment saved' }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Assignment saved (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // DELETE /api/manage/assignments — Remove assignment
+    if (pathname === '/api/manage/assignments' && request.method === 'DELETE') {
+      try {
+        const body = await request.json();
+        const { project_id, developer_id } = body;
+        if (env.DB) {
+          await env.DB.prepare(`
+            DELETE FROM project_assignments WHERE project_id = ? AND developer_id = ?
+          `).bind(project_id, developer_id).run();
+          return jsonResponse({ success: true, message: 'Assignment removed' }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Removed (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // GET /api/manage/audit — Retrieve audit logs
+    if (pathname === '/api/manage/audit' && request.method === 'GET') {
+      if (env.DB) {
+        try {
+          const { results: logs } = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 50').all();
+          return jsonResponse({ success: true, data: logs }, corsHeaders);
+        } catch (e) {}
+      }
+      return jsonResponse({ success: true, data: [] }, corsHeaders);
+    }
+
     // ------------------------------------------------------------------------
     // 2. Static Asset & Clean URL Routing
     // ------------------------------------------------------------------------

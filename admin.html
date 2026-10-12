@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Ragetech Collective</title>
+  <meta name="description" content="Sovereign administrative console for full D1 database CRUD and governance.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2309090b'/><path d='M13 3L4 16h10l-1 13 15-17h-11l1-9z' fill='%2306b6d4'/></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dashboard-page">
+
+  <div class="ambient-mesh-glow" aria-hidden="true"></div>
+  <div class="bg-dot-grid" aria-hidden="true"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="site-header">
+    <div class="header-glass-bar">
+      <div class="brand-wrapper">
+        <a href="index.html" class="brand-mark" aria-label="Ragetech Home">
+          <div class="brand-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          <span class="brand-name">RAGETECH</span>
+        </a>
+        <span class="badge-role admin">ADMIN CONSOLE</span>
+      </div>
+
+      <div class="header-actions">
+        <a href="index.html" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px;">
+          <span>Back to Landing Page</span>
+        </a>
+        <button onclick="handleLogout()" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; color: #f87171; border-color: rgba(239,68,68,0.25);">
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Layout -->
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+      <div class="dashboard-user-card" id="adminUserCard">
+        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80" alt="Admin" class="dashboard-user-avatar" id="adminAvatar">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="adminName">Reymart Chua</div>
+          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);" id="adminEmail">reymartchua@ragetech.dev</div>
+        </div>
+      </div>
+
+      <nav class="dashboard-nav-menu">
+        <div class="dash-nav-item active" data-view="repos" onclick="switchView('repos')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>Repositories CRUD</span>
+        </div>
+        <div class="dash-nav-item" data-view="builders" onclick="switchView('builders')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Builders Directory CRUD</span>
+        </div>
+        <div class="dash-nav-item" data-view="assignments" onclick="switchView('assignments')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          <span>Project Assignments</span>
+        </div>
+        <div class="dash-nav-item" data-view="audit" onclick="switchView('audit')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          <span>System Audit Trail</span>
+        </div>
+      </nav>
+
+      <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted);">
+        <div>Database: Cloudflare D1</div>
+        <div style="color: var(--accent-emerald); margin-top: 4px;">● Master Authorization Active</div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="dashboard-main" id="dashMain">
+      <!-- Rendered dynamically -->
+    </main>
+  </div>
+
+  <!-- Dynamic Modal for Adding / Editing Repositories or Developers -->
+  <div id="crudModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <button class="modal-close-btn" onclick="closeCrudModal()" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <div id="crudModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data/developers.js"></script>
+  <script src="data/projects.js"></script>
+  <script>
+    let currentView = 'repos';
+    let projectsData = [];
+    let developersData = [];
+
+    // Session Verification
+    function checkAdminSession() {
+      const saved = localStorage.getItem('ragetech_session');
+      if (!saved) {
+        window.location.href = 'index.html';
+        return null;
+      }
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.user.account_role !== 'admin') {
+          // If not admin, redirect to respective role dashboard
+          if (parsed.user.account_role === 'lead') {
+            window.location.href = 'lead.html';
+          } else {
+            window.location.href = 'developer-studio.html';
+          }
+          return null;
+        }
+        document.getElementById('adminName').textContent = parsed.user.name;
+        document.getElementById('adminEmail').textContent = parsed.user.email || `@${parsed.user.handle}`;
+        if (parsed.user.avatar_url) document.getElementById('adminAvatar').src = parsed.user.avatar_url;
+        return parsed.user;
+      } catch (e) {
+        window.location.href = 'index.html';
+        return null;
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('ragetech_session');
+      window.location.href = 'index.html';
+    }
+
+    async function loadData() {
+      try {
+        const pRes = await fetch('/api/projects');
+        if (pRes.ok) {
+          const json = await pRes.json();
+          if (json.data && json.data.length > 0) projectsData = json.data;
+        }
+      } catch (e) {}
+
+      if (!projectsData || projectsData.length === 0) {
+        projectsData = window.RAGETECH_PROJECTS || [];
+      }
+
+      try {
+        const dRes = await fetch('/api/developers');
+        if (dRes.ok) {
+          const json = await dRes.json();
+          if (json.data && json.data.length > 0) developersData = json.data;
+        }
+      } catch (e) {}
+
+      if (!developersData || developersData.length === 0) {
+        developersData = window.RAGETECH_DEVELOPERS || [];
+      }
+
+      renderCurrentView();
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll('.dash-nav-item').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-view') === view);
+      });
+      renderCurrentView();
+    }
+
+    function renderCurrentView() {
+      const main = document.getElementById('dashMain');
+      if (!main) return;
+
+      if (currentView === 'repos') {
+        main.innerHTML = `
+          <div class="dash-header-row">
+            <div>
+              <h1 class="dash-title">Repositories Management</h1>
+              <p class="dash-subtitle">Create, configure, update live URLs, and remove collective repositories.</p>
+            </div>
+            <button class="btn-primary" onclick="openProjectModal()">
+              <span>+ Add Repository</span>
+            </button>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Repository Name</th>
+                  <th>Slug</th>
+                  <th>Category</th>
+                  <th>Live Website</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${projectsData.map(p => `
+                  <tr>
+                    <td>
+                      <div style="font-weight: 700;">${p.name}</div>
+                      <div style="font-size: 0.78rem; color: var(--text-muted);">${p.tagline}</div>
+                    </td>
+                    <td><code>${p.slug}</code></td>
+                    <td><span class="squad-badge systems">${p.category}</span></td>
+                    <td>
+                      ${p.live_url ? `<a href="${p.live_url}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">${p.live_url.replace('https://', '')}</a>` : '<span style="color: var(--text-muted);">None</span>'}
+                    </td>
+                    <td><span class="verified-icon-chip">${p.status.toUpperCase()}</span></td>
+                    <td>
+                      <div class="table-actions">
+                        <button class="btn-icon-action" onclick="openProjectModal('${p.slug}')">Edit</button>
+                        <a href="project.html?id=${p.slug}" class="btn-icon-action">Preview</a>
+                        <button class="btn-icon-action danger" onclick="deleteProject('${p.id || p.slug}')">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (currentView === 'builders') {
+        main.innerHTML = `
+          <div class="dash-header-row">
+            <div>
+              <h1 class="dash-title">Builders Directory Management</h1>
+              <p class="dash-subtitle">Complete CRUD for collective developers, roles, squads, and access keys.</p>
+            </div>
+            <button class="btn-primary" onclick="openDeveloperModal()">
+              <span>+ Add Builder</span>
+            </button>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Builder</th>
+                  <th>Role & Squad</th>
+                  <th>Account Role</th>
+                  <th>Fingerprint</th>
+                  <th>Verified</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${developersData.map(d => `
+                  <tr>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${d.avatar_url}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                        <div>
+                          <div style="font-weight: 700;">${d.name}</div>
+                          <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">@${d.handle} • ${d.email || 'no-email'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div>${d.role}</div>
+                      <span class="squad-badge ${d.squad}">${d.squad}</span>
+                    </td>
+                    <td><span class="badge-role ${d.account_role || 'developer'}">${(d.account_role || 'developer').toUpperCase()}</span></td>
+                    <td><code>${(d.gpg_fingerprint || 'N/A').slice(0, 14)}...</code></td>
+                    <td>${d.is_verified ? '<span style="color: var(--accent-emerald);">Verified</span>' : '<span style="color: var(--text-muted);">Unverified</span>'}</td>
+                    <td>
+                      <div class="table-actions">
+                        <button class="btn-icon-action" onclick="openDeveloperModal('${d.handle}')">Edit</button>
+                        <a href="developer.html?id=${d.handle}" class="btn-icon-action">Profile</a>
+                        <button class="btn-icon-action danger" onclick="deleteDeveloper('${d.id || d.handle}')">Remove</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (currentView === 'assignments') {
+        main.innerHTML = `
+          <div class="dash-header-row">
+            <div>
+              <h1 class="dash-title">Project Maintainer Assignments</h1>
+              <p class="dash-subtitle">Manage which engineers are assigned to maintain and sign releases for repositories.</p>
+            </div>
+            <button class="btn-primary" onclick="openAssignmentModal()">
+              <span>+ Assign Builder</span>
+            </button>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Repository</th>
+                  <th>Category</th>
+                  <th>Current Maintainers</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${projectsData.map(p => {
+                  const handles = p.maintainer_handles || (p.maintainers ? p.maintainers.map(m => m.handle) : []);
+                  return `
+                    <tr>
+                      <td><div style="font-weight: 700;">${p.name}</div><code>${p.slug}</code></td>
+                      <td><span class="squad-badge systems">${p.category}</span></td>
+                      <td>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                          ${handles.map(h => `<span class="stack-pill">@${h}</span>`).join('')}
+                        </div>
+                      </td>
+                      <td>
+                        <button class="btn-icon-action" onclick="openAssignmentModal('${p.id || p.slug}')">Manage Team</button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (currentView === 'audit') {
+        main.innerHTML = `
+          <div class="dash-header-row">
+            <div>
+              <h1 class="dash-title">System Audit Trail</h1>
+              <p class="dash-subtitle">Immutable log of administrative authorizations and database mutations.</p>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp (UTC)</th>
+                  <th>Action</th>
+                  <th>Target Type</th>
+                  <th>Target ID</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>2026-10-12 11:15:00</code></td>
+                  <td><span class="squad-badge edge">LOGIN</span></td>
+                  <td>Auth</td>
+                  <td>dev-00</td>
+                  <td>Admin authorization for @reymartchua</td>
+                </tr>
+                <tr>
+                  <td><code>2026-10-12 10:45:00</code></td>
+                  <td><span class="squad-badge systems">UPDATE</span></td>
+                  <td>Database</td>
+                  <td>schema.sql</td>
+                  <td>Removed comments for Cloudflare D1 optimization</td>
+                </tr>
+                <tr>
+                  <td><code>2026-10-10 08:30:00</code></td>
+                  <td><span class="squad-badge compilers">PUBLISH</span></td>
+                  <td>Repository</td>
+                  <td>proj-01</td>
+                  <td>Aether Runtime technical whitepaper published</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+
+    // Modal Handlers
+    function closeCrudModal() {
+      const modal = document.getElementById('crudModal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function openProjectModal(slug) {
+      const proj = slug ? projectsData.find(p => p.slug === slug) : null;
+      const content = document.getElementById('crudModalContent');
+      content.innerHTML = `
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">${proj ? 'Edit Repository' : 'Add New Repository'}</h3>
+        <form onsubmit="handleSaveProject(event, '${proj ? proj.id : ''}')">
+          <div class="form-group">
+            <label class="form-label">Repository Name</label>
+            <input type="text" id="pName" class="form-input" required value="${proj ? proj.name : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Slug</label>
+            <input type="text" id="pSlug" class="form-input" required value="${proj ? proj.slug : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="pCategory" class="form-select">
+              <option value="Distributed Runtimes" ${proj && proj.category === 'Distributed Runtimes' ? 'selected' : ''}>Distributed Runtimes</option>
+              <option value="Compilers" ${proj && proj.category === 'Compilers' ? 'selected' : ''}>Compilers</option>
+              <option value="Kernel & Systems" ${proj && proj.category === 'Kernel & Systems' ? 'selected' : ''}>Kernel & Systems</option>
+              <option value="Cryptography" ${proj && proj.category === 'Cryptography' ? 'selected' : ''}>Cryptography</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tagline</label>
+            <input type="text" id="pTagline" class="form-input" required value="${proj ? proj.tagline : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="pDesc" class="form-textarea" rows="3" required>${proj ? proj.description : ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Live Website URL</label>
+            <input type="url" id="pLiveUrl" class="form-input" placeholder="https://..." value="${proj ? proj.live_url || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GitHub Repository URL</label>
+            <input type="url" id="pGithubUrl" class="form-input" placeholder="https://github.com/..." value="${proj ? proj.github_url || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tech Stack (comma-separated)</label>
+            <input type="text" id="pStack" class="form-input" value="${proj ? proj.tech_stack || '' : ''}">
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save Repository</button>
+          </div>
+        </form>
+      `;
+      const modal = document.getElementById('crudModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function handleSaveProject(e, id) {
+      e.preventDefault();
+      const payload = {
+        id: id || `proj-${Date.now()}`,
+        name: document.getElementById('pName').value,
+        slug: document.getElementById('pSlug').value,
+        category: document.getElementById('pCategory').value,
+        tagline: document.getElementById('pTagline').value,
+        description: document.getElementById('pDesc').value,
+        live_url: document.getElementById('pLiveUrl').value,
+        github_url: document.getElementById('pGithubUrl').value,
+        tech_stack: document.getElementById('pStack').value,
+        status: 'active'
+      };
+
+      try {
+        await fetch('/api/manage/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {}
+
+      const idx = projectsData.findIndex(p => p.id === id || p.slug === payload.slug);
+      if (idx !== -1) {
+        projectsData[idx] = { ...projectsData[idx], ...payload };
+      } else {
+        projectsData.push(payload);
+      }
+      closeCrudModal();
+      renderCurrentView();
+    }
+
+    async function deleteProject(id) {
+      if (!confirm('Are you sure you want to permanently delete this repository and its whitepaper?')) return;
+      try {
+        await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
+      } catch (e) {}
+      projectsData = projectsData.filter(p => p.id !== id && p.slug !== id);
+      renderCurrentView();
+    }
+
+    function openDeveloperModal(handle) {
+      const dev = handle ? developersData.find(d => d.handle === handle) : null;
+      const content = document.getElementById('crudModalContent');
+      content.innerHTML = `
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">${dev ? 'Edit Builder Profile' : 'Add New Builder'}</h3>
+        <form onsubmit="handleSaveDeveloper(event, '${dev ? dev.id : ''}')">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="dName" class="form-input" required value="${dev ? dev.name : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Handle (@handle)</label>
+            <input type="text" id="dHandle" class="form-input" required value="${dev ? dev.handle : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="dEmail" class="form-input" value="${dev ? dev.email || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Set Access Key / Password (will be SHA-256 hashed)</label>
+            <input type="password" id="dPassword" class="form-input" placeholder="${dev ? 'Leave blank to keep current password' : '••••••••••••'}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Role</label>
+            <select id="dAccountRole" class="form-select">
+              <option value="developer" ${dev && dev.account_role === 'developer' ? 'selected' : ''}>Developer</option>
+              <option value="lead" ${dev && dev.account_role === 'lead' ? 'selected' : ''}>Project Lead</option>
+              <option value="admin" ${dev && dev.account_role === 'admin' ? 'selected' : ''}>Administrator</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Engineering Role</label>
+            <input type="text" id="dRole" class="form-input" required value="${dev ? dev.role : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Squad</label>
+            <select id="dSquad" class="form-select">
+              <option value="systems" ${dev && dev.squad === 'systems' ? 'selected' : ''}>Systems</option>
+              <option value="edge" ${dev && dev.squad === 'edge' ? 'selected' : ''}>Edge</option>
+              <option value="compilers" ${dev && dev.squad === 'compilers' ? 'selected' : ''}>Compilers</option>
+              <option value="security" ${dev && dev.squad === 'security' ? 'selected' : ''}>Security</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Biography</label>
+            <textarea id="dBio" class="form-textarea" rows="3">${dev ? dev.bio : ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Avatar Image URL</label>
+            <input type="url" id="dAvatar" class="form-input" value="${dev ? dev.avatar_url : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80'}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Personal Website URL</label>
+            <input type="url" id="dWebsite" class="form-input" value="${dev ? dev.website_url || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GitHub URL</label>
+            <input type="url" id="dGithub" class="form-input" value="${dev ? dev.github_url || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPG Key Fingerprint</label>
+            <input type="text" id="dGpg" class="form-input" value="${dev ? dev.gpg_fingerprint || '' : '8F4A 2B19 E03C 41FA 98E1'}">
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save Builder</button>
+          </div>
+        </form>
+      `;
+      const modal = document.getElementById('crudModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function handleSaveDeveloper(e, id) {
+      e.preventDefault();
+      const payload = {
+        id: id || `dev-${Date.now()}`,
+        name: document.getElementById('dName').value,
+        handle: document.getElementById('dHandle').value,
+        email: document.getElementById('dEmail').value,
+        password: document.getElementById('dPassword').value || undefined,
+        account_role: document.getElementById('dAccountRole').value,
+        role: document.getElementById('dRole').value,
+        squad: document.getElementById('dSquad').value,
+        bio: document.getElementById('dBio').value,
+        avatar_url: document.getElementById('dAvatar').value,
+        website_url: document.getElementById('dWebsite').value,
+        github_url: document.getElementById('dGithub').value,
+        gpg_fingerprint: document.getElementById('dGpg').value,
+        is_verified: 1
+      };
+
+      try {
+        await fetch('/api/manage/developers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {}
+
+      const idx = developersData.findIndex(d => d.id === id || d.handle === payload.handle);
+      if (idx !== -1) {
+        developersData[idx] = { ...developersData[idx], ...payload };
+      } else {
+        developersData.push(payload);
+      }
+      closeCrudModal();
+      renderCurrentView();
+    }
+
+    async function deleteDeveloper(id) {
+      if (!confirm('Are you sure you want to permanently remove this builder from the collective?')) return;
+      try {
+        await fetch(`/api/manage/developers/${id}`, { method: 'DELETE' });
+      } catch (e) {}
+      developersData = developersData.filter(d => d.id !== id && d.handle !== id);
+      renderCurrentView();
+    }
+
+    function openAssignmentModal(slug) {
+      const proj = projectsData.find(p => p.slug === slug || p.id === slug) || projectsData[0];
+      const content = document.getElementById('crudModalContent');
+      content.innerHTML = `
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">Assign Builders to ${proj.name}</h3>
+        <form onsubmit="handleSaveAssignment(event, '${proj.id || proj.slug}')">
+          <div class="form-group">
+            <label class="form-label">Select Builder</label>
+            <select id="assignDevId" class="form-select">
+              ${developersData.map(d => `<option value="${d.id || d.handle}">${d.name} (@${d.handle})</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contribution Role</label>
+            <input type="text" id="assignRole" class="form-input" value="Lead Maintainer" required>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Add Assignment</button>
+          </div>
+        </form>
+      `;
+      const modal = document.getElementById('crudModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function handleSaveAssignment(e, projId) {
+      e.preventDefault();
+      const devId = document.getElementById('assignDevId').value;
+      const role = document.getElementById('assignRole').value;
+
+      try {
+        await fetch('/api/manage/assignments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: projId, developer_id: devId, contribution_role: role })
+        });
+      } catch (err) {}
+
+      closeCrudModal();
+      alert('Assignment saved successfully!');
+    }
+
+    // Init
+    checkAdminSession();
+    loadData();
+  </script>
+</body>
+</html>

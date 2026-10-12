@@ -605,16 +605,29 @@
     }
   }
 
+  function getDashboardUrl(role) {
+    if (role === 'admin') return 'admin.html';
+    if (role === 'lead') return 'lead.html';
+    return 'developer-studio.html';
+  }
+
   function updateHeaderAuthUI() {
     const authWidget = document.getElementById('authHeaderWidget');
     if (!authWidget) return;
 
     if (state.currentUser) {
+      const dashUrl = getDashboardUrl(state.currentUser.account_role);
+      const roleBadge = (state.currentUser.account_role || 'DEV').toUpperCase();
       authWidget.innerHTML = `
-        <button class="btn-auth auth-active" onclick="window.RagetechApp.openDrawer()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <span>Studio [@${state.currentUser.handle}]</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="${dashUrl}" class="btn-auth auth-active" style="text-decoration: none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Dashboard [${roleBadge}]</span>
+          </a>
+          <button class="btn-icon-action" onclick="window.RagetechApp.openDrawer()" title="Quick Studio Drawer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+        </div>
       `;
     } else {
       authWidget.innerHTML = `
@@ -675,7 +688,7 @@
           localStorage.setItem('ragetech_session', JSON.stringify({ user: json.user, token: json.token }));
           closeLoginModal();
           updateHeaderAuthUI();
-          openDrawer();
+          window.location.href = getDashboardUrl(json.user.account_role);
           return;
         }
       }
@@ -703,7 +716,7 @@
         localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
         closeLoginModal();
         updateHeaderAuthUI();
-        openDrawer();
+        window.location.href = 'admin.html';
         return;
       }
     }
@@ -724,7 +737,7 @@
         localStorage.setItem('ragetech_session', JSON.stringify({ user: dev, token: state.sessionToken }));
         closeLoginModal();
         updateHeaderAuthUI();
-        openDrawer();
+        window.location.href = 'admin.html';
         return;
       }
     }
