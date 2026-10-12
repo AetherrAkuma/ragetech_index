@@ -630,10 +630,15 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="dAvatar">Profile Photo / Avatar URL</label>
+              <label class="form-label" for="dAvatar">Profile Photo / Avatar (URL or File Upload)</label>
               <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-                <img id="avatarPreview" src="${dev ? dev.avatar_url : avatarPresets[0]}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan);">
-                <input type="url" id="dAvatar" class="form-input" style="flex: 1;" value="${dev ? dev.avatar_url : avatarPresets[0]}" oninput="document.getElementById('avatarPreview').src = this.value">
+                <img id="avatarPreview" src="${dev ? dev.avatar_url : avatarPresets[0]}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan); background: #18181b;">
+                <input type="text" id="dAvatar" class="form-input" style="flex: 1;" value="${dev ? dev.avatar_url : avatarPresets[0]}" oninput="document.getElementById('avatarPreview').src = this.value">
+                <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('dAvatarFile').click()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span>Upload File</span>
+                </button>
+                <input type="file" id="dAvatarFile" accept="image/*" style="display: none;" onchange="handleAdminAvatarUpload(this)">
               </div>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 0.74rem; color: var(--text-muted);">Quick Presets:</span>
@@ -691,6 +696,37 @@
     function selectAvatarPreset(url) {
       document.getElementById('dAvatar').value = url;
       document.getElementById('avatarPreview').src = url;
+    }
+
+    async function handleAdminAvatarUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          const maxDim = 400;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          document.getElementById('dAvatar').value = dataUrl;
+          document.getElementById('avatarPreview').src = dataUrl;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
     }
 
     // Save Developer (Cloudflare D1 + LocalStorage Sync)

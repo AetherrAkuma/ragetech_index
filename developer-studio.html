@@ -161,8 +161,16 @@
               <textarea id="devBioInput" class="form-textarea" rows="4" required>${currentDev.bio || ''}</textarea>
             </div>
             <div class="form-group">
-              <label class="form-label">Avatar URL</label>
-              <input type="url" id="devAvatarInput" class="form-input" value="${currentDev.avatar_url || ''}">
+              <label class="form-label">Profile Photo / Avatar (URL or File Upload)</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <img id="devAvatarEditPreview" src="${currentDev.avatar_url || ''}" alt="Avatar Preview" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan); background: #18181b;">
+                <input type="text" id="devAvatarInput" class="form-input" style="flex: 1;" placeholder="https://... or upload local file" value="${currentDev.avatar_url || ''}" oninput="document.getElementById('devAvatarEditPreview').src = this.value">
+                <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('devAvatarFileInput').click()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span>Upload Photo</span>
+                </button>
+                <input type="file" id="devAvatarFileInput" accept="image/*" style="display: none;" onchange="handleDevAvatarUpload(this)">
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Personal Website URL</label>
@@ -182,6 +190,61 @@
           </form>
         </div>
       `;
+    }
+
+    function processImageFile(file, maxWidth = 500, maxHeight = 500, quality = 0.85) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) {
+          alert('Please select an image file (PNG, JPG, WEBP).');
+          return reject(new Error('Invalid image file.'));
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (file.type === 'image/svg+xml') {
+            resolve(e.target.result);
+            return;
+          }
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth || h > maxHeight) {
+              if (w / maxWidth > h / maxHeight) {
+                h = Math.round((h * maxWidth) / w);
+                w = maxWidth;
+              } else {
+                w = Math.round((w * maxHeight) / h);
+                h = maxHeight;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.onerror = () => reject(new Error('Failed to load image.'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('Failed to read file.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleDevAvatarUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const dataUrl = await processImageFile(file, 400, 400, 0.85);
+        document.getElementById('devAvatarInput').value = dataUrl;
+        document.getElementById('devAvatarEditPreview').src = dataUrl;
+        document.getElementById('devAvatar').src = dataUrl;
+      } catch (err) {
+        console.error('Avatar upload failed:', err);
+      } finally {
+        input.value = '';
+      }
     }
 
     async function handleSaveDevProfile(e) {

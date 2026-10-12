@@ -247,8 +247,15 @@
         <!-- Form for VISUAL IMAGE -->
         <div id="previewForm_image" style="display: none;">
           <div class="form-group">
-            <label class="form-label" for="editPreviewImgUrl">Showcase Image URL</label>
-            <input type="url" id="editPreviewImgUrl" class="form-input" placeholder="https://images.unsplash.com/..." oninput="onDataChange()">
+            <label class="form-label" for="editPreviewImgUrl">Showcase Image (URL or Upload File)</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="editPreviewImgUrl" class="form-input" style="flex: 1;" placeholder="https://images.unsplash.com/... or upload local file" oninput="onDataChange()">
+              <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('fileUploadShowcaseImg').click()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Upload File</span>
+              </button>
+              <input type="file" id="fileUploadShowcaseImg" accept="image/*" style="display: none;" onchange="handleShowcaseImageUpload(this)">
+            </div>
           </div>
 
           <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
@@ -342,8 +349,15 @@
 
         <div style="border-top: 1px solid var(--border-subtle); margin-top: 20px; padding-top: 18px;">
           <div class="form-group">
-            <label class="form-label" for="editCoverUrl">Banner Diagram / Cover Image URL (Dossier Header)</label>
-            <input type="url" id="editCoverUrl" class="form-input" placeholder="https://images.unsplash.com/..." oninput="onDataChange()">
+            <label class="form-label" for="editCoverUrl">Banner Diagram / Cover Image (URL or Upload File)</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="editCoverUrl" class="form-input" style="flex: 1;" placeholder="https://images.unsplash.com/... or upload local file" oninput="onDataChange()">
+              <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('fileUploadCoverImg').click()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Upload File</span>
+              </button>
+              <input type="file" id="fileUploadCoverImg" accept="image/*" style="display: none;" onchange="handleCoverImageUpload(this)">
+            </div>
           </div>
 
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -394,7 +408,9 @@
           <button type="button" class="md-btn" onclick="insertCodeBlock()" title="Code Block">``` Lang</button>
           <button type="button" class="md-btn" onclick="insertTable()" title="Table">Table</button>
           <button type="button" class="md-btn" onclick="insertLink()" title="Link">Link</button>
-          <button type="button" class="md-btn" onclick="insertImage()" title="Image">Image</button>
+          <button type="button" class="md-btn" onclick="insertImage()" title="Image by URL">Image URL</button>
+          <button type="button" class="md-btn" onclick="document.getElementById('fileUploadMarkdownImg').click()" title="Upload Image File into Article" style="color: var(--accent-cyan);">📁 Upload Image</button>
+          <input type="file" id="fileUploadMarkdownImg" accept="image/*" style="display: none;" onchange="handleMarkdownImageUpload(this)">
         </div>
 
         <textarea id="editMarkdown" class="md-textarea" style="min-height: 480px;" placeholder="Write comprehensive Markdown specifications here. Supports # Headings, **bold**, lists, > quotes, ```code blocks```, and ![images](url)..." oninput="onDataChange()"></textarea>
@@ -976,6 +992,94 @@ Existing alternatives required significant hardware resources and heavy runtimes
       document.getElementById('editPreviewImgUrl').value = url;
       document.getElementById('editPreviewImgCaption').value = caption;
       onDataChange();
+    }
+
+    // Image File Processing & Upload Helpers
+    function processImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.85) {
+      return new Promise((resolve, reject) => {
+        if (!file) return reject(new Error('No file selected.'));
+        if (!file.type.startsWith('image/')) {
+          alert('Please select a valid image file (PNG, JPG, WEBP, GIF, SVG).');
+          return reject(new Error('Invalid image type.'));
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (file.type === 'image/svg+xml') {
+            resolve(e.target.result);
+            return;
+          }
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth || h > maxHeight) {
+              if (w / maxWidth > h / maxHeight) {
+                h = Math.round((h * maxWidth) / w);
+                w = maxWidth;
+              } else {
+                w = Math.round((w * maxHeight) / h);
+                h = maxHeight;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            resolve(dataUrl);
+          };
+          img.onerror = () => reject(new Error('Failed to load image.'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('Failed to read file.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleShowcaseImageUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const dataUrl = await processImageFile(file, 1200, 800, 0.85);
+        document.getElementById('editPreviewImgUrl').value = dataUrl;
+        if (!document.getElementById('editPreviewImgCaption').value) {
+          document.getElementById('editPreviewImgCaption').value = file.name.replace(/\.[^/.]+$/, '');
+        }
+        onDataChange();
+      } catch (err) {
+        console.error('Showcase image upload failed:', err);
+      } finally {
+        input.value = '';
+      }
+    }
+
+    async function handleCoverImageUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const dataUrl = await processImageFile(file, 1400, 700, 0.85);
+        document.getElementById('editCoverUrl').value = dataUrl;
+        onDataChange();
+      } catch (err) {
+        console.error('Cover image upload failed:', err);
+      } finally {
+        input.value = '';
+      }
+    }
+
+    async function handleMarkdownImageUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const dataUrl = await processImageFile(file, 1200, 800, 0.82);
+        const altText = file.name.replace(/\.[^/.]+$/, '') || 'Uploaded Image';
+        insertMd(`\n\n![${altText}](${dataUrl})\n\n`);
+      } catch (err) {
+        console.error('Markdown image upload failed:', err);
+      } finally {
+        input.value = '';
+      }
     }
 
     function setPreviewTab(tab) {
