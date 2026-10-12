@@ -743,14 +743,23 @@ export default {
               existing.id
             ).run();
           } else {
+            // Ensure sort_order column exists and determine next bottom sort_order
+            try { await env.DB.prepare('ALTER TABLE developers ADD COLUMN sort_order INTEGER DEFAULT 0').run(); } catch (_) {}
+
+            let devSortOrder = body.sort_order;
+            if (devSortOrder === undefined || devSortOrder === null) {
+              const maxOrderRow = await env.DB.prepare('SELECT COALESCE(MAX(sort_order), 0) as max_ord, COUNT(*) as count FROM developers').first();
+              devSortOrder = Math.max(Number(maxOrderRow?.max_ord || 0), Number(maxOrderRow?.count || 0)) + 1;
+            }
+
             await env.DB.prepare(`
               INSERT INTO developers (
-                id, handle, name, email, password_hash, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified
+                id, handle, name, email, password_hash, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified, sort_order
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               devId, cleanHandle, cleanName, cleanEmail, passHash, cleanRole, cleanAccountRole, cleanSquad,
-              cleanBio, cleanAvatar, cleanWebsite, cleanGithub, cleanFingerprint, cleanVerified
+              cleanBio, cleanAvatar, cleanWebsite, cleanGithub, cleanFingerprint, cleanVerified, devSortOrder
             ).run();
           }
 
@@ -1007,26 +1016,90 @@ export default {
     // 2. Static Asset & Clean URL Routing
     // ------------------------------------------------------------------------
 
-    // Friendly URL Rewrites:
-    // /r/:slug, /repository/:slug, /p/:slug -> /project.html?id=:slug
-    if (pathname.startsWith('/r/') || pathname.startsWith('/repository/') || pathname.startsWith('/p/')) {
-      const slug = pathname.replace('/repository/', '').replace('/r/', '').replace('/p/', '');
-      const redirectUrl = new URL(`/project.html?id=${slug}`, request.url);
-      return env.ASSETS.fetch(new Request(redirectUrl, request));
+    // Friendly URL Rewrites & Dynamic Open Graph for Facebook / Social Crawlers:
+    // /r/:slug, /repository/:slug, /p/:slug, or /project.html?id=:slug
+    const isProjectRoute = pathname.startsWith('/r/') || pathname.startsWith('/repository/') || pathname.startsWith('/p/') || pathname === '/project.html';
+    if (isProjectRoute) {
+      let slug = '';
+      if (pathname === '/project.html') {
+        slug = url.searchParams.get('id') || url.searchParams.get('slug') || '';
+      } else {
+        slug = pathname.replace('/repository/', '').replace('/r/', '').replace('/p/', '').replace(/^\/+|\/+$/g, '');
+      }
+
+      if (env.ASSETS) {
+        const targetUrl = new URL(`/project.html?id=${encodeURIComponent(slug)}`, request.url);
+        const assetRes = await env.ASSETS.fetch(new Request(targetUrl, request));
+
+        if (slug && env.DB) {
+          try {
+            const project = await env.DB.prepare(`
+              SELECT name, tagline, description, cover_image_url, slug
+              FROM projects
+              WHERE slug = ? OR id = ?
+            `).bind(slug, slug).first();
+
+            if (project) {
+              return rewriteMetaTags(assetRes, {
+                title: `${project.name} — Technical Specification | Ragetech`,
+                description: project.description || project.tagline || 'Technical whitepaper and engineering dossier from the Ragetech sovereign systems collective.',
+                image: project.cover_image_url || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&h=630&q=85',
+                url: `${url.origin}/project.html?id=${project.slug}`,
+                type: 'article'
+              });
+            }
+          } catch (e) {
+            // fallback gracefully
+          }
+        }
+        return assetRes;
+      }
     }
 
     // /edit/:slug -> /repository_editor.html?id=:slug
     if (pathname.startsWith('/edit/')) {
-      const slug = pathname.replace('/edit/', '');
-      const redirectUrl = new URL(`/repository_editor.html?id=${slug}`, request.url);
+      const slug = pathname.replace('/edit/', '').replace(/^\/+|\/+$/g, '');
+      const redirectUrl = new URL(`/repository_editor.html?id=${encodeURIComponent(slug)}`, request.url);
       return env.ASSETS.fetch(new Request(redirectUrl, request));
     }
 
-    // /d/:handle -> /developer.html?id=:handle
-    if (pathname.startsWith('/d/') || pathname.startsWith('/@')) {
-      const handle = pathname.replace('/d/', '').replace('/@', '');
-      const redirectUrl = new URL(`/developer.html?id=${handle}`, request.url);
-      return env.ASSETS.fetch(new Request(redirectUrl, request));
+    // /d/:handle, /@:handle, or /developer.html?id=:handle
+    const isDeveloperRoute = pathname.startsWith('/d/') || pathname.startsWith('/@') || pathname === '/developer.html';
+    if (isDeveloperRoute) {
+      let handle = '';
+      if (pathname === '/developer.html') {
+        handle = url.searchParams.get('id') || url.searchParams.get('handle') || '';
+      } else {
+        handle = pathname.replace('/d/', '').replace('/@', '').replace(/^\/+|\/+$/g, '');
+      }
+
+      if (env.ASSETS) {
+        const targetUrl = new URL(`/developer.html?id=${encodeURIComponent(handle)}`, request.url);
+        const assetRes = await env.ASSETS.fetch(new Request(targetUrl, request));
+
+        if (handle && env.DB) {
+          try {
+            const dev = await env.DB.prepare(`
+              SELECT name, role, squad, bio, avatar_url, handle
+              FROM developers
+              WHERE lower(handle) = lower(?) OR id = ?
+            `).bind(handle, handle).first();
+
+            if (dev) {
+              return rewriteMetaTags(assetRes, {
+                title: `${dev.name} (@${dev.handle}) — Engineer Dossier | Ragetech`,
+                description: dev.bio || `${dev.role} at Ragetech collective.`,
+                image: dev.avatar_url || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&h=630&q=85',
+                url: `${url.origin}/developer.html?id=${dev.handle}`,
+                type: 'profile'
+              });
+            }
+          } catch (e) {
+            // fallback gracefully
+          }
+        }
+        return assetRes;
+      }
     }
 
     // Default static assets handler
@@ -1110,3 +1183,31 @@ async function recordAuditLog(env, { actor_handle, action, target_type, target_i
     // Non-blocking: audit failure never impacts main application flow
   }
 }
+
+// ============================================================================
+// Dynamic Open Graph / Facebook Link Preview Engine (HTMLRewriter)
+// ============================================================================
+function rewriteMetaTags(response, meta) {
+  if (typeof HTMLRewriter === 'undefined' || !response) return response;
+
+  const title = meta.title || 'Ragetech — Sovereign Systems Engineering Collective';
+  const desc = meta.description || 'Independent collective of systems engineers crafting ultra-low-latency edge runtimes, distributed consensus engines, and open-source infrastructure.';
+  const image = meta.image || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&h=630&q=85';
+  const pageUrl = meta.url || 'https://ragetech.dev';
+  const type = meta.type || 'website';
+
+  return new HTMLRewriter()
+    .on('title', { element(el) { el.setInnerContent(title); } })
+    .on('meta[name="description"]', { element(el) { el.setAttribute('content', desc); } })
+    .on('meta[property="og:title"]', { element(el) { el.setAttribute('content', title); } })
+    .on('meta[property="og:description"]', { element(el) { el.setAttribute('content', desc); } })
+    .on('meta[property="og:image"]', { element(el) { el.setAttribute('content', image); } })
+    .on('meta[property="og:image:secure_url"]', { element(el) { el.setAttribute('content', image); } })
+    .on('meta[property="og:url"]', { element(el) { el.setAttribute('content', pageUrl); } })
+    .on('meta[property="og:type"]', { element(el) { el.setAttribute('content', type); } })
+    .on('meta[name="twitter:title"]', { element(el) { el.setAttribute('content', title); } })
+    .on('meta[name="twitter:description"]', { element(el) { el.setAttribute('content', desc); } })
+    .on('meta[name="twitter:image"]', { element(el) { el.setAttribute('content', image); } })
+    .transform(response);
+}
+

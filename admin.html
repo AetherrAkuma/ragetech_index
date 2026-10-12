@@ -1298,6 +1298,12 @@
       const gpgEl = document.getElementById('dGpg');
       const gpg_fingerprint = gpgEl ? gpgEl.value.trim() : (existingDev ? existingDev.gpg_fingerprint || '' : '');
       
+      let devSortOrder = (existingDev && existingDev.sort_order !== undefined && existingDev.sort_order !== null) ? Number(existingDev.sort_order) : undefined;
+      if (devSortOrder === undefined) {
+        const maxExisting = developersData.reduce((max, d) => Math.max(max, Number(d.sort_order || 0)), 0);
+        devSortOrder = Math.max(maxExisting, developersData.length) + 1;
+      }
+
       const payload = {
         id: id || `dev-${Date.now()}`,
         name: document.getElementById('dName').value.trim(),
@@ -1312,7 +1318,8 @@
         website_url: document.getElementById('dWebsite').value.trim(),
         github_url: document.getElementById('dGithub').value.trim(),
         gpg_fingerprint,
-        is_verified: document.getElementById('dVerified').checked ? 1 : 0
+        is_verified: document.getElementById('dVerified').checked ? 1 : 0,
+        sort_order: devSortOrder
       };
 
       // If new password provided, calculate SHA-256 hash
