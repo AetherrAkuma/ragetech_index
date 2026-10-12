@@ -122,117 +122,175 @@
   }
 
   // --------------------------------------------------------------------------
-  // 5. Tailark Expandable Features (@tailark/expandable-features-8)
   // --------------------------------------------------------------------------
+  // 5. Repositories Sticky Scroll Section (Tailark Dusk Features 5)
+  // --------------------------------------------------------------------------
+  function escapeHtml(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function renderRepositoryShowcase() {
-    const listEl = document.getElementById('repoNavList');
-    if (!listEl) return;
+    renderStickyProjectNav();
+    renderProjectsStack();
+  }
+
+  function renderStickyProjectNav() {
+    const nav = document.getElementById('sticky-project-nav');
+    if (!nav) return;
 
     if (!state.projects || state.projects.length === 0) {
       if (window.RAGETECH_PROJECTS) state.projects = [...window.RAGETECH_PROJECTS];
     }
 
-    if (state.projects.length > 0 && (!state.activeProjectSlug || !state.projects.some(p => p.slug === state.activeProjectSlug))) {
-      state.activeProjectSlug = state.projects[0].slug;
+    nav.innerHTML = state.projects.map((p, idx) => `
+      <button 
+        class="sidebar-nav-button" 
+        data-project-id="${p.slug}"
+        ${idx === 0 ? 'data-state="active"' : ''}
+        onclick="window.RagetechApp.scrollToProject('${p.slug}')">
+        <span>${p.name}</span>
+        <span class="nav-bullet"></span>
+      </button>
+    `).join('');
+  }
+
+  function renderProjectsStack() {
+    const container = document.getElementById('projects-stack');
+    if (!container) return;
+
+    if (!state.projects || state.projects.length === 0) {
+      if (window.RAGETECH_PROJECTS) state.projects = [...window.RAGETECH_PROJECTS];
     }
 
-    // Render all repository selector cards without category filter
-    listEl.innerHTML = state.projects.map(proj => {
-      const isActive = proj.slug === state.activeProjectSlug;
+    container.innerHTML = state.projects.map((p, idx) => {
+      const assignees = p.assignees || [];
+      const assigneeAvatars = assignees.map(handle => {
+        const dev = state.developers.find(d => d.handle === handle);
+        const initials = dev ? dev.name.split(' ').map(n => n[0]).join('').slice(0, 2) : handle.slice(0, 2).toUpperCase();
+        return `<a href="developer.html?id=${handle}" class="builder-pill-avatar" title="${dev ? `${dev.name} (@${dev.handle})` : handle}">${initials}</a>`;
+      }).join('');
+
+      const specs = p.specs || [
+        { label: 'Throughput', val: '1.42M events/sec / core' },
+        { label: 'Latency (p99)', val: '0.24ms' },
+        { label: 'Memory Overhead', val: '< 16 MB RSS baseline' },
+        { label: 'Runtime Stack', val: p.tech_stack || 'Rust / Tokio / io_uring' }
+      ];
+
       return `
-        <div class="spotlight-card repo-nav-card ${isActive ? 'active' : ''}" 
-             data-slug="${proj.slug}" 
-             onclick="window.RagetechApp.selectRepository('${proj.slug}')">
-          <div class="spotlight-card-content">
-            <div class="repo-card-top">
-              <span class="repo-name">${proj.name}</span>
-              <span class="repo-status-badge">${proj.category}</span>
+        <article 
+          class="project-entry ${idx === 0 ? 'is-active' : ''}" 
+          id="project-${p.slug}" 
+          data-project-id="${p.slug}">
+          
+          <!-- Left Column: Specs & Purpose -->
+          <div class="project-meta-col">
+            <div>
+              <div class="project-slug-row">
+                <span class="project-slug-tag">${p.repo || `ragetech/${p.slug}`}</span>
+                <span class="project-status-tag">${p.badge || 'v0.9.4-alpha'}</span>
+              </div>
+
+              <h3 class="project-h3">${p.name}</h3>
+              <p class="project-summary">${p.summary || p.tagline}</p>
+
+              <ul class="spec-list">
+                ${specs.map(s => `
+                  <li class="spec-list-row">
+                    <span class="spec-label">${s.label}</span>
+                    <span class="spec-value">${s.val}</span>
+                  </li>
+                `).join('')}
+              </ul>
             </div>
-            <p class="repo-tagline">${proj.tagline}</p>
-            <div class="repo-stack-pills">
-              ${proj.tech_stack.split(',').slice(0, 3).map(tech => `
-                <span class="stack-pill">${tech.trim()}</span>
-              `).join('')}
+
+            <div class="project-actions-row">
+              <div class="project-assignees-avatars" title="Assigned Maintainers">
+                ${assigneeAvatars}
+              </div>
+
+              <div style="display:flex; gap:10px;">
+                <a href="project.html?id=${p.slug}" class="btn-primary" style="font-size:0.8rem; padding: 7px 16px; text-decoration: none;">
+                  Dedicated Page &rarr;
+                </a>
+                <a href="${p.action_button_url || p.github_url || '#'}" target="_blank" rel="noreferrer" class="btn-secondary" style="font-size:0.8rem; padding: 7px 14px; text-decoration: none;">
+                  ${p.action_button_label || 'Spec'}
+                </a>
+              </div>
             </div>
           </div>
-        </div>
+
+          <!-- Right Column: Technical Preview Window -->
+          <div class="project-preview-window">
+            <div class="preview-window-top">
+              <span>${p.previewTitle || 'telemetry_sink.rs'}</span>
+              <span style="color:#71717a;">READ-ONLY</span>
+            </div>
+
+            <pre class="preview-window-body"><code>${escapeHtml(p.previewContent || '')}</code></pre>
+
+            <div class="preview-window-footer">
+              <span>${p.previewMeta || 'Cargo.lock: active configuration'}</span>
+              <span style="color:#10b981;">● Active</span>
+            </div>
+          </div>
+        </article>
       `;
     }).join('');
 
-    renderActivePreviewPane();
+    initStickyScrollObserver();
   }
 
-  function renderActivePreviewPane() {
-    const previewEl = document.getElementById('previewContentWrap');
-    if (!previewEl) return;
+  function initStickyScrollObserver() {
+    const entries = document.querySelectorAll('.project-entry');
+    if (entries.length === 0) return;
 
-    const activeProj = state.projects.find(p => p.slug === state.activeProjectSlug);
-    if (!activeProj) return;
+    const observer = new IntersectionObserver((observedEntries) => {
+      const intersecting = observedEntries
+        .filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
-    const stats = activeProj.stats || {};
-    const maintainerHandles = activeProj.maintainer_handles || (activeProj.maintainers ? activeProj.maintainers.map(m => m.handle) : []);
-    const maintainers = state.developers.filter(d => maintainerHandles.includes(d.handle)).slice(0, 4);
+      if (intersecting.length > 0) {
+        const activeSlug = intersecting[0].target.getAttribute('data-project-id');
+        if (activeSlug) {
+          highlightProject(activeSlug);
+        }
+      }
+    }, {
+      rootMargin: '-20% 0px -40% 0px',
+      threshold: [0.15, 0.35, 0.6]
+    });
 
-    previewEl.innerHTML = `
-      <div class="preview-badge-row">
-        <span class="preview-category">// ${activeProj.category}</span>
-        <div class="preview-stars">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <span>${stats.stars || '1,850'} stars</span>
-        </div>
-      </div>
+    entries.forEach(e => observer.observe(e));
+  }
 
-      <h3 class="preview-title">${activeProj.name}</h3>
-      <p class="preview-desc">${activeProj.description}</p>
+  function highlightProject(slug) {
+    document.querySelectorAll('.sidebar-nav-button').forEach(btn => {
+      if (btn.getAttribute('data-project-id') === slug) {
+        btn.setAttribute('data-state', 'active');
+      } else {
+        btn.removeAttribute('data-state');
+      }
+    });
 
-      <!-- Key Blueprint Stats -->
-      <div class="blueprint-stats-grid">
-        ${Object.entries(stats).filter(([k]) => k !== 'stars' && k !== 'license').slice(0, 4).map(([k, v]) => `
-          <div class="blueprint-stat-box">
-            <div class="blueprint-stat-val">${v}</div>
-            <div class="blueprint-stat-key">${k.replace(/_/g, ' ')}</div>
-          </div>
-        `).join('')}
-      </div>
+    document.querySelectorAll('.project-entry').forEach(card => {
+      if (card.getAttribute('data-project-id') === slug) {
+        card.classList.add('is-active');
+      } else {
+        card.classList.remove('is-active');
+      }
+    });
+  }
 
-      <!-- Lead Maintainers Avatars -->
-      <div class="preview-maintainers-section">
-        <div class="preview-maintainers-title">Assigned Lead Maintainers</div>
-        <div class="maintainer-avatar-group">
-          ${maintainers.map(m => `
-            <div class="maintainer-avatar-chip" onclick="window.RagetechApp.openDeveloperModal('${m.handle}')">
-              <img src="${m.avatar_url}" alt="${m.name}" class="maintainer-avatar-img">
-              <span>@${m.handle}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="preview-actions-row">
-        <a href="project.html?id=${activeProj.slug}" class="btn-primary">
-          <span>Read Full Whitepaper</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </a>
-
-        ${activeProj.live_url ? `
-          <a href="${activeProj.live_url}" target="_blank" rel="noreferrer" class="btn-secondary">
-            <span>Visit Live Demo</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          </a>
-        ` : ''}
-
-        ${activeProj.github_url ? `
-          <a href="${activeProj.github_url}" target="_blank" rel="noreferrer" class="btn-secondary" title="View Source">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-          </a>
-        ` : ''}
-      </div>
-    `;
-
-    // Subtle GSAP entrance for the preview panel content
-    if (typeof gsap !== 'undefined') {
-      gsap.from('#previewContentWrap', { opacity: 0.4, y: 8, duration: 0.25, ease: 'power2.out' });
+  function scrollToProject(slug) {
+    const target = document.getElementById(`project-${slug}`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      highlightProject(slug);
     }
   }
 
@@ -746,9 +804,9 @@
   // Public Namespace Exports
   // --------------------------------------------------------------------------
   window.RagetechApp = {
+    scrollToProject,
     selectRepository: (slug) => {
-      state.activeProjectSlug = slug;
-      renderRepositoryShowcase();
+      scrollToProject(slug);
     },
     openDeveloperModal,
     closeModal,

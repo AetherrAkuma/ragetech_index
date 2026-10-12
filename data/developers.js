@@ -16,7 +16,7 @@
     gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...REYMART...==\n-----END PGP PUBLIC KEY BLOCK-----",
     gpg_fingerprint: "7F19 C201 4B89 E092 AA51",
     is_verified: 1,
-    assigned_projects: ["aether-runtime", "vortex-db"]
+    assigned_projects: ["hyperion", "pulseos"]
   },
   {
     id: "dev-01",
@@ -33,7 +33,7 @@
     gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...SORA...==\n-----END PGP PUBLIC KEY BLOCK-----",
     gpg_fingerprint: "8F4A 2B19 E03C 41FA 98E1",
     is_verified: 1,
-    assigned_projects: ["aether-runtime"]
+    assigned_projects: ["hyperion"]
   },
   {
     id: "dev-02",
@@ -50,7 +50,7 @@
     gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...MARCUS...==\n-----END PGP PUBLIC KEY BLOCK-----",
     gpg_fingerprint: "1B7D 908E F24A C301 774D",
     is_verified: 1,
-    assigned_projects: ["vortex-db"]
+    assigned_projects: ["pulseos"]
   },
   {
     id: "dev-03",
@@ -67,7 +67,7 @@
     gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...ELENA...==\n-----END PGP PUBLIC KEY BLOCK-----",
     gpg_fingerprint: "3C99 4410 AB82 12E0 5519",
     is_verified: 1,
-    assigned_projects: ["prism-compiler"]
+    assigned_projects: ["chimera"]
   },
   {
     id: "dev-04",
@@ -84,7 +84,7 @@
     gpg_key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\nmQENBF+...KAI...==\n-----END PGP PUBLIC KEY BLOCK-----",
     gpg_fingerprint: "99E2 710F D415 67B9 AA33",
     is_verified: 1,
-    assigned_projects: ["cipher-vault"]
+    assigned_projects: ["vortex"]
   },
   {
     id: "dev-05",
@@ -100,7 +100,7 @@
     github_url: "https://github.com/zarachen",
     gpg_fingerprint: "A481 CE02 8139 F521 3C77",
     is_verified: 1,
-    assigned_projects: ["nexus-protocol"]
+    assigned_projects: ["aether"]
   },
   {
     id: "dev-06",
@@ -116,7 +116,7 @@
     github_url: "https://github.com/devonmiller",
     gpg_fingerprint: "5510 8829 F41C 73B0 EA91",
     is_verified: 1,
-    assigned_projects: ["vortex-db"]
+    assigned_projects: ["pulseos"]
   },
   {
     id: "dev-07",
@@ -132,7 +132,7 @@
     github_url: "https://github.com/ananyapatel",
     gpg_fingerprint: "77D2 990A 1154 F399 CD04",
     is_verified: 1,
-    assigned_projects: ["aether-runtime"]
+    assigned_projects: ["hyperion"]
   },
   {
     id: "dev-08",
@@ -148,7 +148,7 @@
     github_url: "https://github.com/lucaslindqvist",
     gpg_fingerprint: "22A1 65FE D091 8847 4410",
     is_verified: 1,
-    assigned_projects: ["hyperion-mesh"]
+    assigned_projects: ["eclipse"]
   },
   {
     id: "dev-09",
@@ -164,7 +164,7 @@
     github_url: "https://github.com/mayalin-sec",
     gpg_fingerprint: "8841 BC90 EF12 3014 9922",
     is_verified: 1,
-    assigned_projects: ["cipher-vault"]
+    assigned_projects: ["vortex"]
   },
   {
     id: "dev-10",
@@ -180,7 +180,7 @@
     github_url: "https://github.com/nikolaiv",
     gpg_fingerprint: "4410 77E2 1109 AA82 B501",
     is_verified: 1,
-    assigned_projects: ["hyperion-mesh"]
+    assigned_projects: ["eclipse"]
   },
   {
     id: "dev-11",
@@ -196,7 +196,7 @@
     github_url: "https://github.com/chloedupont",
     gpg_fingerprint: "9102 4477 3311 BB20 EE45",
     is_verified: 1,
-    assigned_projects: ["nexus-protocol"]
+    assigned_projects: ["aether"]
   },
   {
     id: "dev-12",
@@ -212,7 +212,7 @@
     github_url: "https://github.com/tariqmansoor",
     gpg_fingerprint: "66E1 2290 88FA 1144 0092",
     is_verified: 1,
-    assigned_projects: ["vortex-db"]
+    assigned_projects: ["pulseos"]
   },
   {
     id: "dev-13",
@@ -228,7 +228,7 @@
     github_url: "https://github.com/frejanielsen",
     gpg_fingerprint: "33B0 9944 7711 CC82 5501",
     is_verified: 1,
-    assigned_projects: ["prism-compiler"]
+    assigned_projects: ["chimera"]
   },
   {
     id: "dev-14",
@@ -244,7 +244,7 @@
     github_url: "https://github.com/julianward",
     gpg_fingerprint: "EE41 8820 1199 DD45 7710",
     is_verified: 1,
-    assigned_projects: ["cipher-vault"]
+    assigned_projects: ["vortex"]
   },
   {
     id: "dev-15",
@@ -260,7 +260,7 @@
     github_url: "https://github.com/hanakim-edge",
     gpg_fingerprint: "7711 0022 44AA EE99 8831",
     is_verified: 1,
-    assigned_projects: ["nexus-protocol"]
+    assigned_projects: ["aether"]
   },
   {
     id: "dev-16",
@@ -276,7 +276,7 @@
     github_url: "https://github.com/mateosilva",
     gpg_fingerprint: "5522 9911 33CC 77EE 4400",
     is_verified: 1,
-    assigned_projects: ["aether-runtime"]
+    assigned_projects: ["hyperion"]
   },
   {
     id: "dev-17",
@@ -292,7 +292,7 @@
     github_url: "https://github.com/ingalind",
     gpg_fingerprint: "1100 4488 99FF 2211 EE33",
     is_verified: 1,
-    assigned_projects: ["aether-runtime"]
+    assigned_projects: ["hyperion"]
   },
   {
     id: "dev-18",
@@ -308,7 +308,7 @@
     github_url: "https://github.com/samirkulkarni",
     gpg_fingerprint: "AA99 1100 5544 CC33 7722",
     is_verified: 1,
-    assigned_projects: ["nexus-protocol"]
+    assigned_projects: ["aether"]
   },
   {
     id: "dev-19",
@@ -324,7 +324,7 @@
     github_url: "https://github.com/astridblom",
     gpg_fingerprint: "CC77 4411 9900 22BB EE11",
     is_verified: 1,
-    assigned_projects: ["prism-compiler"]
+    assigned_projects: ["chimera"]
   },
   {
     id: "dev-20",
@@ -340,7 +340,7 @@
     github_url: "https://github.com/dariusreed",
     gpg_fingerprint: "8833 2211 44EE 9900 11AA",
     is_verified: 1,
-    assigned_projects: ["cipher-vault"]
+    assigned_projects: ["vortex"]
   },
   {
     id: "dev-21",
@@ -356,7 +356,7 @@
     github_url: "https://github.com/clarahoffmann",
     gpg_fingerprint: "33AA 7788 1122 FF44 9900",
     is_verified: 1,
-    assigned_projects: ["vortex-db"]
+    assigned_projects: ["pulseos"]
   },
   {
     id: "dev-22",
@@ -372,7 +372,7 @@
     github_url: "https://github.com/liamgallagher",
     gpg_fingerprint: "55FF 1100 4422 99AA 7733",
     is_verified: 1,
-    assigned_projects: ["hyperion-mesh"]
+    assigned_projects: ["eclipse"]
   },
   {
     id: "dev-23",
@@ -388,7 +388,7 @@
     github_url: "https://github.com/nadiabelkacem",
     gpg_fingerprint: "7722 0011 8899 EE44 33BB",
     is_verified: 1,
-    assigned_projects: ["nexus-protocol"]
+    assigned_projects: ["aether"]
   },
   {
     id: "dev-24",
@@ -404,7 +404,7 @@
     github_url: "https://github.com/oscarberg",
     gpg_fingerprint: "9911 44EE 22AA 7700 8833",
     is_verified: 1,
-    assigned_projects: ["prism-compiler"]
+    assigned_projects: ["chimera"]
   },
   {
     id: "dev-25",
@@ -420,7 +420,7 @@
     github_url: "https://github.com/yukitanaka",
     gpg_fingerprint: "1188 9900 44CC 33AA EE77",
     is_verified: 1,
-    assigned_projects: ["aether-runtime"]
+    assigned_projects: ["hyperion"]
   },
   {
     id: "dev-26",
@@ -436,7 +436,7 @@
     github_url: "https://github.com/racheloconnor",
     gpg_fingerprint: "44CC 8811 77EE 9900 22AA",
     is_verified: 1,
-    assigned_projects: ["cipher-vault"]
+    assigned_projects: ["vortex"]
   },
   {
     id: "dev-27",
@@ -452,7 +452,7 @@
     github_url: "https://github.com/arjunmehta",
     gpg_fingerprint: "EE00 4422 99AA 1188 77CC",
     is_verified: 1,
-    assigned_projects: ["vortex-db"]
+    assigned_projects: ["pulseos"]
   },
   {
     id: "dev-28",
@@ -468,7 +468,7 @@
     github_url: "https://github.com/seleneprog",
     gpg_fingerprint: "22BB 9900 4411 EE88 33CC",
     is_verified: 1,
-    assigned_projects: ["prism-compiler"]
+    assigned_projects: ["chimera"]
   },
   {
     id: "dev-29",
@@ -484,7 +484,7 @@
     github_url: "https://github.com/kofimensah",
     gpg_fingerprint: "8811 2299 77CC 44EE 00AA",
     is_verified: 1,
-    assigned_projects: ["hyperion-mesh"]
+    assigned_projects: ["eclipse"]
   }
 ];
 })();

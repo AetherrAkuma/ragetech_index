@@ -2,329 +2,346 @@
   const root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
   root.RAGETECH_PROJECTS = [
   {
-    id: "proj-01",
-    slug: "aether-runtime",
-    name: "Aether Runtime",
-    tagline: "Deterministic zero-overhead WebAssembly execution sandbox at the edge",
-    description: "A lightweight WebAssembly micro-runtime designed for multi-tenant edge isolation. Executes untrusted binaries with zero-copy I/O, nanosecond cold starts, and linear memory safety.",
+    id: "hyperion",
+    slug: "hyperion",
+    name: "Hyperion",
+    repo: "ragetech/hyperion",
+    badge: "v0.9.4-alpha",
+    tagline: "Ultra-low-latency event streaming engine written in pure Rust. Built on lock-free memory ring buffers and Linux io_uring kernel bypass.",
+    summary: "Ultra-low-latency event streaming engine written in pure Rust. Built on lock-free memory ring buffers and Linux io_uring kernel bypass.",
+    description: "A high-performance streaming runtime designed to eliminate GC pauses. Built on lock-free memory ring buffers, Linux io_uring kernel bypass, and SIMD batch parsers.",
     category: "Distributed Runtimes",
     status: "active",
-    action_button_label: "Visit Site",
-    action_button_url: "https://aether.ragetech.dev",
-    live_url: "https://aether.ragetech.dev",
-    github_url: "https://github.com/ragetech/aether-runtime",
+    action_button_label: "Spec",
+    action_button_url: "https://github.com/ragetech/hyperion",
+    live_url: "https://hyperion.ragetech.dev",
+    github_url: "https://github.com/ragetech/hyperion",
     cover_image_url: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
-    tech_stack: "Rust, WebAssembly, Cranelift, io_uring",
-    stats: {
-      cold_start: "0.18ms",
-      memory_overhead: "28KB",
-      stars: 3410,
-      license: "Apache-2.0"
-    },
+    tech_stack: "Rust, Tokio, io_uring, SIMD",
+    specs: [
+      { label: "Throughput", val: "1.42M events/sec / core" },
+      { label: "Latency (p99)", val: "0.24ms" },
+      { label: "Memory Overhead", val: "< 16 MB RSS baseline" },
+      { label: "Runtime Stack", val: "Rust / Tokio / io_uring" }
+    ],
+    previewTitle: "telemetry_sink.rs",
+    previewType: "code",
+    previewContent: `// Socket ring buffer initialization
+let ring = IoUring::builder()
+    .setup_sqpoll(1000)
+    .build(4096)?;
+
+let stream = HyperionStream::bind("0.0.0.0:8443")
+    .with_zero_copy()
+    .with_simd_parser::<BatchSize<64>>()
+    .spawn_workers(16);
+
+println!("Hyperion worker pool online: 16 rings active");`,
+    previewMeta: "Cargo.lock: tokio v1.42, io-uring v0.7.4",
+    assignees: ["reymartchua", "sora", "mateo", "yuki"],
     markdown_content: `## 1. Abstract & Motivation
 
-Modern serverless runtimes suffer from heavyweight container virtualization, multi-megabyte memory footprints, and multi-millisecond cold starts. **Aether Runtime** reimagines the edge execution layer by stripping away guest operating systems, running native WebAssembly bytecode inside sandboxed memory arenas managed directly by the host kernel. 
+Modern streaming distributed brokers suffer from Java Virtual Machine garbage-collection pauses, multi-megabyte buffer footprints, and kernel-space context switching overhead. **Hyperion** re-engineers event streaming from the silicon up, pairing Linux \`io_uring\` ring buffers with cache-coherent lock-free memory rings in pure, memory-safe Rust.
 
-> "By eliminating filesystem overhead and implementing deterministic memory bounds, Aether executes thousands of concurrent tenant tasks within a single operating system process."
+> "By bypassing standard BSD socket syscalls and processing messages in SIMD batches, Hyperion delivers predictable sub-millisecond tail latencies under multi-gigabit workloads."
 
-## 2. Memory Isolation & Cranelift JIT
+## 2. Lock-Free Memory Rings & io_uring
 
-Each tenant task is allocated an isolated 4GB 32-bit linear memory space with guard pages that cause immediate segmentation fault traps on out-of-bounds access. The Cranelift optimizing compiler compiles WASM modules directly into machine code in single-digit milliseconds. 
+Hyperion maps consumer ring buffers directly into shared physical pages:
 
 \`\`\`rust
-// Zero-copy linear memory sandbox initialization
-pub struct WasmSandboxArena {
-    linear_memory: MmapMemoryPool,
-    epoch_timer: Arc<AtomicU64>,
-    trap_handler: HostTrapTable,
-}
+// Zero-copy socket ring buffer initialization
+let ring = IoUring::builder()
+    .setup_sqpoll(1000)
+    .build(4096)?;
 
-impl WasmSandboxArena {
-    pub fn instantiate_tenant(&self, module_bytes: &[u8]) -> Result<TenantInstance, Trap> {
-        let compiled = CraneliftJIT::compile_fast(module_bytes)?;
-        let memory = self.linear_memory.allocate_guarded_arena(64 * 1024)?;
-        Ok(TenantInstance::bind(compiled, memory))
-    }
-}
+let stream = HyperionStream::bind("0.0.0.0:8443")
+    .with_zero_copy()
+    .with_simd_parser::<BatchSize<64>>()
+    .spawn_workers(16);
+
+println!("Hyperion worker pool online: 16 rings active");
 \`\`\`
 
-Linear memory pages are lazily mapped using kernel copy-on-write (COW) semantics, ensuring tenant instances initialize with an effective RSS footprint of less than **28 Kilobytes**.
+## 3. Production Benchmarks
 
-## 3. Zero-Copy Asynchronous I/O via io_uring
-
-Traditional network proxies incur significant CPU cycles copying bytes between kernel socket buffers and user-space runtime buffers. Aether interfaces directly with Linux \`io_uring\` ring buffers to establish zero-copy memory transfers:
-
-- **Kernel Submission Queue (SQ):** Async socket read descriptors are enqueued without syscall context switches.
-- **Completion Queue (CQ):** In-kernel hardware network packets populate tenant arenas directly.
-- **Hardware NIC Descriptors:** Zero serialization or intermediate string allocations.
-
-## 4. Production Benchmarks & Edge Verification
-
-Under synthetic benchmark load testing across 10 global Cloudflare edge POPs, Aether achieved median cold-start latencies of **180 microseconds**, handling **2,400,000 requests per second** per node.
-
-| Metric | Docker Container | Firecracker MicroVM | Aether Runtime |
-| :--- | :--- | :--- | :--- |
-| **Cold Start** | 450ms | 120ms | **0.18ms** |
-| **Memory Base** | 42MB | 5MB | **28KB** |
-| **P99 Latency** | 18.2ms | 4.8ms | **1.4ms** |
-| **Syscall Trap** | ~2,100 | ~480 | **0 (Sandboxed)** |
-`,
-    sections: [
-      {
-        title: "1. Abstract & Motivation",
-        content: "Modern serverless runtimes suffer from heavyweight container virtualization, multi-megabyte memory footprints, and multi-millisecond cold starts. Aether Runtime reimagines the edge execution layer by stripping away guest operating systems, running native WebAssembly bytecode inside sandboxed memory arenas managed directly by the host kernel."
-      },
-      {
-        title: "2. Memory Isolation & Cranelift JIT",
-        content: "Each tenant task is allocated an isolated 4GB 32-bit linear memory space with guard pages that cause immediate segmentation fault traps on out-of-bounds access. The Cranelift optimizing compiler compiles WASM modules directly into machine code in single-digit milliseconds."
-      },
-      {
-        title: "3. Zero-Copy Asynchronous I/O",
-        content: "Traditional network proxies incur significant CPU cycles copying bytes between kernel socket buffers and user-space runtime buffers. Aether interfaces directly with Linux io_uring ring buffers to establish zero-copy memory transfers."
-      },
-      {
-        title: "4. Production Benchmarks & Edge Verification",
-        content: "Under synthetic benchmark load testing across 10 global Cloudflare edge POPs, Aether achieved median cold-start latencies of 180 microseconds, handling 2,400,000 requests per second per node with a 99.9th percentile response time of 1.4 milliseconds."
-      }
-    ],
-    maintainer_handles: ["sora", "ananya", "mateo", "inga", "yuki"]
+Under 100GbE bare-metal load tests, Hyperion achieved sustained throughput of **1,420,000 events/sec per core** with a p99 latency of **0.24ms** while consuming under 16MB resident memory.
+`
   },
   {
-    id: "proj-02",
-    slug: "vortex-db",
-    name: "Vortex DB",
-    tagline: "Decentralized transactional SQLite replication engine across global edge nodes",
-    description: "Global SQLite state replication engine with causal consistency, multi-region snapshot isolation, and delta CRDT sync over stream websockets. Zero config, sub-millisecond local reads.",
+    id: "pulseos",
+    slug: "pulseos",
+    name: "PulseOS KV",
+    repo: "ragetech/pulseos",
+    badge: "v0.8.1-dev",
+    tagline: "Distributed key-value store engineered for sovereign edge clusters. Combines Raft consensus with eBPF network acceleration.",
+    summary: "Distributed key-value store engineered for sovereign edge clusters. Combines Raft consensus with eBPF network acceleration.",
+    description: "Distributed key-value store engineered for sovereign edge clusters. Combines Raft consensus with eBPF network acceleration and RocksDB persistent storage.",
     category: "Distributed Runtimes",
     status: "active",
-    action_button_label: "Visit Site",
-    action_button_url: "https://vortex.ragetech.dev",
-    live_url: "https://vortex.ragetech.dev",
-    github_url: "https://github.com/ragetech/vortex-db",
+    action_button_label: "Spec",
+    action_button_url: "https://github.com/ragetech/pulseos",
+    live_url: "https://pulseos.ragetech.dev",
+    github_url: "https://github.com/ragetech/pulseos",
     cover_image_url: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1200&q=80",
-    tech_stack: "C++23, SQLite3, Raft, QUIC",
-    stats: {
-      read_latency: "0.4ms",
-      sync_window: "12ms",
-      stars: 2890,
-      license: "MIT"
-    },
-    markdown_content: `## 1. The Edge State Dilemma
+    tech_stack: "Go, Raft, eBPF, RocksDB",
+    specs: [
+      { label: "Consensus", val: "Multi-Raft v2 with Learner nodes" },
+      { label: "Cold Boot", val: "12ms on Firecracker microVM" },
+      { label: "Replication", val: "Synchronous edge quorum (3 of 5)" },
+      { label: "Runtime Stack", val: "Go / Raft / eBPF / RocksDB" }
+    ],
+    previewTitle: "cluster_state.json",
+    previewType: "json",
+    previewContent: `{
+  "cluster_id": "pulse-edge-us-east",
+  "raft_term": 8942,
+  "leader_node": "node-01.ragetech.internal",
+  "quorum_status": "5/5 synchronized",
+  "replication_lag": "< 0.12ms",
+  "ebpf_filter": "ACTIVE (zero-copy socket pass)"
+}`,
+    previewMeta: "Cluster: 5 nodes across 3 availability zones",
+    assignees: ["marcus", "devon", "tariq", "clara"],
+    markdown_content: `## 1. Edge Storage Consensus
 
-Centralized relational databases force geographically distributed users to incur hundreds of milliseconds of transatlantic round-trip network delays. **Vortex DB** solves this by embedding an asynchronous SQLite transaction coordinator into every edge point of presence, decoupling read transactions from write coordinator consensus.
+PulseOS KV is built for sovereign edge clusters where nodes experience intermittent network partitions. By combining a hardened Multi-Raft protocol with in-kernel eBPF socket filters, read commands bypass user space entirely when state is provably stable.
 
-> "Reads are served from local in-memory SQLite snapshots with zero network hops, delivering sub-millisecond query execution anywhere on the planet."
-
-## 2. Multi-Region Replication Architecture
-
-Vortex DB employs an optimized Raft log pipeline with adaptive batch pipelining:
-- Write operations are committed to the local NVMe write-ahead log (WAL).
-- Log deltas are propagated to consensus quorums over multiplexed QUIC streams.
-- Local edge caches remain non-blocking for read bursts.
-
-\`\`\`cpp
-// C++23 High-throughput Raft Delta Appender
-template <typename TransportStream>
-auto replicate_wal_delta(const WalFrameBatch& batch, TransportStream& quic_channel) -> co_await Task<SyncStatus> {
-    auto frame_digest = blake3_hash(batch.payload_span());
-    auto ack = co_await quic_channel.async_send_stream(frame_digest, batch.payload_span());
-    if (ack.quorum_reached()) {
-        co_return SyncStatus::Committed;
-    }
-    co_return SyncStatus::BufferedRetry;
+\`\`\`json
+{
+  "cluster_id": "pulse-edge-us-east",
+  "raft_term": 8942,
+  "leader_node": "node-01.ragetech.internal",
+  "quorum_status": "5/5 synchronized",
+  "replication_lag": "< 0.12ms",
+  "ebpf_filter": "ACTIVE (zero-copy socket pass)"
 }
 \`\`\`
 
-## 3. Conflict Resolution via State CRDTs
+## 2. Fast Failover and Zero Partition Drift
 
-For collaborative write scenarios across edge partitions, Vortex implements delta state-based conflict-free replicated data types (CRDTs). Schema alterations and row-level operations merge deterministically using vector clocks, guaranteeing convergence across network nets without split-brain anomalies.
-`,
-    sections: [
-      {
-        title: "1. The Edge State Dilemma",
-        content: "Centralized relational databases force geographically distributed users to incur hundreds of milliseconds of transatlantic round-trip network delays. Vortex DB solves this by embedding an asynchronous SQLite transaction coordinator into every edge point of presence, decoupling read transactions from write coordinator consensus."
-      },
-      {
-        title: "2. Multi-Region Replication Architecture",
-        content: "Vortex DB employs an optimized Raft log pipeline with adaptive batch pipelining. Write operations are committed to the local NVMe write-ahead log (WAL) and propagated to consensus quorums over multiplexed QUIC streams. Reads are served from local in-memory SQLite snapshots with zero network hops."
-      },
-      {
-        title: "3. Conflict Resolution via State CRDTs",
-        content: "For collaborative write scenarios across edge partitions, Vortex implements delta state-based conflict-free replicated data types (CRDTs). Schema alterations and row-level operations merge deterministically using vector clocks, guaranteeing convergence across network nets without split-brain anomalies."
-      }
-    ],
-    maintainer_handles: ["marcus", "devon", "tariq", "clara", "arjun"]
+State persistence is backed by custom RocksDB block tables tuned for solid-state flash memory wear leveling.
+`
   },
   {
-    id: "proj-03",
-    slug: "prism-compiler",
-    name: "Prism Compiler",
-    tagline: "Zero-allocation optimizing IR compiler for edge micro-kernels",
-    description: "An optimizing intermediate representation (IR) compiler transforming high-level domain languages into bare-metal micro-kernels. Features vectorization, dead-code elimination, and register allocation.",
+    id: "chimera",
+    slug: "chimera",
+    name: "Chimera Runtime",
+    repo: "ragetech/chimera",
+    badge: "v0.4.0-preview",
+    tagline: "Deterministic multi-agent execution kernel. Coordinates asynchronous cognitive workflows with verified memory checkpoints.",
+    summary: "Deterministic multi-agent execution kernel. Coordinates asynchronous cognitive workflows with verified memory checkpoints.",
+    description: "Deterministic multi-agent execution kernel. Coordinates asynchronous cognitive workflows with verified memory checkpoints and vector cache.",
     category: "Compilers",
     status: "active",
-    action_button_label: "Visit Site",
-    action_button_url: "https://prism.ragetech.dev",
-    live_url: "https://prism.ragetech.dev",
-    github_url: "https://github.com/ragetech/prism-compiler",
+    action_button_label: "Spec",
+    action_button_url: "https://github.com/ragetech/chimera",
+    live_url: "https://chimera.ragetech.dev",
+    github_url: "https://github.com/ragetech/chimera",
     cover_image_url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
-    tech_stack: "Zig, LLVM 18, SIMD, x86-64/arm64",
-    stats: {
-      binary_size: "<400KB",
-      compile_rate: "85k lines/s",
-      stars: 2150,
-      license: "MIT"
-    },
-    markdown_content: `## 1. High-Performance Static Analysis
+    tech_stack: "Python, PyTorch, CUDA, gRPC",
+    specs: [
+      { label: "Execution Model", val: "Asynchronous DAG with state rewind" },
+      { label: "Context Engine", val: "Memory-mapped vector cache (2M tokens)" },
+      { label: "Inference Target", val: "Distributed vLLM / TensorRT-LLM" },
+      { label: "Runtime Stack", val: "Python / PyTorch / CUDA / gRPC" }
+    ],
+    previewTitle: "dag_trace.log",
+    previewType: "log",
+    previewContent: `[00:00:00.012] SPAN: root_dispatch -> worker_pool [16 agents]
+[00:00:00.045] STEP: retrieval_pass (vector_index: 4,096 docs) -> 1.4ms
+[00:00:00.118] STEP: model_inference (batch_size=8) -> 64.2ms
+[00:00:00.134] STEP: verification_gate (schema_assert=PASS)
+[00:00:00.141] RESULT: DAG complete (total: 129ms, memory: 48MB)`,
+    previewMeta: "GPU: CUDA 12.6 / TensorRT 10.4",
+    assignees: ["elena", "ananya", "astrid", "selene"],
+    markdown_content: `## 1. Deterministic Multi-Agent Coordination
 
-Prism was engineered from the ground up in Zig to provide sub-second compilation cycles for systems micro-kernels. Unlike massive compilation frameworks that require gigabytes of RAM, Prism processes abstract syntax trees in a single pass with cache-friendly flat arena allocators.
+Asynchronous cognitive workflows frequently collapse when downstream LLM agents hallucinate or fail structural schema assertions. **Chimera Runtime** introduces a formal directed acyclic graph (DAG) scheduler with reversible state checkpoints.
 
-## 2. Polyhedral Loop Optimization & SIMD
+\`\`\`log
+[00:00:00.012] SPAN: root_dispatch -> worker_pool [16 agents]
+[00:00:00.045] STEP: retrieval_pass (vector_index: 4,096 docs) -> 1.4ms
+[00:00:00.118] STEP: model_inference (batch_size=8) -> 64.2ms
+[00:00:00.134] STEP: verification_gate (schema_assert=PASS)
+[00:00:00.141] RESULT: DAG complete (total: 129ms, memory: 48MB)
+\`\`\`
 
-The Prism optimization pipeline analyzes nested loops to identify data parallelism, automatically emitting AVX-512 and ARM Neon vector instructions. Memory allocations within the inner execution loops are statically proven and promoted into CPU registers.
+## 2. Memory-Mapped Vector Cache
 
-\`\`\`zig
-// Zig Arena IR lowering pass
-pub fn lower_loop_vector(allocator: std.mem.Allocator, ir_block: *IrBlock) !SimdVectorNode {
-    var vector_arena = std.heap.ArenaAllocator.init(allocator);
-    defer vector_arena.deinit();
+A 2-million token shared memory arena allows multiple worker processes to inspect the same inference context without duplication or serialization overhead.
+`
+  },
+  {
+    id: "eclipse",
+    slug: "eclipse",
+    name: "Eclipse UI",
+    repo: "ragetech/eclipse-ui",
+    badge: "v1.1.0-rc3",
+    tagline: "High-density design token system and zero-runtime component foundation engineered for complex developer tools and monitoring suites.",
+    summary: "High-density design token system and zero-runtime component foundation engineered for complex developer tools and monitoring suites.",
+    description: "High-density design token system and zero-runtime component foundation engineered for complex developer tools and monitoring suites.",
+    category: "Kernel & Systems",
+    status: "active",
+    action_button_label: "Spec",
+    action_button_url: "https://github.com/ragetech/eclipse-ui",
+    live_url: "https://eclipse.ragetech.dev",
+    github_url: "https://github.com/ragetech/eclipse-ui",
+    cover_image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+    tech_stack: "Vanilla CSS, PostCSS, TypeScript",
+    specs: [
+      { label: "Bundle Size", val: "0 KB runtime overhead" },
+      { label: "Token Scale", val: "OKLCH color system with APCA contrast" },
+      { label: "Primitives", val: "48 accessible, headless components" },
+      { label: "Runtime Stack", val: "Vanilla CSS / PostCSS / TypeScript" }
+    ],
+    previewTitle: "design_tokens.css",
+    previewType: "code",
+    previewContent: `:root {
+  /* Hairline precision border scales */
+  --hairline: rgba(255, 255, 255, 0.07);
+  --border-focus: #f4f4f5;
+  
+  /* OKLCH surface scales */
+  --surface-base: oklch(14.5% 0.005 285);
+  --surface-elevated: oklch(17.8% 0.008 285);
+  --accent-cyan: oklch(78.2% 0.142 210);
+}`,
+    previewMeta: "Conforms to WCAG 2.2 AAA contrast standards",
+    assignees: ["chloe", "liam", "maya", "julian"],
+    markdown_content: `## 1. Zero-Runtime Design Architecture
 
-    const unrolled = try ir_block.polyhedral_unroll(8);
-    return unrolled.emit_avx512_instructions();
+Heavy frontend component frameworks introduce megabytes of JavaScript dependencies that slow down systems consoles. **Eclipse UI** relies entirely on CSS custom properties, modern pseudo-classes, and accessible headless web primitives.
+
+\`\`\`css
+:root {
+  /* Hairline precision border scales */
+  --hairline: rgba(255, 255, 255, 0.07);
+  --border-focus: #f4f4f5;
+  
+  /* OKLCH surface scales */
+  --surface-base: oklch(14.5% 0.005 285);
+  --surface-elevated: oklch(17.8% 0.008 285);
+  --accent-cyan: oklch(78.2% 0.142 210);
 }
 \`\`\`
-`,
-    sections: [
-      {
-        title: "1. High-Performance Static Analysis",
-        content: "Prism was engineered from the ground up in Zig to provide sub-second compilation cycles for systems micro-kernels. Unlike massive compilation frameworks that require gigabytes of RAM, Prism processes abstract syntax trees in a single pass with cache-friendly flat arena allocators."
-      },
-      {
-        title: "2. Polyhedral Loop Optimization & SIMD",
-        content: "The Prism optimization pipeline analyzes nested loops to identify data parallelism, automatically emitting AVX-512 and ARM Neon vector instructions. Memory allocations within the inner execution loops are statically proven and promoted into CPU registers."
-      }
-    ],
-    maintainer_handles: ["elena", "freja", "astrid", "oscar", "selene"]
+
+## 2. High-Density Observability
+
+Designed specifically for systems engineers who require maximum information density, monospace data alignment, and microsecond responsiveness.
+`
   },
   {
-    id: "proj-04",
-    slug: "hyperion-mesh",
-    name: "Hyperion Mesh",
-    tagline: "Peer-to-peer authenticated BGP and WireGuard overlay network",
-    description: "Decentralized overlay mesh establishing zero-trust WireGuard tunnels between server nodes and edge pops. Automatic NAT hole-punching, dynamic path selection, and end-to-end packet encryption.",
+    id: "vortex",
+    slug: "vortex",
+    name: "Vortex Scheduler",
+    repo: "ragetech/vortex",
+    badge: "v0.6.2-beta",
+    tagline: "Sub-millisecond job scheduling daemon for heterogeneous compute workloads. Replaces heavy distributed cron engines.",
+    summary: "Sub-millisecond job scheduling daemon for heterogeneous compute workloads. Replaces heavy distributed cron engines.",
+    description: "Sub-millisecond job scheduling daemon for heterogeneous compute workloads. Replaces heavy distributed cron engines.",
     category: "Kernel & Systems",
     status: "active",
-    action_button_label: "Visit Site",
-    action_button_url: "https://hyperion.ragetech.dev",
-    live_url: "https://hyperion.ragetech.dev",
-    github_url: "https://github.com/ragetech/hyperion-mesh",
-    cover_image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-    tech_stack: "Go, WireGuard, eBPF, Linux XDP",
-    stats: {
-      throughput: "94.2 Gbps",
-      reconnect_time: "<80ms",
-      stars: 1940,
-      license: "BSD-3"
-    },
-    markdown_content: `## 1. Autonomous Overlay Routing
-
-Hyperion establishes an intelligent mesh overlay across edge infrastructure. Using continuous eBPF telemetry, nodes dynamically measure jitter, packet loss, and latency along every available internet path, dynamically steering packets over the fastest available WireGuard peer.
-
-## 2. Kernel Bypass via eBPF XDP
-
-Encrypted tunnel headers are parsed directly at the network card driver level using eBPF eXpress Data Path (XDP). Packets that do not belong to established cryptographic sessions are dropped in hardware with zero CPU consumption.
-`,
-    sections: [
-      {
-        title: "1. Autonomous Overlay Routing",
-        content: "Hyperion establishes an intelligent mesh overlay across edge infrastructure. Using continuous eBPF telemetry, nodes dynamically measure jitter, packet loss, and latency along every available internet path, dynamically steering packets over the fastest available WireGuard peer."
-      },
-      {
-        title: "2. Kernel Bypass via eBPF XDP",
-        content: "Encrypted tunnel headers are parsed directly at the network card driver level using eBPF eXpress Data Path (XDP). Packets that do not belong to established cryptographic sessions are dropped in hardware with zero CPU consumption."
-      }
-    ],
-    maintainer_handles: ["lucas", "nikolai", "liam", "kofi"]
-  },
-  {
-    id: "proj-05",
-    slug: "cipher-vault",
-    name: "Cipher Vault",
-    tagline: "Post-quantum cryptographic state coordinator and verifiable key authority",
-    description: "State-of-the-art cryptographic coordinator providing Kyber-1024 and Dilithium-5 authenticated identity tokens for microservices. Constant-time execution resistant to cache timing attacks.",
-    category: "Cryptography",
-    status: "active",
-    action_button_label: "Visit Site",
-    action_button_url: "https://cipher.ragetech.dev",
-    live_url: "https://cipher.ragetech.dev",
-    github_url: "https://github.com/ragetech/cipher-vault",
+    action_button_label: "Spec",
+    action_button_url: "https://github.com/ragetech/vortex",
+    live_url: "https://vortex.ragetech.dev",
+    github_url: "https://github.com/ragetech/vortex",
     cover_image_url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
-    tech_stack: "Rust, Kyber, Dilithium, Constant-Time",
-    stats: {
-      security_level: "NIST Cat 5",
-      verify_latency: "1.1ms",
-      stars: 1680,
-      license: "Apache-2.0"
-    },
-    markdown_content: `## 1. Post-Quantum Cryptographic Posture
-
-Anticipating quantum computing decryption capabilities against traditional RSA and Elliptic Curve algorithms, **Cipher Vault** deploys NIST-approved Crystals-Kyber for key encapsulation and Crystals-Dilithium for digital signatures.
-
-## 2. Side-Channel Immunity
-
-All cryptographic primitives in Cipher Vault are audited and formally verified for constant-time execution. Arithmetic operations avoid branch instructions conditioned on secret key bits, neutralizing timing attack vectors.
-`,
-    sections: [
-      {
-        title: "1. Post-Quantum Cryptographic Posture",
-        content: "Anticipating quantum computing decryption capabilities against traditional RSA and Elliptic Curve algorithms, Cipher Vault deploys NIST-approved Crystals-Kyber for key encapsulation and Crystals-Dilithium for digital signatures."
-      },
-      {
-        title: "2. Side-Channel Immunity",
-        content: "All cryptographic primitives in Cipher Vault are audited and formally verified for constant-time execution. Arithmetic operations avoid branch instructions conditioned on secret key bits, neutralizing timing attack vectors."
-      }
+    tech_stack: "Rust, Tokio, WASM, RocksDB",
+    specs: [
+      { label: "Dispatch Tick", val: "10 microseconds" },
+      { label: "Capacity", val: "10,000,000 concurrent timers" },
+      { label: "Failover", val: "Raft consensus failover < 50ms" },
+      { label: "Runtime Stack", val: "Rust / Tokio / WASM / RocksDB" }
     ],
-    maintainer_handles: ["kai", "maya", "julian", "darius", "rachel"]
+    previewTitle: "schedule_manifest.yaml",
+    previewType: "code",
+    previewContent: `schedule:
+  id: "telemetry-flush-01"
+  cron: "*/5 * * * * *"
+  precision: "sub-millisecond"
+  dispatch:
+    target: "wasm://runtime/metrics-sink"
+    timeout: "250ms"
+    jitter_budget: "50us"
+    retry:
+      max_attempts: 3
+      backoff: exponential`,
+    previewMeta: "Queue status: 0 backlog, 128 workers healthy",
+    assignees: ["kai", "darius", "rachel", "arjun"],
+    markdown_content: `## 1. Precision Event Dispatch
+
+Standard distributed cron solutions query database tables every minute, creating thundering herd spikes and latency jitter. **Vortex Scheduler** utilizes hierarchical timing wheels with 10-microsecond dispatch resolution.
+
+\`\`\`yaml
+schedule:
+  id: "telemetry-flush-01"
+  cron: "*/5 * * * * *"
+  precision: "sub-millisecond"
+  dispatch:
+    target: "wasm://runtime/metrics-sink"
+    timeout: "250ms"
+    jitter_budget: "50us"
+    retry:
+      max_attempts: 3
+      backoff: exponential
+\`\`\`
+
+## 2. High-Capacity Timer Arenas
+
+Supports up to 10 million active timers per instance with Raft-synchronized failover under 50 milliseconds.
+`
   },
   {
-    id: "proj-06",
-    slug: "nexus-protocol",
-    name: "Nexus Protocol",
-    tagline: "High-throughput binary RPC over QUIC with stream multiplexing",
-    description: "Compact binary communication layer designed as an ultra-fast alternative to gRPC. Zero serialization overhead via FlatBuffers layouts and bidirectional UDP streaming.",
-    category: "Kernel & Systems",
+    id: "aether",
+    slug: "aether",
+    name: "Aether P2P",
+    repo: "ragetech/aether",
+    badge: "v0.3.5-alpha",
+    tagline: "P2P collaborative CRDT sync mesh for browser and native applications. Converges distributed states without central servers.",
+    summary: "P2P collaborative CRDT sync mesh for browser and native applications. Converges distributed states without central servers.",
+    description: "P2P collaborative CRDT sync mesh for browser and native applications. Converges distributed states without central servers.",
+    category: "Distributed Runtimes",
     status: "active",
-    action_button_label: "Visit Site",
-    action_button_url: "https://nexus.ragetech.dev",
-    live_url: "https://nexus.ragetech.dev",
-    github_url: "https://github.com/ragetech/nexus-protocol",
+    action_button_label: "Spec",
+    action_button_url: "https://github.com/ragetech/aether",
+    live_url: "https://aether.ragetech.dev",
+    github_url: "https://github.com/ragetech/aether",
     cover_image_url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
-    tech_stack: "Rust, QUIC, FlatBuffers, Tokio",
-    stats: {
-      latency_p99: "0.8ms",
-      rps: "1.8M req/s",
-      stars: 2420,
-      license: "MIT"
-    },
-    markdown_content: `## 1. Next-Generation Binary Streaming
-
-Nexus eliminates the header bloat and framing penalties of HTTP/2 and Protobuf. By utilizing FlatBuffers binary layouts, serialized structs can be accessed in-place directly from network socket memory buffers without decompression or pointer swizzling.
-
-## 2. Bidirectional QUIC Multiplexing
-
-Operating over native UDP with modern loss recovery mechanisms, Nexus streams maintain independent packet sequence numbers, completely eliminating head-of-line blocking during packet loss bursts.
-`,
-    sections: [
-      {
-        title: "1. Next-Generation Binary Streaming",
-        content: "Nexus eliminates the header bloat and framing penalties of HTTP/2 and Protobuf. By utilizing FlatBuffers binary layouts, serialized structs can be accessed in-place directly from network socket memory buffers without decompression or pointer swizzling."
-      },
-      {
-        title: "2. Bidirectional QUIC Multiplexing",
-        content: "Operating over native UDP with modern loss recovery mechanisms, Nexus streams maintain independent packet sequence numbers, completely eliminating head-of-line blocking during packet loss bursts."
-      }
+    tech_stack: "Rust, WASM, WebRTC, CRDT",
+    specs: [
+      { label: "Peer Latency", val: "< 8ms over encrypted WebRTC" },
+      { label: "Conflict Rate", val: "0.00% (Automerge CRDT)" },
+      { label: "Discovery", val: "Encrypted DHT via libp2p" },
+      { label: "Runtime Stack", val: "Rust / WASM / WebRTC / CRDT" }
     ],
-    maintainer_handles: ["zara", "chloe", "hana", "samir", "nadia"]
+    previewTitle: "webrtc_mesh.log",
+    previewType: "log",
+    previewContent: `[18:24:02.102] PEER_DISCOVERY: ICE candidate gathered -> 192.88.99.1:51820
+[18:24:02.110] HANDSHAKE: authenticated with Curve25519 key
+[18:24:02.114] CRDT_SYNC: Vector clock synchronized (delta=0)
+[18:24:02.116] STATUS: P2P mesh converged (4 active nodes)`,
+    previewMeta: "Mesh topology: 4 peers connected directly",
+    assignees: ["zara", "lucas", "nikolai", "kofi"],
+    markdown_content: `## 1. Serverless Peer-to-Peer Convergence
+
+Aether P2P enables local-first collaborative software where client nodes synchronize document state across encrypted WebRTC data channels with zero server intermediaries.
+
+\`\`\`log
+[18:24:02.102] PEER_DISCOVERY: ICE candidate gathered -> 192.88.99.1:51820
+[18:24:02.110] HANDSHAKE: authenticated with Curve25519 key
+[18:24:02.114] CRDT_SYNC: Vector clock synchronized (delta=0)
+[18:24:02.116] STATUS: P2P mesh converged (4 active nodes)
+\`\`\`
+
+## 2. Automerge CRDT & Libp2p Discovery
+
+State mutations are recorded in compact vector clocks that guarantee mathematical convergence across concurrent offline edits.
+`
   }
 ];
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { RAGETECH_PROJECTS: root.RAGETECH_PROJECTS };
+}
 })();

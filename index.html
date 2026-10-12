@@ -131,27 +131,28 @@
     </section>
 
     <!-- ======================================================================
-         3. Tailark Expandable-Features-8 (@tailark/expandable-features-8)
+         3. Repositories Sticky Scroll Section (Tailark Dusk Features 5)
          ====================================================================== -->
-    <section id="repositories" class="app-container" style="padding: 72px 0;">
-      <div class="section-header">
-        <span class="section-tag">// OPEN-SOURCE BLUEPRINTS</span>
-        <h2 class="section-title">The Sovereign Repositories</h2>
-        <p class="section-desc">Six mission-critical edge components developed in open collaboration with cryptographic verification and zero telemetry backdoors.</p>
+    <section class="projects-section app-container" id="repositories">
+      <div class="section-lead">
+        <h2 class="section-h2">Built for systems engineers.</h2>
+        <p class="section-p">
+          Each repository addresses bottlenecks in modern distributed applications. Scroll through each system below to inspect architectural parameters.
+        </p>
       </div>
 
-      <!-- Interactive Split-Pane Layout with Equal Spotlight -->
-      <div class="expandable-features-grid">
-        <!-- Left: Interactive Repository Selector Cards -->
-        <div class="repo-nav-list" id="repoNavList">
-          <!-- Rendered dynamically by app.js -->
-        </div>
-
-        <!-- Right: Active Feature Preview Showcase Pane -->
-        <div class="feature-preview-panel spotlight-card" id="featurePreviewPanel">
-          <div class="spotlight-card-content" id="previewContentWrap">
-            <!-- Rendered dynamically by app.js -->
+      <div class="scroll-layout-grid">
+        <!-- Sticky Left Index -->
+        <aside class="sticky-sidebar-nav" aria-label="Repository Index">
+          <div class="sidebar-section-title">REPOSITORIES</div>
+          <div id="sticky-project-nav">
+            <!-- Rendered by app.js -->
           </div>
+        </aside>
+
+        <!-- Main Scrollable Projects Stack -->
+        <div class="projects-stack" id="projects-stack">
+          <!-- Rendered by app.js with scroll highlight observer -->
         </div>
       </div>
     </section>

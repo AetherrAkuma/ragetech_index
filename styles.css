@@ -524,240 +524,308 @@ code, pre, .font-mono {
   max-width: 580px;
 }
 
-/* Category Filter Tabs */
-.filter-tabs-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 32px;
+/* --- 7. Repositories Sticky Scroll Section (Tailark Dusk Features 5) --- */
+.projects-section {
+  padding: 80px 0 96px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.filter-tab-btn {
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
-  font-size: 0.84rem;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
+.section-lead {
+  margin-bottom: 50px;
 }
 
-.filter-tab-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-}
-
-.filter-tab-btn.active {
-  background: rgba(6, 182, 212, 0.12);
-  border-color: rgba(6, 182, 212, 0.35);
-  color: var(--accent-cyan);
-  font-weight: 600;
-}
-
-/* Expandable Split Pane */
-.expandable-features-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.25fr;
-  gap: 24px;
-  align-items: start;
-}
-
-@media (max-width: 960px) {
-  .expandable-features-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.repo-nav-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.repo-nav-card {
-  padding: 18px 20px;
-  cursor: pointer;
-  text-align: left;
-}
-
-.repo-nav-card.active {
-  background-color: var(--bg-card-hover);
-  border-color: rgba(6, 182, 212, 0.4);
-  box-shadow: 0 0 24px rgba(6, 182, 212, 0.1);
-}
-
-.repo-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.repo-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.repo-status-badge {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--accent-emerald);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-.repo-tagline {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 12px;
-}
-
-.repo-stack-pills {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.stack-pill {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-}
-
-/* Feature Showcase Preview Pane */
-.feature-preview-panel {
-  padding: 32px;
-  position: sticky;
-  top: 96px;
-}
-
-.preview-badge-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.preview-category {
+.section-kicker {
   font-family: var(--font-mono);
   font-size: 0.76rem;
   color: var(--accent-cyan);
   text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+  display: block;
 }
 
-.preview-stars {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-secondary);
-}
-
-.preview-title {
-  font-size: 1.7rem;
+.section-h2 {
+  font-size: clamp(2rem, 3.6vw, 2.7rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  color: #ffffff;
   margin-bottom: 12px;
 }
 
-.preview-desc {
-  font-size: 0.95rem;
+.section-p {
+  font-size: 1.02rem;
+  color: var(--text-secondary);
+  max-width: 680px;
+  line-height: 1.6;
+}
+
+/* Layout: 220px Sticky Sidebar + Clean Content Column */
+.scroll-layout-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.sticky-sidebar-nav {
+  position: sticky;
+  top: calc(var(--header-height) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-left: 10px;
+}
+
+.sidebar-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-nav-button[data-state="active"] {
+  color: #ffffff;
+  background: #14141c;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-nav-button[data-state="active"] .nav-bullet {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.nav-bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Projects Stack */
+.projects-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.project-entry {
+  scroll-margin-top: calc(var(--header-height) + 24px);
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 36px;
+  padding: 36px;
+  border-radius: var(--radius-xl);
+  background: #101015;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.project-entry.is-active {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: #14141c;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.project-meta-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.project-slug-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.project-slug-tag {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.project-status-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+}
+
+.project-h3 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.project-summary {
+  font-size: 0.94rem;
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 24px;
 }
 
-.blueprint-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 28px;
+.spec-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.blueprint-stat-box {
-  padding: 12px 14px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+.spec-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.84rem;
 }
 
-.blueprint-stat-val {
+.spec-label {
+  color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
 }
 
-.blueprint-stat-key {
+.spec-value {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.project-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.project-assignees-avatars {
+  display: flex;
+  align-items: center;
+}
+
+.builder-pill-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1e1e2a;
+  border: 2px solid #14141c;
+  margin-left: -6px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: transform 0.15s ease, z-index 0.15s ease;
+}
+
+.builder-pill-avatar:first-child {
+  margin-left: 0;
+}
+
+.builder-pill-avatar:hover {
+  transform: translateY(-2px) scale(1.1);
+  z-index: 5;
+  color: #ffffff;
+  border-color: var(--accent-cyan);
+}
+
+/* Technical Preview Window */
+.project-preview-window {
+  background: #08080a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 360px;
+}
+
+.preview-window-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
   font-size: 0.74rem;
   color: var(--text-muted);
-  text-transform: uppercase;
-  margin-top: 2px;
 }
 
-.preview-maintainers-section {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 20px;
-  margin-bottom: 28px;
+.preview-window-body {
+  padding: 20px 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: #d4d4d8;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
 }
 
-.preview-maintainers-title {
-  font-size: 0.8rem;
-  font-weight: 600;
+.preview-window-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 12px;
 }
 
-.maintainer-avatar-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.maintainer-avatar-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px 4px 4px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.maintainer-avatar-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--border-strong);
-}
-
-.maintainer-avatar-img {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.preview-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+@media (max-width: 960px) {
+  .scroll-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .sticky-sidebar-nav {
+    display: none;
+  }
+  .project-entry {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 24px;
+  }
 }
 
 /* --- 8. Tailark Quartz Team (@tailark/blocks/quartz/team) --- */
