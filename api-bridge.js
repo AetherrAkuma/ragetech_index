@@ -23,6 +23,41 @@
 
   const nativeFetch = window.fetch;
 
+  // Real-time Cross-Tab & Inter-Window Synchronization Engine
+  const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ragetech_realtime_sync') : null;
+  const syncListeners = new Set();
+
+  window.RagetechSync = {
+    broadcast(event) {
+      if (syncChannel) {
+        try { syncChannel.postMessage(event); } catch (e) {}
+      }
+      try {
+        localStorage.setItem('ragetech_last_sync', JSON.stringify({ ...event, _t: Date.now() }));
+      } catch (e) {}
+      syncListeners.forEach(fn => { try { fn(event); } catch (err) {} });
+    },
+    subscribe(cb) {
+      syncListeners.add(cb);
+      return () => syncListeners.delete(cb);
+    }
+  };
+
+  if (syncChannel) {
+    syncChannel.onmessage = (e) => {
+      syncListeners.forEach(fn => { try { fn(e.data); } catch (err) {} });
+    };
+  }
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'ragetech_last_sync' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        syncListeners.forEach(fn => { try { fn(data); } catch (err) {} });
+      } catch (err) {}
+    }
+  });
+
   // Web Crypto SHA-256 helper
   async function sha256Hex(message) {
     if (!message) return '';
@@ -56,21 +91,28 @@
       const cleanPath = pathname.startsWith('/api') ? pathname : `/${pathname.replace(/^\/?/, '')}`;
       const method = (init && init.method ? init.method.toUpperCase() : 'GET');
 
-      // If on static server, intercept directly to avoid 404/405 console errors
-      if (isStaticHost) {
-        return handleBridgeRequest(cleanPath, method, init);
+      // Always attempt live network request first to get real-time database updates from D1
+      if (window.location.protocol.startsWith('http')) {
+        try {
+          const response = await nativeFetch(input, init);
+          // If server actively answered, return response
+          if (response.status !== 404 && response.status !== 405) {
+            if (['POST', 'PUT', 'DELETE'].includes(method) && response.ok) {
+              if (cleanPath.includes('/projects')) {
+                window.RagetechSync?.broadcast({ type: 'PROJECT_MUTATED', path: cleanPath });
+              } else if (cleanPath.includes('/developers') || cleanPath.includes('/change-password')) {
+                window.RagetechSync?.broadcast({ type: 'DEVELOPER_MUTATED', path: cleanPath });
+              }
+            }
+            return response;
+          }
+        } catch (networkErr) {
+          // If offline / network error, fall through to graceful bridge mock
+        }
       }
 
-      // In live edge / wrangler runtime, attempt live fetch first
-      try {
-        const response = await nativeFetch(input, init);
-        if (response.status === 404 || response.status === 405) {
-          return handleBridgeRequest(cleanPath, method, init);
-        }
-        return response;
-      } catch (networkErr) {
-        return handleBridgeRequest(cleanPath, method, init);
-      }
+      // If running on static local file: or standalone static server without backend, use dynamic bridge
+      return handleBridgeRequest(cleanPath, method, init);
     }
 
     return nativeFetch.apply(this, arguments);
@@ -205,6 +247,7 @@
         }
       } catch (e) {}
 
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_SAVED', handle: body.handle, data: body });
       return createJsonResponse({ success: true, message: 'Developer profile synchronized', data: body });
     }
 
@@ -277,6 +320,7 @@
         }
       } catch (e) {}
 
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_PASSWORD_CHANGED', handle: dev.handle });
       return createJsonResponse({ success: true, message: 'Access key successfully updated and hashed via SHA-256.' });
     }
 
@@ -297,6 +341,7 @@
         window.RAGETECH_DEVELOPERS = window.RAGETECH_DEVELOPERS.filter(d => d.id !== idOrHandle && d.handle !== idOrHandle);
       }
 
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_DELETED', handle: idOrHandle });
       return createJsonResponse({ success: true, message: 'Developer removed' });
     }
 
@@ -321,6 +366,7 @@
         else window.RAGETECH_PROJECTS.push(body);
       }
 
+      window.RagetechSync?.broadcast({ type: 'PROJECT_SAVED', slug: body.slug, data: body });
       return createJsonResponse({ success: true, message: 'Project repository synchronized', data: body });
     }
 
@@ -341,11 +387,13 @@
         window.RAGETECH_PROJECTS = window.RAGETECH_PROJECTS.filter(p => p.id !== idOrSlug && p.slug !== idOrSlug);
       }
 
+      window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', slug: idOrSlug });
       return createJsonResponse({ success: true, message: 'Project removed' });
     }
 
     // 11. POST /api/manage/assignments
     if (path === '/api/manage/assignments' && method === 'POST') {
+      window.RagetechSync?.broadcast({ type: 'ASSIGNMENT_UPDATED' });
       return createJsonResponse({ success: true, message: 'Assignment synchronized' });
     }
 
@@ -373,7 +421,7 @@
       const expectedHash = dev.password_hash || defaultHash;
       const isValid = (inputHash === expectedHash) ||
         (dev.handle === 'reymartchua' && password === 'yuichirokanade') ||
-        (password === 'admin123');
+        (!dev.password_hash && password === 'admin123');
 
       if (!isValid) {
         return createJsonResponse({ success: false, error: 'Invalid access key / password' }, 401);

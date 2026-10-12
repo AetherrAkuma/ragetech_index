@@ -1689,6 +1689,8 @@ Existing alternatives required significant hardware resources and heavy runtimes
         });
       } catch (err) {}
 
+      window.RagetechSync?.broadcast({ type: 'PROJECT_SAVED', slug, data: payload });
+
       saveBtn.disabled = false;
       saveBtn.innerHTML = `
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -1765,13 +1767,20 @@ Existing alternatives required significant hardware resources and heavy runtimes
         await fetch(`/api/manage/projects/${id}`, { method: 'DELETE' });
       } catch (e) {}
 
-      // 2. Remove from LocalStorage custom projects
+      // 2. Remove from LocalStorage custom projects & record tombstone
       try {
         let customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
         customProjects = customProjects.filter(p => p.id !== id && p.slug !== slug && p.id !== slug);
         localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
         localStorage.removeItem(`ragetech_project_${slug}`);
+
+        let deleted = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        if (!deleted.includes(id)) deleted.push(id);
+        if (!deleted.includes(slug)) deleted.push(slug);
+        localStorage.setItem('ragetech_deleted_projects', JSON.stringify(deleted));
       } catch (e) {}
+
+      window.RagetechSync?.broadcast({ type: 'PROJECT_DELETED', id, slug });
 
       // 3. Remove from Lead's assigned projects in session if lead
       if (isLead && currentSessionUser.assigned_projects) {

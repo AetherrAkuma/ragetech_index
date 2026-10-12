@@ -399,6 +399,7 @@
                     <td>
                       <div class="table-actions">
                         <button class="btn-primary" style="font-size: 0.76rem; padding: 5px 12px;" onclick="openDeveloperModal('${d.handle}')">Edit Profile</button>
+                        <button class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px;" onclick="openQuickPasswordModal('${d.handle}')" title="Reset Developer Access Key">Change Key</button>
                         <a href="developer.html?id=${d.handle}" target="_blank" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 10px; text-decoration: none;">View Dossier</a>
                         <button class="btn-icon-action danger" onclick="deleteDeveloper('${d.id || d.handle}')" title="Remove Developer">Remove</button>
                       </div>
@@ -1070,11 +1071,120 @@
         localStorage.setItem('ragetech_custom_projects', JSON.stringify(customProjects));
       } catch (e) {}
 
+      if (passVal) {
+        try {
+          await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              handle: payload.handle,
+              id: payload.id,
+              email: payload.email,
+              newPassword: passVal
+            })
+          });
+        } catch (err) {}
+      }
+
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_SAVED', handle: payload.handle, data: payload });
+
       closeCrudModal();
       renderCurrentView();
 
       if (passVal) {
         alert(`Access key for @${payload.handle} has been successfully updated and hashed with SHA-256! They can now log in using this access key.`);
+      }
+    }
+
+    // Dedicated Quick Password Reset Modal
+    function openQuickPasswordModal(handle) {
+      const dev = developersData.find(d => d.handle === handle || d.id === handle);
+      if (!dev) return;
+      const content = document.getElementById('crudModalContent');
+      content.innerHTML = `
+        <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px; margin-bottom: 20px;">
+          <h2 style="font-size: 1.3rem; font-weight: 800; margin: 0 0 4px;">Reset Password: ${dev.name}</h2>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Admin Override: Instantly assign a new access key for <code>@${dev.handle}</code>.</p>
+        </div>
+
+        <form onsubmit="handleQuickPasswordReset(event, '${dev.handle}')">
+          <div class="form-group">
+            <label class="form-label" for="quickNewPass">New Access Key / Password (min. 6 chars)</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="quickNewPass" class="form-input" style="padding-right: 80px;" required minlength="6" placeholder="Enter new password">
+              <button type="button" onclick="togglePasswordVisibility('quickNewPass', this)" class="btn-secondary" style="position: absolute; right: 6px; padding: 4px 10px; font-size: 0.72rem; height: 30px;">Show</button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 10px; margin-bottom: 20px;">
+            <button type="button" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 10px;" onclick="setPresetPassword('quickNewPass', 'admin123')">Preset: "admin123"</button>
+            <button type="button" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 10px;" onclick="setPresetPassword('quickNewPass', 'ragetech-' + Math.random().toString(36).substring(2, 8))">Generate Random</button>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+            <button type="button" class="btn-secondary" onclick="closeCrudModal()">Cancel</button>
+            <button type="submit" class="btn-primary" id="quickSavePassBtn">
+              <span>Save & Update D1</span>
+            </button>
+          </div>
+        </form>
+      `;
+      const modal = document.getElementById('crudModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function handleQuickPasswordReset(e, handle) {
+      e.preventDefault();
+      const input = document.getElementById('quickNewPass');
+      const pass = input ? input.value.trim() : '';
+      if (!pass || pass.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+      }
+      const btn = document.getElementById('quickSavePassBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Updating D1...</span>';
+      }
+
+      const dev = developersData.find(d => d.handle === handle || d.id === handle);
+      const devId = dev ? dev.id : handle;
+
+      try {
+        const msgUint8 = new TextEncoder().encode(pass);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            handle,
+            id: devId,
+            email: dev ? dev.email : '',
+            newPassword: pass
+          })
+        });
+
+        // Update local storage
+        let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+        const idx = customDevs.findIndex(d => d.id === devId || d.handle === handle);
+        if (idx >= 0) {
+          customDevs[idx] = { ...customDevs[idx], password_hash: newHash };
+        } else if (dev) {
+          customDevs.push({ ...dev, password_hash: newHash });
+        }
+        localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+
+        if (dev) dev.password_hash = newHash;
+
+        window.RagetechSync?.broadcast({ type: 'DEVELOPER_PASSWORD_CHANGED', handle });
+        closeCrudModal();
+        alert(`Access key for @${handle} updated successfully! New password is: "${pass}"`);
+      } catch (err) {
+        alert('Error updating password: ' + err.message);
       }
     }
 
@@ -1104,6 +1214,8 @@
       if (window.RAGETECH_DEVELOPERS) {
         window.RAGETECH_DEVELOPERS = window.RAGETECH_DEVELOPERS.filter(d => d.id !== id && d.handle !== id);
       }
+
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_DELETED', id, handle: dev ? dev.handle : id });
 
       developersData = developersData.filter(d => d.id !== id && d.handle !== id);
       renderCurrentView();
@@ -1171,6 +1283,13 @@
     // Init
     checkAdminSession();
     loadData();
+
+    // Real-time synchronization across tabs and windows
+    if (window.RagetechSync) {
+      window.RagetechSync.subscribe(() => {
+        loadData();
+      });
+    }
   </script>
 </body>
 </html>

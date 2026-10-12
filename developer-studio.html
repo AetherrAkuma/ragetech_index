@@ -115,8 +115,11 @@
 
       let baseProjects = d1Projects.length > 0 ? d1Projects : (window.RAGETECH_PROJECTS || []);
       try {
+        const deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        baseProjects = baseProjects.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
         const customProjects = JSON.parse(localStorage.getItem('ragetech_custom_projects') || '[]');
         customProjects.forEach(cp => {
+          if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
           const idx = baseProjects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
           if (idx >= 0) baseProjects[idx] = { ...baseProjects[idx], ...cp };
           else baseProjects.push(cp);
@@ -483,6 +486,13 @@
 
     checkDevSession();
     loadDevData();
+
+    // Real-time synchronization
+    if (window.RagetechSync) {
+      window.RagetechSync.subscribe(() => {
+        loadDevData();
+      });
+    }
   </script>
 </body>
 </html>

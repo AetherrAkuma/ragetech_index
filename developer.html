@@ -151,13 +151,27 @@
       }
     }
 
-    (async function initDeveloperPage() {
+    async function loadDeveloperDetails() {
       const urlParams = new URLSearchParams(window.location.search);
       const handle = urlParams.get('id') || urlParams.get('handle') || 'sora';
 
+      // Check tombstones
+      try {
+        const deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
+        if (deletedDevs.includes(handle)) {
+          document.title = 'Developer Removed — Ragetech';
+          document.getElementById('devName').textContent = 'Developer Removed';
+          document.getElementById('devHandle').textContent = `@${handle}`;
+          document.getElementById('devRole').textContent = 'Archived Collective Member';
+          document.getElementById('devBio').textContent = 'This developer profile has been permanently removed from the sovereign systems collective catalog.';
+          document.getElementById('assignedProjectsList').innerHTML = '<p style="color:var(--text-muted); padding: 16px 0;">No active repository assignments.</p>';
+          return;
+        }
+      } catch (e) {}
+
       let dev = null;
 
-      // 1. D1 API query
+      // 1. D1 API query (benefits from edge memory cache & ETag)
       try {
         const res = await fetch(`/api/developers/${handle}`);
         if (res.ok) {
@@ -180,7 +194,7 @@
 
       // 3. Offline dataset fallback
       if (!dev && window.RAGETECH_DEVELOPERS) {
-        dev = window.RAGETECH_DEVELOPERS.find(d => d.handle === handle) || window.RAGETECH_DEVELOPERS[0];
+        dev = window.RAGETECH_DEVELOPERS.find(d => d.handle === handle);
       }
 
       if (!dev) return;
@@ -213,9 +227,14 @@
       const ghBtn = document.getElementById('devGithubBtn');
       if (dev.github_url) { ghBtn.href = dev.github_url; } else { ghBtn.style.display = 'none'; }
 
-      // Assigned Projects List (Query D1 + LocalStorage)
+      // Assigned Projects List (Query D1 + LocalStorage, filtering deleted tombstones)
       const assignedList = document.getElementById('assignedProjectsList');
       let allProjects = [];
+      let deletedProj = [];
+      try {
+        deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+      } catch (e) {}
+
       try {
         const pRes = await fetch('/api/projects');
         if (pRes.ok) {
@@ -236,6 +255,8 @@
         });
       } catch (e) {}
 
+      allProjects = allProjects.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
+
       const assignedSlugs = dev.assigned_projects || [];
       const matchedProjects = allProjects.filter(p => assignedSlugs.includes(p.slug));
 
@@ -249,7 +270,7 @@
               </div>
               <p class="repo-tagline">${p.tagline}</p>
               <div class="repo-stack-pills">
-                ${p.tech_stack.split(',').map(t => `<span class="stack-pill">${t.trim()}</span>`).join('')}
+                ${(p.tech_stack || '').split(',').map(t => `<span class="stack-pill">${t.trim()}</span>`).join('')}
               </div>
             </div>
           </div>
@@ -257,7 +278,16 @@
       } else {
         assignedList.innerHTML = `<p style="color: var(--text-muted);">Assigned to collective core infrastructure.</p>`;
       }
-    })();
+    }
+
+    loadDeveloperDetails();
+
+    // Real-time synchronization
+    if (window.RagetechSync) {
+      window.RagetechSync.subscribe(() => {
+        loadDeveloperDetails();
+      });
+    }
   </script>
 </body>
 </html>

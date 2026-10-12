@@ -34,6 +34,38 @@
     setupCommandPaletteListeners();
     initTelemetryHUD();
     initGSAPAnimations();
+
+    // Real-time synchronization across tabs and windows
+    if (window.RagetechSync) {
+      window.RagetechSync.subscribe(async () => {
+        await fetchPlatformData();
+        renderHeroMetrics();
+        renderRepositoryShowcase();
+        renderBuildersGrid();
+      });
+    }
+
+    // Refresh automatically when returning to tab
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        fetchPlatformData().then(() => {
+          renderHeroMetrics();
+          renderRepositoryShowcase();
+          renderBuildersGrid();
+        });
+      }
+    });
+
+    // Lightweight edge-cached background sync every 45s (0 D1 reads when unchanged due to Edge Cache & ETag)
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchPlatformData().then(() => {
+          renderHeroMetrics();
+          renderRepositoryShowcase();
+          renderBuildersGrid();
+        });
+      }
+    }, 45000);
   }
 
   // Fetch from D1 API or gracefully fallback to offline registry
@@ -41,17 +73,22 @@
     // 1. Immediately hydrate from offline registry + local dynamic changes
     let customProjects = [];
     let customDevs = [];
+    let deletedProj = [];
+    let deletedDevs = [];
     try {
       const storedP = localStorage.getItem('ragetech_custom_projects');
       if (storedP) customProjects = JSON.parse(storedP);
       const storedD = localStorage.getItem('ragetech_custom_developers');
       if (storedD) customDevs = JSON.parse(storedD);
+      deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+      deletedDevs = JSON.parse(localStorage.getItem('ragetech_deleted_developers') || '[]');
     } catch (e) {}
 
     if (window.RAGETECH_PROJECTS && window.RAGETECH_PROJECTS.length > 0) {
-      state.projects = [...window.RAGETECH_PROJECTS];
+      state.projects = window.RAGETECH_PROJECTS.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
       // Overlay custom project changes
       customProjects.forEach(cp => {
+        if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
         const idx = state.projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
         if (idx >= 0) state.projects[idx] = { ...state.projects[idx], ...cp };
         else state.projects.push(cp);
@@ -60,8 +97,9 @@
     }
 
     if (window.RAGETECH_DEVELOPERS && window.RAGETECH_DEVELOPERS.length > 0) {
-      state.developers = [...window.RAGETECH_DEVELOPERS];
+      state.developers = window.RAGETECH_DEVELOPERS.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
       customDevs.forEach(cd => {
+        if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
         const idx = state.developers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
         if (idx >= 0) state.developers[idx] = { ...state.developers[idx], ...cd };
         else state.developers.push(cd);
@@ -75,8 +113,9 @@
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data && json.data.length > 0) {
-            state.projects = json.data;
+            state.projects = json.data.filter(p => !deletedProj.includes(p.id) && !deletedProj.includes(p.slug));
             customProjects.forEach(cp => {
+              if (deletedProj.includes(cp.id) || deletedProj.includes(cp.slug)) return;
               const idx = state.projects.findIndex(p => p.slug === cp.slug || p.id === cp.id);
               if (idx >= 0) state.projects[idx] = { ...state.projects[idx], ...cp };
               else state.projects.push(cp);
@@ -93,8 +132,9 @@
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data && json.data.length > 0) {
-            state.developers = json.data;
+            state.developers = json.data.filter(d => !deletedDevs.includes(d.id) && !deletedDevs.includes(d.handle));
             customDevs.forEach(cd => {
+              if (deletedDevs.includes(cd.id) || deletedDevs.includes(cd.handle)) return;
               const idx = state.developers.findIndex(d => d.handle === cd.handle || d.id === cd.id);
               if (idx >= 0) state.developers[idx] = { ...state.developers[idx], ...cd };
               else state.developers.push(cd);

@@ -219,22 +219,26 @@
     }
 
     // Main Page Loader
-    (async function initProjectPage() {
+    async function loadProjectDetails() {
       const urlParams = new URLSearchParams(window.location.search);
       const slug = urlParams.get('id') || urlParams.get('slug') || 'aether-runtime';
 
-      let project = null;
-
-      // 1. Check LocalStorage for recent studio updates
+      // Check tombstones
       try {
-        const localUpdated = localStorage.getItem(`ragetech_project_${slug}`);
-        if (localUpdated) {
-          project = JSON.parse(localUpdated);
+        const deletedProj = JSON.parse(localStorage.getItem('ragetech_deleted_projects') || '[]');
+        if (deletedProj.includes(slug)) {
+          document.title = 'Repository Removed — Ragetech';
+          document.getElementById('repoTitle').textContent = 'Repository Removed';
+          document.getElementById('repoTagline').textContent = 'This repository was removed from the sovereign collective catalog.';
+          document.getElementById('markdownContent').innerHTML = '<p style="color:var(--text-muted); padding: 24px 0;">The requested whitepaper dossier has been archived or removed by platform maintainers.</p>';
+          return;
         }
       } catch (e) {}
 
-      // 2. Query Cloudflare D1 Edge API if available and not file:
-      if (!project && window.location.protocol.startsWith('http')) {
+      let project = null;
+
+      // 1. Query Cloudflare D1 Edge API first if online (uses Edge Memory Cache & conditional ETag)
+      if (window.location.protocol.startsWith('http')) {
         try {
           const res = await fetch(`/api/projects/${slug}`);
           if (res.ok) {
@@ -246,9 +250,19 @@
         } catch (e) {}
       }
 
+      // 2. Check LocalStorage for recent local edits
+      if (!project) {
+        try {
+          const localUpdated = localStorage.getItem(`ragetech_project_${slug}`);
+          if (localUpdated) {
+            project = JSON.parse(localUpdated);
+          }
+        } catch (e) {}
+      }
+
       // 3. Fallback to Isomorphic Offline Dataset
       if (!project && window.RAGETECH_PROJECTS) {
-        project = window.RAGETECH_PROJECTS.find(p => p.slug === slug) || window.RAGETECH_PROJECTS[0];
+        project = window.RAGETECH_PROJECTS.find(p => p.slug === slug);
       }
 
       if (!project) return;
@@ -397,7 +411,16 @@
       } else {
         maintainersContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">Maintained by the core systems guild.</p>`;
       }
-    })();
+    }
+
+    loadProjectDetails();
+
+    // Real-time synchronization
+    if (window.RagetechSync) {
+      window.RagetechSync.subscribe(() => {
+        loadProjectDetails();
+      });
+    }
   </script>
 </body>
 </html>
