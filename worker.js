@@ -57,23 +57,10 @@ export default {
       }, corsHeaders);
     }
 
-    // GET /api/projects — List all published repositories with Edge Memory Caching & ETag validation
+    // GET /api/projects — Always read from D1; ETag lets browsers 304, no PoP caching
+    // (We removed per-PoP caches.default writes so every mutation is instantly visible
+    //  to all users on all edge nodes. D1 latency is ~0.5ms, fast enough to skip cache.)
     if (pathname === '/api/projects' && request.method === 'GET') {
-      const cacheKey = new Request(request.url, request);
-      if (typeof caches !== 'undefined' && caches.default) {
-        try {
-          const cached = await caches.default.match(cacheKey);
-          if (cached) {
-            const clientEtag = request.headers.get('If-None-Match');
-            const cachedEtag = cached.headers.get('ETag');
-            if (clientEtag && cachedEtag && clientEtag === cachedEtag) {
-              return new Response(null, { status: 304, headers: cached.headers });
-            }
-            return cached;
-          }
-        } catch (e) {}
-      }
-
       if (env.DB) {
         try {
           const { results: projects } = await env.DB.prepare(`
@@ -103,7 +90,7 @@ export default {
             maintainer_handles: p.maintainers_json ? JSON.parse(p.maintainers_json) : []
           }));
 
-          // Calculate deterministic version hash for conditional 304 validation
+          // ETag for browser-level conditional requests (304 Not Modified)
           const versionString = projects.map(p => `${p.id}:${p.updated_at || p.created_at || ''}`).join('|');
           const etag = `"${await sha256Hex(versionString)}"`;
 
@@ -111,27 +98,15 @@ export default {
           if (clientEtag && clientEtag === etag) {
             return new Response(null, {
               status: 304,
-              headers: {
-                ...corsHeaders,
-                'ETag': etag,
-                'Cache-Control': 'public, max-age=15, stale-while-revalidate=60'
-              }
+              headers: { ...corsHeaders, 'ETag': etag, 'Cache-Control': 'no-store' }
             });
           }
 
-          const response = jsonResponse({ success: true, source: 'd1', data: formatted }, {
+          return jsonResponse({ success: true, source: 'd1', data: formatted }, {
             ...corsHeaders,
             'ETag': etag,
-            'Cache-Control': 'public, max-age=15, stale-while-revalidate=60'
+            'Cache-Control': 'no-store'
           });
-
-          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
-            try {
-              ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
-            } catch (e) {}
-          }
-
-          return response;
         } catch (err) {
           // Fall through to fallback
         }
@@ -215,23 +190,8 @@ export default {
       return jsonResponse({ success: false, message: 'Project not found' }, corsHeaders, 404);
     }
 
-    // GET /api/developers — List all collective builders with Edge Memory Caching & ETag validation
+    // GET /api/developers — Always read from D1; no PoP caching so changes are instant
     if (pathname === '/api/developers' && request.method === 'GET') {
-      const cacheKey = new Request(request.url, request);
-      if (typeof caches !== 'undefined' && caches.default) {
-        try {
-          const cached = await caches.default.match(cacheKey);
-          if (cached) {
-            const clientEtag = request.headers.get('If-None-Match');
-            const cachedEtag = cached.headers.get('ETag');
-            if (clientEtag && cachedEtag && clientEtag === cachedEtag) {
-              return new Response(null, { status: 304, headers: cached.headers });
-            }
-            return cached;
-          }
-        } catch (e) {}
-      }
-
       if (env.DB) {
         try {
           const { results: devs } = await env.DB.prepare(`
@@ -257,27 +217,15 @@ export default {
           if (clientEtag && clientEtag === etag) {
             return new Response(null, {
               status: 304,
-              headers: {
-                ...corsHeaders,
-                'ETag': etag,
-                'Cache-Control': 'public, max-age=15, stale-while-revalidate=60'
-              }
+              headers: { ...corsHeaders, 'ETag': etag, 'Cache-Control': 'no-store' }
             });
           }
 
-          const response = jsonResponse({ success: true, source: 'd1', data: formatted }, {
+          return jsonResponse({ success: true, source: 'd1', data: formatted }, {
             ...corsHeaders,
             'ETag': etag,
-            'Cache-Control': 'public, max-age=15, stale-while-revalidate=60'
+            'Cache-Control': 'no-store'
           });
-
-          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
-            try {
-              ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
-            } catch (e) {}
-          }
-
-          return response;
         } catch (e) {
           // Fall through
         }
@@ -514,9 +462,10 @@ export default {
                 live_url, github_url, tech_stack, 
                 action_button_label, action_button_url, cover_image_url, markdown_content,
                 specs_json, preview_title, preview_content, preview_meta,
-                preview_type, preview_url, action_buttons_json
+                preview_type, preview_url, action_buttons_json, is_published, featured_order
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1,
+                (SELECT COALESCE(MAX(featured_order), 0) + 1 FROM projects))
             `).bind(
               targetId, slug, name, effectiveRepo, effectiveBadge, tagline, description, category, status || 'active', 
               live_url, github_url, tech_stack, 
@@ -541,17 +490,6 @@ export default {
             }
           }
 
-          // Invalidate edge cache for projects
-          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
-            try {
-              const origin = url.origin;
-              ctx.waitUntil(Promise.all([
-                caches.default.delete(new Request(`${origin}/api/projects`)),
-                caches.default.delete(new Request(`${origin}/api/projects/${slug}`))
-              ]));
-            } catch (e) {}
-          }
-
           return jsonResponse({ success: true, message: 'Project saved successfully to Cloudflare D1' }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Updated (offline mode)' }, corsHeaders);
@@ -568,17 +506,6 @@ export default {
           await env.DB.prepare('DELETE FROM project_assignments WHERE project_id = ?').bind(id).run();
           await env.DB.prepare('DELETE FROM project_sections WHERE project_id = ?').bind(id).run();
           await env.DB.prepare('DELETE FROM projects WHERE id = ? OR slug = ?').bind(id, id).run();
-
-          // Invalidate edge cache for projects
-          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
-            try {
-              const origin = url.origin;
-              ctx.waitUntil(Promise.all([
-                caches.default.delete(new Request(`${origin}/api/projects`)),
-                caches.default.delete(new Request(`${origin}/api/projects/${id}`))
-              ]));
-            } catch (e) {}
-          }
 
           return jsonResponse({ success: true, message: 'Project deleted' }, corsHeaders);
         }
@@ -632,14 +559,6 @@ export default {
             }
           }
 
-          // Invalidate edge cache for developers
-          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
-            try {
-              const origin = url.origin;
-              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers`)));
-            } catch (e) {}
-          }
-
           return jsonResponse({ success: true, message: 'Developer profile updated in Cloudflare D1' }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Saved (offline mode)' }, corsHeaders);
@@ -655,14 +574,6 @@ export default {
         if (env.DB) {
           await env.DB.prepare('DELETE FROM project_assignments WHERE developer_id = ?').bind(id).run();
           await env.DB.prepare('DELETE FROM developers WHERE id = ? OR handle = ?').bind(id, id).run();
-
-          // Invalidate edge cache for developers
-          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
-            try {
-              const origin = url.origin;
-              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers`)));
-            } catch (e) {}
-          }
 
           return jsonResponse({ success: true, message: 'Developer removed' }, corsHeaders);
         }
