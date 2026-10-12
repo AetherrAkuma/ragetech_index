@@ -101,10 +101,13 @@
   <div class="dashboard-layout">
     <!-- Sidebar -->
     <aside class="dashboard-sidebar">
-      <div class="dashboard-user-card" id="adminUserCard">
-        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80" alt="Admin" class="dashboard-user-avatar" id="adminAvatar">
+      <div class="dashboard-user-card" id="adminUserCard" onclick="openDeveloperModal(currentAdminUser ? currentAdminUser.handle : 'reymartchua')" style="cursor: pointer;" title="Click to customize your admin profile and custom photo">
+        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80" alt="Admin" class="dashboard-user-avatar" id="adminAvatar" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80';">
         <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="adminName">Reymart Chua</div>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="adminName">Reymart Chua</div>
+            <span style="font-size: 0.72rem; color: var(--accent-cyan);">✎ Edit</span>
+          </div>
           <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);" id="adminEmail">reymartchua@ragetech.dev</div>
         </div>
       </div>
@@ -161,6 +164,8 @@
     let projectsData = [];
     let developersData = [];
 
+    let currentAdminUser = null;
+
     // Session Verification
     function checkAdminSession() {
       const saved = localStorage.getItem('ragetech_session');
@@ -178,10 +183,22 @@
           }
           return null;
         }
-        document.getElementById('adminName').textContent = parsed.user.name;
-        document.getElementById('adminEmail').textContent = parsed.user.email || `@${parsed.user.handle}`;
-        if (parsed.user.avatar_url) document.getElementById('adminAvatar').src = parsed.user.avatar_url;
-        return parsed.user;
+        currentAdminUser = parsed.user;
+        document.getElementById('adminName').textContent = currentAdminUser.name;
+        document.getElementById('adminEmail').textContent = currentAdminUser.email || `@${currentAdminUser.handle}`;
+        if (currentAdminUser.avatar_url) document.getElementById('adminAvatar').src = currentAdminUser.avatar_url;
+
+        // Fetch fresh developer record from D1 to ensure live avatar is applied
+        fetch(`/api/developers/${currentAdminUser.handle}`).then(r => r.json()).then(json => {
+          if (json.success && json.data) {
+            currentAdminUser = { ...currentAdminUser, ...json.data };
+            localStorage.setItem('ragetech_session', JSON.stringify({ user: currentAdminUser, token: parsed.token }));
+            document.getElementById('adminName').textContent = currentAdminUser.name;
+            if (currentAdminUser.avatar_url) document.getElementById('adminAvatar').src = currentAdminUser.avatar_url;
+          }
+        }).catch(() => {});
+
+        return currentAdminUser;
       } catch (e) {
         window.location.href = 'index.html';
         return null;
@@ -220,6 +237,20 @@
 
       projectsData = d1Projects;
       developersData = d1Devs;
+
+      if (currentAdminUser && currentAdminUser.handle && d1Devs.length > 0) {
+        const freshAdmin = d1Devs.find(d => d.handle.toLowerCase() === currentAdminUser.handle.toLowerCase() || d.id === currentAdminUser.id);
+        if (freshAdmin) {
+          currentAdminUser = { ...currentAdminUser, ...freshAdmin };
+          const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+          localStorage.setItem('ragetech_session', JSON.stringify({ ...savedSession, user: currentAdminUser }));
+          const nameEl = document.getElementById('adminName');
+          const avatarEl = document.getElementById('adminAvatar');
+          if (nameEl) nameEl.textContent = currentAdminUser.name;
+          if (avatarEl && currentAdminUser.avatar_url) avatarEl.src = currentAdminUser.avatar_url;
+        }
+      }
+
       renderCurrentView();
     }
 
@@ -441,51 +472,7 @@
           </div>
         `;
       } else if (currentView === 'audit') {
-        main.innerHTML = `
-          <div class="dash-header-row">
-            <div>
-              <h1 class="dash-title">Activity & Database Log</h1>
-              <p class="dash-subtitle">Live log of administrative authorizations, updates, and Cloudflare D1 edge synchronizations.</p>
-            </div>
-          </div>
-
-          <div class="data-table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Timestamp (UTC)</th>
-                  <th>Event</th>
-                  <th>Scope</th>
-                  <th>Target</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><code>2026-10-12 12:10:00</code></td>
-                  <td><span class="stack-pill" style="color: #34d399; border-color: rgba(52,211,153,0.3); font-size: 0.72rem;">D1 SYNC</span></td>
-                  <td>Edge DB</td>
-                  <td>projects</td>
-                  <td>Synchronized landing page specs and interactive terminal preview</td>
-                </tr>
-                <tr>
-                  <td><code>2026-10-12 11:15:00</code></td>
-                  <td><span class="stack-pill" style="color: #a78bfa; border-color: rgba(167,139,250,0.3); font-size: 0.72rem;">AUTH</span></td>
-                  <td>Session</td>
-                  <td>reymartchua</td>
-                  <td>Master authorization active for @reymartchua</td>
-                </tr>
-                <tr>
-                  <td><code>2026-10-12 10:45:00</code></td>
-                  <td><span class="stack-pill" style="color: #38bdf8; border-color: rgba(56,189,248,0.3); font-size: 0.72rem;">SCHEMA</span></td>
-                  <td>Database</td>
-                  <td>schema.sql</td>
-                  <td>Cloudflare D1 tables verified and indexed</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        `;
+        renderAuditView();
       } else if (currentView === 'security') {
         const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
         const adminUser = savedSession.user || {};
@@ -969,13 +956,115 @@
         } catch (err) {}
       }
 
+      // If saving current logged-in admin, immediately update session & avatar in top user card
+      if (currentAdminUser && (payload.handle.toLowerCase() === currentAdminUser.handle.toLowerCase() || payload.id === currentAdminUser.id)) {
+        currentAdminUser = { ...currentAdminUser, ...payload };
+        const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+        localStorage.setItem('ragetech_session', JSON.stringify({ ...savedSession, user: currentAdminUser }));
+        document.getElementById('adminName').textContent = currentAdminUser.name;
+        if (currentAdminUser.avatar_url) document.getElementById('adminAvatar').src = currentAdminUser.avatar_url;
+      }
+
       window.RagetechSync?.broadcast({ type: 'DEVELOPER_SAVED', handle: payload.handle, data: payload });
 
       closeCrudModal();
-      renderCurrentView();
+      await loadData();
 
       if (passVal) {
         alert(`Access key for @${payload.handle} has been successfully updated and hashed with SHA-256! They can now log in using this access key.`);
+      }
+    }
+
+    // Dynamic Activity & Database Audit Logger (Direct D1 Query)
+    async function renderAuditView() {
+      const main = document.getElementById('dashMain');
+      if (!main) return;
+
+      main.innerHTML = `
+        <div class="dash-header-row">
+          <div>
+            <h1 class="dash-title">Activity & Database Log</h1>
+            <p class="dash-subtitle">Live log of administrative authorizations, updates, and Cloudflare D1 edge synchronizations.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" onclick="renderAuditView()" style="font-size: 0.8rem; padding: 6px 14px;">
+              <span>↻ Refresh Logs</span>
+            </button>
+            <button class="btn-secondary" onclick="handleClearAuditLogs()" style="font-size: 0.8rem; padding: 6px 14px; color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+              <span>Clear History</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp (UTC)</th>
+                <th>Event</th>
+                <th>Actor</th>
+                <th>Target</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading live database logs from Cloudflare D1...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/manage/audit');
+        const json = await res.json();
+        const logs = (json.success && Array.isArray(json.data)) ? json.data : [];
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        if (logs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">No activity logged yet. Platform events will appear here in real time.</td></tr>`;
+          return;
+        }
+
+        const BADGE_COLORS = {
+          'PROJECT_CREATE': '#10b981',
+          'PROJECT_UPDATE': '#06b6d4',
+          'PROJECT_DELETE': '#f87171',
+          'DEVELOPER_CREATE': '#10b981',
+          'DEVELOPER_UPDATE': '#06b6d4',
+          'DEVELOPER_DELETE': '#f87171',
+          'AUTH_LOGIN': '#8b5cf6',
+          'D1 SYNC': '#34d399',
+          'SECURITY': '#f59e0b'
+        };
+
+        tbody.innerHTML = logs.map(l => {
+          const color = BADGE_COLORS[l.action] || '#06b6d4';
+          return `
+            <tr>
+              <td><code>${(l.timestamp || '').replace('T', ' ').slice(0, 19)}</code></td>
+              <td><span class="stack-pill" style="color: ${color}; border-color: ${color}40; font-size: 0.72rem; font-weight: 700;">${l.action || 'EVENT'}</span></td>
+              <td><span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">@${l.actor_handle || 'system'}</span></td>
+              <td><span style="font-family: var(--font-mono); font-size: 0.8rem;">${l.target_id || l.target_type || '-'}</span></td>
+              <td style="color: #d4d4d8; font-size: 0.84rem;">${l.details || ''}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        const tbody = document.getElementById('auditTableBody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171; padding: 24px;">Failed to fetch audit logs: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function handleClearAuditLogs() {
+      if (!confirm('Are you sure you want to clear all activity and database audit logs?')) return;
+      try {
+        await fetch('/api/manage/audit', { method: 'DELETE' });
+        renderAuditView();
+      } catch (e) {
+        alert('Failed to clear logs: ' + e.message);
       }
     }
 

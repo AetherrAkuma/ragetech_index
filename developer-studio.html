@@ -91,6 +91,19 @@
         document.getElementById('devName').textContent = currentDev.name;
         document.getElementById('devHandle').textContent = `@${currentDev.handle}`;
         if (currentDev.avatar_url) document.getElementById('devAvatar').src = currentDev.avatar_url;
+
+        // Fetch fresh developer record from D1 to ensure live avatar is applied
+        fetch(`/api/developers/${currentDev.handle}`).then(r => r.json()).then(json => {
+          if (json.success && json.data) {
+            currentDev = { ...currentDev, ...json.data };
+            localStorage.setItem('ragetech_session', JSON.stringify({ user: currentDev, token: parsed.token }));
+            document.getElementById('devName').textContent = currentDev.name;
+            document.getElementById('devHandle').textContent = `@${currentDev.handle}`;
+            if (currentDev.avatar_url) document.getElementById('devAvatar').src = currentDev.avatar_url;
+            const previewEl = document.getElementById('devAvatarEditPreview');
+            if (previewEl && currentDev.avatar_url) previewEl.src = currentDev.avatar_url;
+          }
+        }).catch(() => {});
       } catch (e) {
         window.location.href = 'index.html';
       }
@@ -111,6 +124,23 @@
         }
       } catch (e) {
         console.warn('Error loading projects:', e);
+      }
+
+      // Also refresh developer profile from D1
+      if (currentDev && currentDev.handle) {
+        try {
+          const dRes = await fetch(`/api/developers/${currentDev.handle}`);
+          if (dRes.ok) {
+            const dJson = await dRes.json();
+            if (dJson.success && dJson.data) {
+              currentDev = { ...currentDev, ...dJson.data };
+              const saved = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+              localStorage.setItem('ragetech_session', JSON.stringify({ ...saved, user: currentDev }));
+              document.getElementById('devName').textContent = currentDev.name;
+              if (currentDev.avatar_url) document.getElementById('devAvatar').src = currentDev.avatar_url;
+            }
+          }
+        } catch (e) {}
       }
 
       allProjects = d1Projects;
@@ -249,19 +279,26 @@
       currentDev.gpg_fingerprint = document.getElementById('devGpgInput').value.trim();
 
       try {
-        await fetch('/api/manage/developers', {
+        const res = await fetch('/api/manage/developers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(currentDev)
         });
-      } catch (err) {}
-
-
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to save dossier to D1: ' + (json.message || `HTTP ${res.status}`));
+          return;
+        }
+      } catch (err) {
+        alert('Network error connecting to D1 API: ' + err.message);
+        return;
+      }
 
       localStorage.setItem('ragetech_session', JSON.stringify({ user: currentDev, token: `tok_${currentDev.handle}` }));
       document.getElementById('devName').textContent = currentDev.name;
       if (currentDev.avatar_url) document.getElementById('devAvatar').src = currentDev.avatar_url;
-      alert('Your dossier profile has been updated!');
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_SAVED', handle: currentDev.handle, data: currentDev });
+      alert('Your dossier profile and photo have been updated and synchronized with Cloudflare D1!');
     }
 
     function renderDevRepos() {

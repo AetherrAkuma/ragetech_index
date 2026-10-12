@@ -239,8 +239,8 @@ export default {
       if (env.DB) {
         try {
           const dev = await env.DB.prepare(`
-            SELECT * FROM developers WHERE handle = ?
-          `).bind(handle).first();
+            SELECT * FROM developers WHERE lower(handle) = lower(?) OR id = ?
+          `).bind(handle, handle).first();
 
           if (dev) {
             const { results: assignedProjects } = await env.DB.prepare(`
@@ -292,6 +292,13 @@ export default {
 
             if (isValid) {
               const { password_hash, ...safeUser } = dev;
+              try {
+                await env.DB.prepare(`
+                  INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
+                  VALUES (?, ?, 'AUTH_LOGIN', 'session', ?, ?)
+                `).bind(`aud-${Date.now()}`, dev.handle, dev.id, `User @${dev.handle} signed in with role [${dev.account_role}]`).run();
+              } catch (e) {}
+
               return jsonResponse({
                 success: true,
                 token: `tok_${dev.handle}_${Date.now()}`,
@@ -680,6 +687,15 @@ export default {
             ).run();
           } catch (e) {}
 
+          // Invalidate edge cache for developers
+          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
+            try {
+              const origin = url.origin;
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers`)));
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers/${cleanHandle}`)));
+            } catch (e) {}
+          }
+
           return jsonResponse({ success: true, message: 'Developer profile updated in Cloudflare D1', id: devId, handle: cleanHandle }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Saved (offline mode)' }, corsHeaders);
@@ -788,15 +804,55 @@ export default {
       }
     }
 
-    // GET /api/manage/audit — Retrieve audit logs
-    if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/') && request.method === 'GET') {
+    // GET /api/manage/audit or /api/logs — Retrieve audit logs
+    if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/' || pathname === '/api/logs' || pathname === '/api/logs/') && request.method === 'GET') {
       if (env.DB) {
         try {
-          const { results: logs } = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 50').all();
-          return jsonResponse({ success: true, data: logs }, corsHeaders);
-        } catch (e) {}
+          const { results: logs } = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100').all();
+          return jsonResponse({ success: true, data: logs || [] }, corsHeaders);
+        } catch (e) {
+          return jsonResponse({ success: true, data: [], error: e.message }, corsHeaders);
+        }
       }
       return jsonResponse({ success: true, data: [] }, corsHeaders);
+    }
+
+    // POST /api/manage/audit or /api/logs — Record audit event
+    if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/' || pathname === '/api/logs' || pathname === '/api/logs/') && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { actor_handle, action, target_type, target_id, details } = body;
+        if (env.DB) {
+          await env.DB.prepare(`
+            INSERT INTO audit_logs (id, actor_handle, action, target_type, target_id, details)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).bind(
+            `aud-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            actor_handle || 'system',
+            action || 'EVENT',
+            target_type || 'system',
+            target_id || '',
+            details || ''
+          ).run();
+          return jsonResponse({ success: true, message: 'Audit event logged' }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Logged (offline)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // DELETE /api/manage/audit or /api/logs — Clear audit history
+    if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/' || pathname === '/api/logs' || pathname === '/api/logs/') && request.method === 'DELETE') {
+      if (env.DB) {
+        try {
+          await env.DB.prepare('DELETE FROM audit_logs').run();
+          return jsonResponse({ success: true, message: 'Audit logs cleared successfully' }, corsHeaders);
+        } catch (e) {
+          return jsonResponse({ success: false, message: e.message }, corsHeaders, 500);
+        }
+      }
+      return jsonResponse({ success: true, message: 'Cleared (offline)' }, corsHeaders);
     }
 
     // ------------------------------------------------------------------------

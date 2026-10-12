@@ -40,10 +40,13 @@
   <!-- Dashboard Layout -->
   <div class="dashboard-layout">
     <aside class="dashboard-sidebar">
-      <div class="dashboard-user-card">
-        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80" alt="Lead" class="dashboard-user-avatar" id="leadAvatar">
+      <div class="dashboard-user-card" id="leadUserCard" onclick="openLeadProfileModal()" style="cursor: pointer;" title="Click to customize your lead profile and photo">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80" alt="Lead" class="dashboard-user-avatar" id="leadAvatar" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80';">
         <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="leadName">Marcus Vance</div>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="leadName">Marcus Vance</div>
+            <span style="font-size: 0.72rem; color: var(--accent-cyan);">✎ Edit</span>
+          </div>
           <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);" id="leadRole">Distributed Consensus Lead</div>
         </div>
       </div>
@@ -74,9 +77,9 @@
     </main>
   </div>
 
-  <!-- Edit Project Modal -->
+  <!-- Edit Project / Profile Modal -->
   <div id="leadModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-dialog" style="max-width: 580px;">
+    <div class="modal-dialog" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
       <button class="modal-close-btn" onclick="closeLeadModal()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
@@ -102,6 +105,17 @@
         document.getElementById('leadName').textContent = currentLead.name;
         document.getElementById('leadRole').textContent = `@${currentLead.handle} • ${currentLead.role}`;
         if (currentLead.avatar_url) document.getElementById('leadAvatar').src = currentLead.avatar_url;
+
+        // Fetch fresh developer record from D1 to ensure live avatar is applied
+        fetch(`/api/developers/${currentLead.handle}`).then(r => r.json()).then(json => {
+          if (json.success && json.data) {
+            currentLead = { ...currentLead, ...json.data };
+            localStorage.setItem('ragetech_session', JSON.stringify({ user: currentLead, token: parsed.token }));
+            document.getElementById('leadName').textContent = currentLead.name;
+            document.getElementById('leadRole').textContent = `@${currentLead.handle} • ${currentLead.role}`;
+            if (currentLead.avatar_url) document.getElementById('leadAvatar').src = currentLead.avatar_url;
+          }
+        }).catch(() => {});
       } catch (e) {
         window.location.href = 'index.html';
       }
@@ -138,6 +152,22 @@
 
       projectsList = d1Projects;
       developersList = d1Devs;
+
+      if (currentLead && currentLead.handle && d1Devs.length > 0) {
+        const freshLead = d1Devs.find(d => d.handle.toLowerCase() === currentLead.handle.toLowerCase() || d.id === currentLead.id);
+        if (freshLead) {
+          currentLead = { ...currentLead, ...freshLead };
+          const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+          localStorage.setItem('ragetech_session', JSON.stringify({ ...savedSession, user: currentLead }));
+          const nameEl = document.getElementById('leadName');
+          const roleEl = document.getElementById('leadRole');
+          const avatarEl = document.getElementById('leadAvatar');
+          if (nameEl) nameEl.textContent = currentLead.name;
+          if (roleEl) roleEl.textContent = `@${currentLead.handle} • ${currentLead.role}`;
+          if (avatarEl && currentLead.avatar_url) avatarEl.src = currentLead.avatar_url;
+        }
+      }
+
       renderLeadProjects();
     }
 
@@ -343,6 +373,134 @@
       }
       closeLeadModal();
       renderLeadProjects();
+    }
+
+    // Lead Profile & Avatar Customizer
+    function openLeadProfileModal() {
+      if (!currentLead) return;
+      const content = document.getElementById('leadModalContent');
+      content.innerHTML = `
+        <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px; margin-bottom: 18px;">
+          <h3 style="font-size: 1.3rem; font-weight: 800; margin: 0 0 4px;">Customize Lead Profile & Photo</h3>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Update your name, bio, and custom profile photo stored in Cloudflare D1.</p>
+        </div>
+
+        <form onsubmit="handleSaveLeadProfile(event)">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="leadEditName" class="form-input" required value="${currentLead.name}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Engineering Role / Title</label>
+            <input type="text" id="leadEditRole" class="form-input" required value="${currentLead.role}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Biographical Overview</label>
+            <textarea id="leadEditBio" class="form-textarea" rows="3">${currentLead.bio || ''}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Profile Photo / Avatar (URL or File Upload)</label>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+              <img id="leadAvatarPreview" src="${currentLead.avatar_url || ''}" alt="Avatar Preview" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan); background: #18181b;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=280&q=80';">
+              <input type="text" id="leadAvatarInput" class="form-input" style="flex: 1;" placeholder="https://... or upload local file" value="${currentLead.avatar_url || ''}" oninput="document.getElementById('leadAvatarPreview').src = this.value">
+              <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('leadAvatarFileInput').click()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Upload File</span>
+              </button>
+              <input type="file" id="leadAvatarFileInput" accept="image/*" style="display: none;" onchange="handleLeadAvatarUpload(this)">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+            <button type="button" class="btn-secondary" onclick="closeLeadModal()">Cancel</button>
+            <button type="submit" class="btn-primary" id="saveLeadProfileBtn">
+              <span>Save & Sync Profile</span>
+            </button>
+          </div>
+        </form>
+      `;
+
+      const modal = document.getElementById('leadModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function handleLeadAvatarUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          const maxDim = 400;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          document.getElementById('leadAvatarInput').value = dataUrl;
+          document.getElementById('leadAvatarPreview').src = dataUrl;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+
+    async function handleSaveLeadProfile(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveLeadProfileBtn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span>Saving...</span>`;
+      }
+
+      currentLead.name = document.getElementById('leadEditName').value.trim();
+      currentLead.role = document.getElementById('leadEditRole').value.trim();
+      currentLead.bio = document.getElementById('leadEditBio').value.trim();
+      currentLead.avatar_url = document.getElementById('leadAvatarInput').value.trim();
+
+      try {
+        const res = await fetch('/api/manage/developers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentLead)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.success === false) {
+          alert('Failed to save profile: ' + (json.message || `HTTP ${res.status}`));
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = `<span>Save & Sync Profile</span>`; }
+          return;
+        }
+      } catch (err) {
+        alert('Network error connecting to D1 API: ' + err.message);
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = `<span>Save & Sync Profile</span>`; }
+        return;
+      }
+
+      const savedSession = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+      localStorage.setItem('ragetech_session', JSON.stringify({ ...savedSession, user: currentLead }));
+
+      document.getElementById('leadName').textContent = currentLead.name;
+      document.getElementById('leadRole').textContent = `@${currentLead.handle} • ${currentLead.role}`;
+      if (currentLead.avatar_url) document.getElementById('leadAvatar').src = currentLead.avatar_url;
+
+      window.RagetechSync?.broadcast({ type: 'DEVELOPER_SAVED', handle: currentLead.handle, data: currentLead });
+
+      closeLeadModal();
+      alert('Your project lead profile and photo have been successfully synchronized with Cloudflare D1!');
     }
 
     // Delete Repository (Strictly restricted to Lead's assigned/created repos)

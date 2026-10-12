@@ -547,6 +547,9 @@
 
         <!-- Markdown Toolbar -->
         <div class="md-toolbar">
+          <button type="button" class="md-btn" id="btnMdUndo" onclick="undoMarkdown()" title="Undo (Ctrl+Z)" style="font-weight: 700; color: var(--accent-cyan);">↺ Undo</button>
+          <button type="button" class="md-btn" id="btnMdRedo" onclick="redoMarkdown()" title="Redo (Ctrl+Y or Ctrl+Shift+Z)" style="font-weight: 700; color: var(--accent-cyan);">↻ Redo</button>
+          <span style="color: var(--border-subtle); margin: 0 4px; user-select: none;">|</span>
           <button type="button" class="md-btn" onclick="insertMd('**', '**')" title="Bold"><strong>B</strong></button>
           <button type="button" class="md-btn" onclick="insertMd('*', '*')" title="Italic"><em>I</em></button>
           <button type="button" class="md-btn" onclick="insertMd('## ')" title="Heading 2">H2</button>
@@ -1010,8 +1013,169 @@
       btn.innerHTML = isFull ? `<span>✕ Close Fullscreen</span>` : `<span>⛶ Toggle Fullscreen</span>`;
     }
 
+    // ==========================================
+    // Markdown History & Undo/Redo Engine
+    // ==========================================
+    let mdHistoryStack = [];
+    let mdHistoryIndex = -1;
+    const MAX_MD_HISTORY = 120;
+    let isUndoRedoActive = false;
+    let mdDebounceTimer = null;
+
+    function initMdHistory(initialValue = '') {
+      const textarea = document.getElementById('editMarkdown');
+      const val = initialValue !== undefined ? initialValue : (textarea ? textarea.value : '');
+      mdHistoryStack = [{
+        value: val,
+        selectionStart: val.length,
+        selectionEnd: val.length,
+        timestamp: Date.now()
+      }];
+      mdHistoryIndex = 0;
+      updateUndoRedoUI();
+    }
+
+    function recordMdSnapshot(force = false) {
+      if (isUndoRedoActive) return;
+      const textarea = document.getElementById('editMarkdown');
+      if (!textarea) return;
+
+      const currentVal = textarea.value;
+      const start = textarea.selectionStart || 0;
+      const end = textarea.selectionEnd || 0;
+
+      // If nothing has changed in value from the current snapshot, update selection cursor only
+      if (mdHistoryIndex >= 0 && mdHistoryStack[mdHistoryIndex]) {
+        const lastSnap = mdHistoryStack[mdHistoryIndex];
+        if (lastSnap.value === currentVal) {
+          lastSnap.selectionStart = start;
+          lastSnap.selectionEnd = end;
+          return;
+        }
+      }
+
+      // If user undid previously and is now making new changes, prune future redo steps
+      if (mdHistoryIndex < mdHistoryStack.length - 1) {
+        mdHistoryStack = mdHistoryStack.slice(0, mdHistoryIndex + 1);
+      }
+
+      mdHistoryStack.push({
+        value: currentVal,
+        selectionStart: start,
+        selectionEnd: end,
+        timestamp: Date.now()
+      });
+
+      if (mdHistoryStack.length > MAX_MD_HISTORY) {
+        mdHistoryStack.shift();
+      }
+
+      mdHistoryIndex = mdHistoryStack.length - 1;
+      updateUndoRedoUI();
+    }
+
+    function onMdInput() {
+      // Debounce snapshot recording so normal typing groups words cleanly into undo steps
+      clearTimeout(mdDebounceTimer);
+      mdDebounceTimer = setTimeout(() => {
+        recordMdSnapshot();
+      }, 350);
+    }
+
+    function undoMarkdown() {
+      if (mdHistoryIndex <= 0) return;
+      clearTimeout(mdDebounceTimer);
+
+      // If there are pending unrecorded typing changes, record them first so we don't drop current state
+      const textarea = document.getElementById('editMarkdown');
+      if (textarea && mdHistoryIndex === mdHistoryStack.length - 1 && textarea.value !== mdHistoryStack[mdHistoryIndex].value) {
+        recordMdSnapshot(true);
+      }
+
+      if (mdHistoryIndex <= 0) return;
+      mdHistoryIndex--;
+      applyMdSnapshot(mdHistoryStack[mdHistoryIndex]);
+      updateUndoRedoUI();
+    }
+
+    function redoMarkdown() {
+      if (mdHistoryIndex >= mdHistoryStack.length - 1) return;
+      clearTimeout(mdDebounceTimer);
+      mdHistoryIndex++;
+      applyMdSnapshot(mdHistoryStack[mdHistoryIndex]);
+      updateUndoRedoUI();
+    }
+
+    function applyMdSnapshot(snapshot) {
+      if (!snapshot) return;
+      const textarea = document.getElementById('editMarkdown');
+      if (!textarea) return;
+
+      isUndoRedoActive = true;
+      try {
+        textarea.value = snapshot.value;
+        textarea.focus();
+        if (typeof snapshot.selectionStart === 'number' && typeof snapshot.selectionEnd === 'number') {
+          textarea.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+        }
+        onDataChange();
+      } finally {
+        isUndoRedoActive = false;
+      }
+    }
+
+    function updateUndoRedoUI() {
+      const btnUndo = document.getElementById('btnMdUndo');
+      const btnRedo = document.getElementById('btnMdRedo');
+
+      const canUndo = mdHistoryIndex > 0;
+      const canRedo = mdHistoryIndex < mdHistoryStack.length - 1;
+
+      if (btnUndo) {
+        btnUndo.disabled = !canUndo;
+        btnUndo.style.opacity = canUndo ? '1' : '0.35';
+        btnUndo.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+      }
+      if (btnRedo) {
+        btnRedo.disabled = !canRedo;
+        btnRedo.style.opacity = canRedo ? '1' : '0.35';
+        btnRedo.style.cursor = canRedo ? 'pointer' : 'not-allowed';
+      }
+    }
+
+    function initMdKeybinds() {
+      const textarea = document.getElementById('editMarkdown');
+      if (!textarea) return;
+
+      // Handle typing input
+      textarea.addEventListener('input', onMdInput);
+
+      // Keybinds for Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, Cmd+Z, Cmd+Shift+Z
+      textarea.addEventListener('keydown', function(e) {
+        const isMod = e.ctrlKey || e.metaKey;
+        if (!isMod) return;
+
+        const key = e.key.toLowerCase();
+        if (key === 'z') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.shiftKey) {
+            redoMarkdown();
+          } else {
+            undoMarkdown();
+          }
+        } else if (key === 'y') {
+          e.preventDefault();
+          e.stopPropagation();
+          redoMarkdown();
+        }
+      });
+    }
+
     // Markdown helpers
     function insertMd(prefix, suffix = '') {
+      clearTimeout(mdDebounceTimer);
+      recordMdSnapshot(true);
       const textarea = document.getElementById('editMarkdown');
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
@@ -1020,6 +1184,7 @@
       textarea.value = text.substring(0, start) + prefix + selected + suffix + text.substring(end);
       textarea.focus();
       textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+      recordMdSnapshot(true);
       onDataChange();
     }
 
@@ -1041,6 +1206,8 @@
 
     // Document Blueprints
     function insertAcademicThesisBlueprint() {
+      clearTimeout(mdDebounceTimer);
+      recordMdSnapshot(true);
       const title = document.getElementById('editName').value || 'System Architecture';
       document.getElementById('editMarkdown').value = `# ${title}: Architectural Specification & Formal Verification
 
@@ -1073,10 +1240,13 @@ pub struct MemoryRingArena<const RING_SIZE: usize> {
 ## 4. Formal Conclusion
 Empirical verification confirms that eliminating kernel transitions achieves predictable real-time determinism across distributed nodes.
 `;
+      recordMdSnapshot(true);
       onDataChange();
     }
 
     function insertSystemsRfcBlueprint() {
+      clearTimeout(mdDebounceTimer);
+      recordMdSnapshot(true);
       const title = document.getElementById('editName').value || 'System RFC';
       document.getElementById('editMarkdown').value = `# RFC-01: ${title} High-Performance Execution Kernel
 
@@ -1099,10 +1269,13 @@ let ring = IoUring::builder()
 - [x] Phase 2: Distributed cluster integration test.
 - [ ] Phase 3: Production traffic rollout.
 `;
+      recordMdSnapshot(true);
       onDataChange();
     }
 
     function insertPortfolioBlueprint() {
+      clearTimeout(mdDebounceTimer);
+      recordMdSnapshot(true);
       const title = document.getElementById('editName').value || 'Project Showcase';
       document.getElementById('editMarkdown').value = `# ${title} — Systems Engineering Showcase
 
@@ -1121,6 +1294,7 @@ Existing alternatives required significant hardware resources and heavy runtimes
 - Deployed across multi-region sovereign nodes
 - Proven 99.999% uptime with zero partition drift
 `;
+      recordMdSnapshot(true);
       onDataChange();
     }
 
@@ -1342,7 +1516,9 @@ Existing alternatives required significant hardware resources and heavy runtimes
       renderActionButtonsList();
 
       // Markdown
-      document.getElementById('editMarkdown').value = p.markdown_content || '';
+      const mdContent = p.markdown_content || '';
+      document.getElementById('editMarkdown').value = mdContent;
+      initMdHistory(mdContent);
 
       // Maintainers
       selectedMaintainers.clear();
@@ -1828,6 +2004,9 @@ Existing alternatives required significant hardware resources and heavy runtimes
       } catch (e) {}
 
 
+
+      initMdKeybinds();
+      initMdHistory(document.getElementById('editMarkdown').value || '');
 
       renderMaintainersPicker();
       renderSpecsInputs();
