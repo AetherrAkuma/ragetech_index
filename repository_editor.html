@@ -45,6 +45,81 @@
     .dossier-info-banner strong {
       color: var(--text-primary);
     }
+
+    /* Settings Scope Grouping Bar */
+    .editor-scope-bar {
+      margin-bottom: 20px;
+      position: sticky;
+      top: -20px;
+      z-index: 25;
+      background: rgba(9, 9, 11, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 4px 0 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .editor-scope-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+    .scope-tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+    }
+    .scope-tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    .scope-tab-btn.active {
+      background: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.4);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(6, 182, 212, 0.15);
+    }
+    .scope-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .scope-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      display: block;
+      color: inherit;
+    }
+    .scope-desc {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+    }
+    .scope-tab-btn.active .scope-desc {
+      color: #cbd5e1;
+    }
+    .scope-tab-btn.compact {
+      padding: 0 14px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      justify-content: center;
+    }
+    .scope-tab-btn.compact.active {
+      color: var(--accent-cyan);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-subtle);
+    }
   </style>
 </head>
 <body class="editor-page-container">
@@ -109,8 +184,36 @@
     <!-- LEFT PANE: User-friendly Editor Controls -->
     <div class="editor-pane-scroll">
 
-      <!-- Section 1: Basic Information -->
-      <div class="editor-section-card">
+      <!-- Settings Scope Switcher (Homepage vs Dossier) -->
+      <div class="editor-scope-bar">
+        <div class="editor-scope-tabs">
+          <button type="button" class="scope-tab-btn active" id="scopeTab_home" onclick="setEditorScope('home')">
+            <span class="scope-icon">🏠</span>
+            <div>
+              <span class="scope-title">Homepage Showcase</span>
+              <span class="scope-desc">Card highlights, terminal preview & buttons</span>
+            </div>
+          </button>
+          <button type="button" class="scope-tab-btn" id="scopeTab_doc" onclick="setEditorScope('doc')">
+            <span class="scope-icon">📄</span>
+            <div>
+              <span class="scope-title">Dossier Page</span>
+              <span class="scope-desc">Cover diagram, RFC thesis & markdown article</span>
+            </div>
+          </button>
+          <button type="button" class="scope-tab-btn compact" id="scopeTab_all" onclick="setEditorScope('all')" title="View all settings simultaneously">
+            <span>Show All</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================================
+           GROUP 1: HOMEPAGE SHOWCASE SETTINGS
+           ====================================================================== -->
+      <div id="scopeGroup_home" class="scope-group">
+
+        <!-- Section 1: Basic Information -->
+        <div class="editor-section-card">
         <div class="editor-section-title">
           <span class="step-pill">1</span>
           <span>Basic Repository Details</span>
@@ -346,34 +449,70 @@
         <button type="button" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="addActionButtonRow()">
           <span>+ Add Another Action Button</span>
         </button>
+      </div>
 
-        <div style="border-top: 1px solid var(--border-subtle); margin-top: 20px; padding-top: 18px;">
-          <div class="form-group">
-            <label class="form-label" for="editCoverUrl">Banner Diagram / Cover Image (URL or Upload File)</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="editCoverUrl" class="form-input" style="flex: 1;" placeholder="https://images.unsplash.com/... or upload local file" oninput="onDataChange()">
-              <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('fileUploadCoverImg').click()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>Upload File</span>
-              </button>
-              <input type="file" id="fileUploadCoverImg" accept="image/*" style="display: none;" onchange="handleCoverImageUpload(this)">
-            </div>
-          </div>
+      <!-- Section 5: Assign Developers to Homepage Card -->
+      <div class="editor-section-card" id="maintainersSection">
+        <div class="editor-section-title">
+          <span class="step-pill">5</span>
+          <span>Assign Developers</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+          Select collective maintainers. Their profile images will display on the homepage card avatar cluster and link to their dossiers.
+        </p>
 
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('server')">Sample: Cluster</button>
-            <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('network')">Sample: Network</button>
-            <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('circuit')">Sample: Silicon</button>
-            <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="clearCover()">Clear Image</button>
-          </div>
+        <!-- Search Bar -->
+        <div class="form-group" style="margin-bottom: 14px;">
+          <input type="text" id="devSearchInput" class="form-input" placeholder="🔍 Search developers by name, @handle, role, or skill..." oninput="filterMaintainers()">
+        </div>
+
+        <div class="maintainer-checkbox-grid" id="maintainersPicker">
+          <!-- Rendered dynamically -->
         </div>
       </div>
 
-      <!-- Section 5: Full Project Whitepaper (Markdown) -->
+    </div><!-- End of scopeGroup_home -->
+
+    <!-- ======================================================================
+         GROUP 2: DOSSIER ARTICLE SETTINGS (project.html)
+         ====================================================================== -->
+    <div id="scopeGroup_doc" class="scope-group" style="display: none;">
+
+      <!-- Section 1: Dossier Banner Diagram & Cover Visual -->
+      <div class="editor-section-card">
+        <div class="editor-section-title">
+          <span class="step-pill">1</span>
+          <span>Banner Diagram & Cover Visual</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+          High-resolution architecture diagram, system schematic, or cover visual displayed at the top of your standalone whitepaper page (<code>project.html</code>).
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="editCoverUrl">Banner Diagram / Cover Image (URL or Upload File)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="editCoverUrl" class="form-input" style="flex: 1;" placeholder="https://images.unsplash.com/... or upload local file" oninput="onDataChange()">
+            <button type="button" class="btn-secondary" style="white-space: nowrap; font-size: 0.8rem; padding: 7px 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('fileUploadCoverImg').click()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload File</span>
+            </button>
+            <input type="file" id="fileUploadCoverImg" accept="image/*" style="display: none;" onchange="handleCoverImageUpload(this)">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('server')">Sample: Cluster</button>
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('network')">Sample: Network</button>
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="setSampleCover('circuit')">Sample: Silicon</button>
+          <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 0.74rem;" onclick="clearCover()">Clear Image</button>
+        </div>
+      </div>
+
+      <!-- Section 2: Full Project Whitepaper (Markdown) -->
       <div class="editor-section-card" id="dossierEditorCard">
         <div class="editor-section-title" style="justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="step-pill">5</span>
+            <span class="step-pill">2</span>
             <span>Full Technical Dossier (project.html Article)</span>
           </div>
           <button type="button" class="btn-secondary" id="fullscreenToggleBtn" style="padding: 4px 10px; font-size: 0.76rem;" onclick="toggleDossierFullscreen()">
@@ -416,25 +555,27 @@
         <textarea id="editMarkdown" class="md-textarea" style="min-height: 480px;" placeholder="Write comprehensive Markdown specifications here. Supports # Headings, **bold**, lists, > quotes, ```code blocks```, and ![images](url)..." oninput="onDataChange()"></textarea>
       </div>
 
-      <!-- Section 6: Assign Developers (with Search!) -->
+      <!-- Section 3: Dossier Maintainers Box -->
       <div class="editor-section-card">
         <div class="editor-section-title">
-          <span class="step-pill">6</span>
-          <span>Assign Developers</span>
+          <span class="step-pill">3</span>
+          <span>Dossier Engineering Maintainers</span>
         </div>
         <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
-          Assign collective developers to maintain, audit, and sign releases for this repository.
+          The developers assigned to this repository are featured in the dedicated <strong>Tailark Quartz Team Cards</strong> roster at the bottom of the dossier page.
         </p>
-
-        <!-- Search Bar -->
-        <div class="form-group" style="margin-bottom: 14px;">
-          <input type="text" id="devSearchInput" class="form-input" placeholder="🔍 Search developers by name, @handle, role, or skill..." oninput="filterMaintainers()">
-        </div>
-
-        <div class="maintainer-checkbox-grid" id="maintainersPicker">
-          <!-- Rendered dynamically -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+          <div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent-cyan);">Assigned Collective Maintainers</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">Manage assigned developers and author signatures.</div>
+          </div>
+          <button type="button" class="btn-secondary" style="font-size: 0.76rem; padding: 5px 12px;" onclick="setEditorScope('home'); document.getElementById('maintainersSection')?.scrollIntoView({behavior:'smooth'});">
+            Manage Team Roster &rarr;
+          </button>
         </div>
       </div>
+
+    </div><!-- End of scopeGroup_doc -->
     </div>
 
     <!-- RIGHT PANE: Dual Live Preview -->
@@ -1082,12 +1223,46 @@ Existing alternatives required significant hardware resources and heavy runtimes
       }
     }
 
-    function setPreviewTab(tab) {
+    let currentEditorScope = 'home';
+
+    function setEditorScope(scope, syncPreview = true) {
+      currentEditorScope = scope;
+      
+      const btnHome = document.getElementById('scopeTab_home');
+      const btnDoc = document.getElementById('scopeTab_doc');
+      const btnAll = document.getElementById('scopeTab_all');
+      
+      if (btnHome) btnHome.classList.toggle('active', scope === 'home');
+      if (btnDoc) btnDoc.classList.toggle('active', scope === 'doc');
+      if (btnAll) btnAll.classList.toggle('active', scope === 'all');
+
+      const groupHome = document.getElementById('scopeGroup_home');
+      const groupDoc = document.getElementById('scopeGroup_doc');
+
+      if (scope === 'home') {
+        if (groupHome) groupHome.style.display = 'block';
+        if (groupDoc) groupDoc.style.display = 'none';
+        if (syncPreview) setPreviewTab('home', false);
+      } else if (scope === 'doc') {
+        if (groupHome) groupHome.style.display = 'none';
+        if (groupDoc) groupDoc.style.display = 'block';
+        if (syncPreview) setPreviewTab('doc', false);
+      } else {
+        if (groupHome) groupHome.style.display = 'block';
+        if (groupDoc) groupDoc.style.display = 'block';
+      }
+    }
+
+    function setPreviewTab(tab, syncScope = true) {
       currentPreviewTab = tab;
       document.getElementById('tabPrevHome').className = tab === 'home' ? 'btn-primary' : 'btn-secondary';
       document.getElementById('tabPrevDoc').className = tab === 'doc' ? 'btn-primary' : 'btn-secondary';
       document.getElementById('viewPrevHome').style.display = tab === 'home' ? 'block' : 'none';
       document.getElementById('viewPrevDoc').style.display = tab === 'doc' ? 'block' : 'none';
+      
+      if (syncScope && currentEditorScope !== 'all') {
+        setEditorScope(tab, false);
+      }
     }
 
     // Populate Form From Data
