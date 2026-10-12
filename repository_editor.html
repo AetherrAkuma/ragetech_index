@@ -690,7 +690,8 @@
     <div style="font-size: 0.88rem; color: #f4f4f5;" id="studioToastMsg">Repository updated successfully.</div>
   </div>
 
-  <!-- Direct Edge API Bridge -->
+  <!-- Markdown & Edge API Libraries -->
+  <script src="marked.min.js"></script>
   <script src="api-bridge.js?v=20261012-d1"></script>
 
   <!-- Studio Engine Script -->
@@ -746,46 +747,47 @@
       return 'btn-secondary';
     }
 
-    // Markdown Parser
+    // High-Performance Standard Markdown & Whitepaper Dossier Engine
     function parseMarkdown(md) {
       if (!md) return '';
+
+      // 1. Full GFM parsing via standard marked library
+      if (typeof marked !== 'undefined' && marked.parse) {
+        try {
+          let html = marked.parse(md, { gfm: true, breaks: false });
+
+          // GitHub Callout Alerts: > [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]
+          html = html.replace(/<blockquote>\s*<p>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:\s*<br\s*\/?>)?\s*([\s\S]*?)<\/p>\s*<\/blockquote>/gi, (match, type, content) => {
+            const t = type.toUpperCase();
+            const icons = { NOTE: '📘', TIP: '💡', IMPORTANT: '⚡', WARNING: '⚠️', CAUTION: '🛑' };
+            const colors = { NOTE: '#06b6d4', TIP: '#10b981', IMPORTANT: '#8b5cf6', WARNING: '#f59e0b', CAUTION: '#ef4444' };
+            const icon = icons[t] || '📘';
+            const color = colors[t] || '#06b6d4';
+            return `<div class="dossier-callout callout-${t.toLowerCase()}" style="margin: 22px 0; padding: 14px 18px; border-left: 4px solid ${color}; background: rgba(255,255,255,0.02); border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.06)); border-right: 1px solid var(--border-subtle, rgba(255,255,255,0.06)); border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));">
+              <div style="font-weight: 700; font-size: 0.82rem; color: ${color}; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span>${icon}</span>
+                <span>${t}</span>
+              </div>
+              <div style="font-size: 0.92rem; color: #d4d4d8; line-height: 1.6;">${content}</div>
+            </div>`;
+          });
+
+          return html;
+        } catch (e) {
+          console.warn('Marked parsing fallback:', e);
+        }
+      }
+
+      // 2. Resilient fallback parser
       let html = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-      html = html.replace(/```([a-zA-Z0-9_\-\+]*)\n([\s\S]*?)```/g, function(m, lang, code) {
-        return `<pre><code class="language-${lang}">${code.trim()}</code></pre>`;
-      });
-
+      html = html.replace(/```([a-zA-Z0-9_\-\+]*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
       html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
       html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
       html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
       html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
       html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-      html = html.replace(/^\> \[!NOTE\]\s*\n\> (.*$)/gim, '<div class="dossier-info-banner"><strong>NOTE:</strong> $1</div>');
-      html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
-      html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
       html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-      html = html.replace(/^\|(.+)\|$/gim, function(m, row) {
-        if (/^[\s|:-]+$/.test(row)) return '';
-        const cells = row.split('|').map(c => c.trim()).filter(c => c.length > 0);
-        return `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
-      });
-      html = html.replace(/(<tr>[\s\S]*?<\/tr>)/g, '<table>$1</table>');
-      html = html.replace(/^[\s]*[-\*]\s+(.*$)/gim, '<li>$1</li>');
-      html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>');
-
-      const paragraphs = html.split(/\n{2,}/);
-      html = paragraphs.map(p => {
-        p = p.trim();
-        if (!p) return '';
-        if (p.startsWith('<h') || p.startsWith('<pre') || p.startsWith('<blockquote') || p.startsWith('<ul>') || p.startsWith('<table>') || p.startsWith('<img') || p.startsWith('<div')) {
-          return p;
-        }
-        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
-      }).join('\n');
-
       return html;
     }
 

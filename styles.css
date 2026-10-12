@@ -1659,6 +1659,29 @@ code, pre, .font-mono {
   margin: 20px 0;
 }
 
+.markdown-render hr {
+  border: 0;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 36px 0;
+}
+
+.markdown-render a {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s ease;
+}
+
+.markdown-render a:hover {
+  opacity: 0.8;
+}
+
+.markdown-render strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
 .maintainer-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
