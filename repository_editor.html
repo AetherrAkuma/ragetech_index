@@ -1684,20 +1684,30 @@ Existing alternatives required significant hardware resources and heavy runtimes
       }
 
       // 3. Post to Cloudflare D1 Edge API
+      let d1Success = false;
+      let d1ErrorMsg = '';
       try {
-        await fetch('/api/manage/projects', {
+        const d1Res = await fetch('/api/manage/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-      } catch (err) {}
+        const d1Json = await d1Res.json().catch(() => ({}));
+        if (d1Res.ok && d1Json.success) {
+          d1Success = true;
+        } else {
+          d1ErrorMsg = d1Json.message || d1Json.error || `HTTP ${d1Res.status}`;
+        }
+      } catch (err) {
+        d1ErrorMsg = err.message || 'Network offline';
+      }
 
       window.RagetechSync?.broadcast({ type: 'PROJECT_SAVED', slug, data: payload });
 
       saveBtn.disabled = false;
       saveBtn.innerHTML = `
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-        <span>Saved & Synced!</span>
+        <span>${d1Success ? 'Saved & Synced to D1!' : 'Saved (Local Cache)'}</span>
       `;
       setTimeout(() => {
         saveBtn.innerHTML = `
@@ -1707,12 +1717,14 @@ Existing alternatives required significant hardware resources and heavy runtimes
       }, 2500);
 
       const toast = document.getElementById('studioToast');
-      document.getElementById('studioToastMsg').textContent = `Repository "${name}" saved & synced to Cloudflare D1!`;
+      document.getElementById('studioToastMsg').textContent = d1Success
+        ? `Repository "${name}" saved & synced to Cloudflare D1!`
+        : `Repository "${name}" saved in browser cache (${d1ErrorMsg || 'offline'})`;
       toast.style.transform = 'translateY(0)';
       setTimeout(() => { toast.style.transform = 'translateY(140%)'; }, 3500);
 
       document.getElementById('studioModeTitle').textContent = `Editing: ${slug}`;
-      document.getElementById('studioStatusBadge').textContent = 'SYNCED';
+      document.getElementById('studioStatusBadge').textContent = d1Success ? 'SYNCED D1' : 'LOCAL CACHE';
     }
 
     function viewLiveRenderer() {

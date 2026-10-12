@@ -95,8 +95,9 @@
       if (window.location.protocol.startsWith('http')) {
         try {
           const response = await nativeFetch(input, init);
-          // If server actively answered, return response
-          if (response.status !== 404 && response.status !== 405) {
+          const contentType = response.headers.get('content-type') || '';
+          // If server actively answered with a JSON API response (from Cloudflare Worker) or answered with non-404/405
+          if (contentType.includes('application/json') || (response.status !== 404 && response.status !== 405)) {
             if (['POST', 'PUT', 'DELETE'].includes(method) && response.ok) {
               if (cleanPath.includes('/projects')) {
                 window.RagetechSync?.broadcast({ type: 'PROJECT_MUTATED', path: cleanPath });
