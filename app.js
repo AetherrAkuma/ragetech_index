@@ -498,8 +498,8 @@
         </div>
       </div>
 
-      <div style="margin-bottom: 18px;">
-        <span class="squad-badge ${dev.squad}">${dev.squad.toUpperCase()} SQUAD</span>
+      <div style="margin-bottom: 18px; display: flex; gap: 8px; align-items: center;">
+        <span class="badge-role ${(dev.account_role || 'developer').toLowerCase()}">${(dev.account_role || 'DEVELOPER').toUpperCase()}</span>
       </div>
 
       <p style="font-size: 0.95rem; line-height: 1.6; color: #d4d4d8; margin-bottom: 22px;">

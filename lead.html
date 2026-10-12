@@ -190,7 +190,7 @@
                     <div style="font-weight: 700;">${p.name}</div>
                     <div style="font-size: 0.78rem; color: var(--text-muted);">${p.tagline}</div>
                   </td>
-                  <td><span class="squad-badge systems">${p.category}</span></td>
+                  <td><span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${p.category || 'Project'}</span></td>
                   <td>
                     ${p.live_url ? `<a href="${p.live_url}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">${p.live_url.replace('https://', '')}</a>` : 'None'}
                   </td>

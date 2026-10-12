@@ -64,7 +64,7 @@
     <!-- Dossier Header -->
     <header class="article-header" id="repoHeader">
       <div class="article-meta-bar">
-        <span class="article-category-badge" id="repoCategoryBadge">DISTRIBUTED RUNTIMES</span>
+        <span class="article-category-badge" id="repoCategoryBadge">PROJECT</span>
         <span class="article-read-time" id="repoLicense">Apache-2.0 License</span>
         <span style="color: var(--text-faint);">•</span>
         <span class="article-read-time" id="repoStatusBadge">STATUS: ACTIVE</span>
@@ -257,7 +257,7 @@
       document.getElementById('breadcrumbRepoName').textContent = project.name;
       document.getElementById('repoTitle').textContent = project.name;
       document.getElementById('repoTagline').textContent = project.tagline;
-      document.getElementById('repoCategoryBadge').textContent = (project.category || 'SYSTEMS RUNTIME').toUpperCase();
+      document.getElementById('repoCategoryBadge').textContent = (project.category || 'PROJECT').toUpperCase();
       document.getElementById('repoStatusBadge').textContent = `STATUS: ${(project.status || 'ACTIVE').toUpperCase()}`;
       
       if (project.stats && project.stats.license) {

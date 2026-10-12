@@ -297,7 +297,7 @@
                         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">${p.tagline || ''}</div>
                       </td>
                       <td><span class="stack-pill" style="font-size: 0.72rem; padding: 2px 8px;">${p.badge || 'v0.9.4'}</span></td>
-                      <td><span class="squad-badge systems">${p.category || 'Systems'}</span></td>
+                      <td><span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${p.category || 'Project'}</span></td>
                       <td>
                         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                           ${maintainers.length > 0 
@@ -429,7 +429,7 @@
                         <div style="font-weight: 700;">${p.name}</div>
                         <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan);">${p.repo || `ragetech/${p.slug}`}</div>
                       </td>
-                      <td><span class="squad-badge systems">${p.category || 'Systems'}</span></td>
+                      <td><span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${p.category || 'Project'}</span></td>
                       <td>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                           ${handles.length > 0 
@@ -472,21 +472,21 @@
               <tbody>
                 <tr>
                   <td><code>2026-10-12 12:10:00</code></td>
-                  <td><span class="squad-badge edge">D1 SYNC</span></td>
+                  <td><span class="stack-pill" style="color: #34d399; border-color: rgba(52,211,153,0.3); font-size: 0.72rem;">D1 SYNC</span></td>
                   <td>Edge DB</td>
                   <td>projects</td>
                   <td>Synchronized landing page specs and interactive terminal preview</td>
                 </tr>
                 <tr>
                   <td><code>2026-10-12 11:15:00</code></td>
-                  <td><span class="squad-badge compilers">AUTH</span></td>
+                  <td><span class="stack-pill" style="color: #a78bfa; border-color: rgba(167,139,250,0.3); font-size: 0.72rem;">AUTH</span></td>
                   <td>Session</td>
                   <td>reymartchua</td>
                   <td>Master authorization active for @reymartchua</td>
                 </tr>
                 <tr>
                   <td><code>2026-10-12 10:45:00</code></td>
-                  <td><span class="squad-badge systems">SCHEMA</span></td>
+                  <td><span class="stack-pill" style="color: #38bdf8; border-color: rgba(56,189,248,0.3); font-size: 0.72rem;">SCHEMA</span></td>
                   <td>Database</td>
                   <td>schema.sql</td>
                   <td>Cloudflare D1 tables verified and indexed</td>

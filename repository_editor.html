@@ -140,19 +140,15 @@
 
         <!-- Customizable Category Classification -->
         <div class="form-group">
-          <label class="form-label" for="editCategory">Category Classification (Customizable)</label>
-          <input type="text" id="editCategory" class="form-input" placeholder="e.g. Thesis, Project, System, Hobby Project, Portfolio..." value="Distributed Runtimes" oninput="onDataChange()">
+          <label class="form-label" for="editCategory">Category Classification</label>
+          <input type="text" id="editCategory" class="form-input" placeholder="e.g. Thesis, Project, System, Hobby Project, Portfolio..." value="Project" oninput="onDataChange()">
           
           <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
             <button type="button" class="category-chip" onclick="selectCategory('Thesis')">Thesis</button>
-            <button type="button" class="category-chip" onclick="selectCategory('Project')">Project</button>
+            <button type="button" class="category-chip active" onclick="selectCategory('Project')">Project</button>
             <button type="button" class="category-chip" onclick="selectCategory('System')">System</button>
             <button type="button" class="category-chip" onclick="selectCategory('Hobby Project')">Hobby Project</button>
             <button type="button" class="category-chip" onclick="selectCategory('Portfolio')">Portfolio</button>
-            <button type="button" class="category-chip" onclick="selectCategory('Distributed Runtimes')">Distributed Runtimes</button>
-            <button type="button" class="category-chip" onclick="selectCategory('Compilers')">Compilers</button>
-            <button type="button" class="category-chip" onclick="selectCategory('Kernel & Systems')">Kernel & Systems</button>
-            <button type="button" class="category-chip" onclick="selectCategory('Cryptography')">Cryptography</button>
           </div>
         </div>
 
@@ -468,7 +464,7 @@
 
           <header class="article-header" style="margin-bottom: 24px;">
             <div class="article-meta-bar" style="margin-bottom: 12px;">
-              <span class="article-category-badge" id="prevCategory">DISTRIBUTED RUNTIMES</span>
+              <span class="article-category-badge" id="prevCategory">PROJECT</span>
               <span class="article-read-time" id="prevStatus">STATUS: ACTIVE</span>
               <span style="color: var(--text-faint);">•</span>
               <span class="article-read-time" id="prevReadTime">3 min read</span>
@@ -977,7 +973,7 @@ Existing alternatives required significant hardware resources and heavy runtimes
       document.getElementById('editRepo').value = p.repo || `ragetech/${p.slug}`;
       document.getElementById('editBadge').value = p.badge || 'v0.9.4-alpha';
       
-      const cat = p.category || 'Distributed Runtimes';
+      const cat = p.category || 'Project';
       document.getElementById('editCategory').value = cat;
       document.querySelectorAll('.category-chip').forEach(c => {
         c.classList.toggle('active', c.textContent.trim().toLowerCase() === cat.toLowerCase());

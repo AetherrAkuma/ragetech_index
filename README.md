@@ -18,12 +18,12 @@ A human-crafted, sovereign edge platform and engineering collective website buil
    * `@tailark/hero-section-2`: Monumental typography, live edge status pill, dual CTAs, and live edge telemetry metrics ribbon.
 
 3. **Expandable Repository Showcase (`@tailark/expandable-features-8`)**:
-   * Category filter pills (*Distributed Runtimes*, *Compilers*, *Kernel & Systems*, *Cryptography*).
+   * Customizable project category tags (*Thesis*, *Project*, *System*, *Hobby Project*, *Portfolio*).
    * Interactive split-pane accordion with equal spotlight illumination.
    * Live blueprint preview with benchmark metrics, maintainer chips, and direct links to the custom whitepaper page.
 
 4. **The 29 Builders Guild (`@tailark/blocks/quartz/team`)**:
-   * Responsive grid of 29 developer cards with squad badges, roles, and verified cryptographic chips.
+   * Responsive grid of 29 developer cards with role badges and assigned project links.
    * Card click opens the **Developer Modal Dossier** featuring their bio, GPG fingerprint, and assigned repositories linking to project pages.
 
 5. **Templated Repository Dossier Renderer (`project.html`)**:
