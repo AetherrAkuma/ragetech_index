@@ -129,7 +129,7 @@
        ====================================================================== -->
   <header class="editor-top-nav">
     <div style="display: flex; align-items: center; gap: 14px;">
-      <a href="admin.html" class="brand-mark" style="text-decoration: none;">
+      <a href="admin.html" id="brandDashLink" class="brand-mark" style="text-decoration: none;">
         <div class="brand-icon" style="width: 28px; height: 28px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
@@ -148,7 +148,7 @@
     </div>
 
     <div style="display: flex; align-items: center; gap: 10px;">
-      <a href="admin.html" class="btn-secondary" style="padding: 7px 14px; font-size: 0.82rem;">
+      <a href="admin.html" id="backToDashLink" class="btn-secondary" style="padding: 7px 14px; font-size: 0.82rem;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
@@ -684,6 +684,7 @@
 
   <!-- Studio Engine Script -->
   <script>
+    let currentSessionUser = null;
     let currentProject = null;
     let selectedMaintainers = new Set();
     let currentPreviewTab = 'home';
@@ -1612,9 +1613,40 @@ Existing alternatives required significant hardware resources and heavy runtimes
         preview_meta: pMeta,
         previewMeta: pMeta,
         markdown_content,
+        created_by: currentProject ? (currentProject.created_by || null) : (currentSessionUser ? currentSessionUser.handle : null),
         assignees: Array.from(selectedMaintainers),
         maintainer_handles: Array.from(selectedMaintainers)
       };
+
+      // If user is a lead or creator, ensure they are in assignees
+      if (currentSessionUser && !payload.assignees.includes(currentSessionUser.handle)) {
+        if (!currentProject || currentProject.created_by === currentSessionUser.handle) {
+          payload.assignees.push(currentSessionUser.handle);
+          payload.maintainer_handles.push(currentSessionUser.handle);
+        }
+      }
+
+      // Sync user's assigned_projects list in session
+      if (currentSessionUser) {
+        if (!currentSessionUser.assigned_projects) currentSessionUser.assigned_projects = [];
+        if (!currentSessionUser.assigned_projects.includes(slug)) {
+          currentSessionUser.assigned_projects.push(slug);
+          try {
+            const sess = JSON.parse(localStorage.getItem('ragetech_session') || '{}');
+            sess.user = currentSessionUser;
+            localStorage.setItem('ragetech_session', JSON.stringify(sess));
+
+            let customDevs = JSON.parse(localStorage.getItem('ragetech_custom_developers') || '[]');
+            const dIdx = customDevs.findIndex(d => d.id === currentSessionUser.id || d.handle === currentSessionUser.handle);
+            if (dIdx >= 0) {
+              customDevs[dIdx].assigned_projects = currentSessionUser.assigned_projects;
+            } else {
+              customDevs.push(currentSessionUser);
+            }
+            localStorage.setItem('ragetech_custom_developers', JSON.stringify(customDevs));
+          } catch (e) {}
+        }
+      }
 
       // 1. Sync to Local Dynamic Cache
       try {
@@ -1679,6 +1711,51 @@ Existing alternatives required significant hardware resources and heavy runtimes
 
     // Initialize Studio Editor
     (async function initStudio() {
+      // 1. Session verification & Role Detection
+      try {
+        const sessionStr = localStorage.getItem('ragetech_session');
+        if (sessionStr) {
+          currentSessionUser = JSON.parse(sessionStr).user;
+        }
+      } catch (e) {}
+
+      if (!currentSessionUser) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      const userRole = currentSessionUser.account_role || 'developer';
+      const dashUrl = userRole === 'admin' ? 'admin.html' : (userRole === 'lead' ? 'lead.html' : 'developer-studio.html');
+      const dashLabel = userRole === 'admin' ? 'Admin Dashboard' : (userRole === 'lead' ? 'Lead Governance' : 'Developer Studio');
+
+      const backLink = document.getElementById('backToDashLink');
+      if (backLink) {
+        backLink.href = dashUrl;
+        const span = backLink.querySelector('span');
+        if (span) span.textContent = `Back to ${dashLabel}`;
+      }
+      const brandLink = document.getElementById('brandDashLink');
+      if (brandLink) brandLink.href = dashUrl;
+
+      function showAccessDenied(title, message) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(9, 9, 11, 0.96); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(16px);';
+        overlay.innerHTML = `
+          <div class="spotlight-card" style="padding: 40px; max-width: 520px; text-align: center; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(18, 18, 22, 0.95); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+            <div style="font-size: 2.8rem; margin-bottom: 14px;">🔒</div>
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: #f87171; margin-bottom: 10px;">${title}</h2>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
+              ${message}
+            </p>
+            <a href="${dashUrl}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 10px 22px; font-size: 0.88rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <span>Back to ${dashLabel}</span>
+            </a>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+
       // Load developers dynamically from D1 + LocalStorage
       try {
         const dRes = await fetch('/api/developers');
@@ -1704,41 +1781,90 @@ Existing alternatives required significant hardware resources and heavy runtimes
       const urlParams = new URLSearchParams(window.location.search);
       const slug = urlParams.get('id') || urlParams.get('slug');
 
-      let found = null;
-      if (slug) {
-        document.getElementById('studioModeTitle').textContent = `Editing: ${slug}`;
-        document.getElementById('studioStatusBadge').textContent = 'SYNCED';
-
-        try {
-          const res = await fetch(`/api/projects/${slug}`);
-          if (res.ok) {
-            const json = await res.json();
-            if (json.data) found = json.data;
-          }
-        } catch (e) {}
-
-        if (!found) {
-          try {
-            const custom = localStorage.getItem('ragetech_custom_projects');
-            if (custom) {
-              const list = JSON.parse(custom);
-              found = list.find(p => p.slug === slug || p.id === slug);
-            }
-          } catch (e) {}
+      // RBAC Check 1: Creating a new repository
+      if (!slug) {
+        if (userRole === 'developer') {
+          showAccessDenied(
+            'Repository Creation Restricted',
+            `As a standard developer (<code>@${currentSessionUser.handle}</code>), you do not have permission to initialize new repositories. You can only edit repositories assigned to you.`
+          );
+          return;
         }
 
-        if (!found && window.RAGETECH_PROJECTS) {
-          found = window.RAGETECH_PROJECTS.find(p => p.slug === slug || p.id === slug);
-        }
-
-        if (found) {
-          populateForm(found);
-        }
-      } else {
+        // Lead or Admin: Initialize default blueprint and assign creator
         insertSystemsRfcBlueprint();
-        selectedMaintainers.add('reymartchua');
+        selectedMaintainers.add(currentSessionUser.handle);
         renderMaintainersPicker();
         onDataChange();
+        return;
+      }
+
+      // RBAC Check 2: Editing existing repository
+      let found = null;
+      document.getElementById('studioModeTitle').textContent = `Editing: ${slug}`;
+      document.getElementById('studioStatusBadge').textContent = 'SYNCED';
+
+      try {
+        const res = await fetch(`/api/projects/${slug}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) found = json.data;
+        }
+      } catch (e) {}
+
+      if (!found) {
+        try {
+          const custom = localStorage.getItem('ragetech_custom_projects');
+          if (custom) {
+            const list = JSON.parse(custom);
+            found = list.find(p => p.slug === slug || p.id === slug);
+          }
+        } catch (e) {}
+      }
+
+      if (!found && window.RAGETECH_PROJECTS) {
+        found = window.RAGETECH_PROJECTS.find(p => p.slug === slug || p.id === slug);
+      }
+
+      if (found) {
+        const isAdmin = userRole === 'admin';
+        const userAssigned = currentSessionUser.assigned_projects || [];
+        const isAssigned = isAdmin ||
+          (found.maintainer_handles || []).includes(currentSessionUser.handle) ||
+          (found.assignees || []).includes(currentSessionUser.handle) ||
+          (found.maintainers && found.maintainers.some(m => m.handle === currentSessionUser.handle)) ||
+          userAssigned.includes(found.slug) ||
+          userAssigned.includes(found.id) ||
+          found.created_by === currentSessionUser.handle;
+
+        if (!isAssigned) {
+          showAccessDenied(
+            'Unauthorized Repository Access',
+            `You (<code>@${currentSessionUser.handle}</code>) are not assigned to maintain <strong>${found.name || slug}</strong>. ${userRole === 'lead' ? 'As a Project Lead, you can only edit repositories under your lead.' : 'As a developer, you can only edit repositories assigned to you.'}`
+          );
+          return;
+        }
+
+        populateForm(found);
+
+        // If developer, lock team assignment checkboxes as read-only
+        if (userRole === 'developer') {
+          setTimeout(() => {
+            const pickerBox = document.getElementById('maintainersPickerList');
+            if (pickerBox) {
+              const notice = document.createElement('div');
+              notice.style.cssText = 'font-size: 0.76rem; color: var(--accent-cyan); padding: 8px 12px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: var(--radius-sm); margin-bottom: 12px;';
+              notice.innerHTML = '🔒 <em>Maintainer roster is locked. Project Leads and Administrators manage team assignments.</em>';
+              pickerBox.parentNode.insertBefore(notice, pickerBox);
+              pickerBox.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = true);
+            }
+          }, 100);
+        }
+      } else {
+        showAccessDenied(
+          'Repository Not Found',
+          `The requested repository <code>${slug}</code> could not be located in the catalog.`
+        );
       }
     })();
   </script>

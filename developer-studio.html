@@ -286,28 +286,53 @@
 
     function renderDevRepos() {
       const main = document.getElementById('devMain');
-      const assignedSlugs = currentDev.assigned_projects || [];
-      const matched = allProjects.filter(p => assignedSlugs.includes(p.slug));
+      const devHandle = currentDev ? currentDev.handle : '';
+      const assignedSlugs = (currentDev && currentDev.assigned_projects) ? currentDev.assigned_projects : [];
+
+      // Strict Developer Scoping: Developers can only see and edit repositories assigned to them
+      const matched = allProjects.filter(p => {
+        return (p.maintainer_handles || []).includes(devHandle) ||
+               (p.assignees || []).includes(devHandle) ||
+               (p.maintainers && p.maintainers.some(m => m.handle === devHandle)) ||
+               assignedSlugs.includes(p.slug) ||
+               assignedSlugs.includes(p.id);
+      });
 
       main.innerHTML = `
         <div class="dash-header-row">
           <div>
             <h1 class="dash-title">My Assigned Repositories</h1>
-            <p class="dash-subtitle">Repositories you are actively maintaining and releasing.</p>
+            <p class="dash-subtitle">Repositories you are authorized to maintain, modify, and publish.</p>
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
           ${matched.length > 0 ? matched.map(p => `
-            <div class="spotlight-card" style="padding: 24px;">
-              <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 6px;">${p.name}</div>
-              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">${p.tagline}</div>
-              <div style="display: flex; gap: 8px;">
-                <a href="project.html?id=${p.slug}" class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">Dossier</a>
-                ${p.live_url ? `<a href="${p.live_url}" target="_blank" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Live Website</a>` : ''}
+            <div class="spotlight-card" style="padding: 24px; display: flex; flex-direction: column;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div style="font-weight: 700; font-size: 1.1rem;">${p.name}</div>
+                <span class="stack-pill" style="font-size: 0.72rem;">${p.badge || 'v0.9'}</span>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-cyan); margin-bottom: 6px;">${p.repo || `ragetech/${p.slug}`}</div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px; flex: 1;">${p.tagline || ''}</div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  <span>Edit in Studio</span>
+                </a>
+                <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; text-decoration: none;">Dossier</a>
+                ${p.live_url ? `<a href="${p.live_url}" target="_blank" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; text-decoration: none;">Live Site</a>` : ''}
               </div>
             </div>
-          `).join('') : '<p style="color: var(--text-muted);">You are not currently assigned to specific repositories.</p>'}
+          `).join('') : `
+            <div class="spotlight-card" style="padding: 40px 24px; text-align: center; grid-column: 1 / -1;">
+              <div style="font-size: 2.2rem; margin-bottom: 10px;">🔒</div>
+              <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 6px;">No Repositories Assigned</div>
+              <p style="color: var(--text-muted); font-size: 0.86rem; max-width: 480px; margin: 0 auto; line-height: 1.5;">
+                As a standard developer (<code>@${devHandle}</code>), you can only edit repositories assigned to you. Contact an Administrator or Project Lead to be assigned to a repository.
+              </p>
+            </div>
+          `}
         </div>
       `;
     }

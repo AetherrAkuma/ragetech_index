@@ -170,48 +170,85 @@
 
     function renderLeadProjects() {
       const main = document.getElementById('leadMain');
+      const leadHandle = currentLead ? currentLead.handle : '';
+      const leadAssigned = (currentLead && currentLead.assigned_projects) ? currentLead.assigned_projects : [];
+
+      // Strict Lead Scoping: Leads only see and edit repositories assigned to them or created by them
+      const visibleProjects = projectsList.filter(p => {
+        return (p.maintainer_handles || []).includes(leadHandle) ||
+               (p.assignees || []).includes(leadHandle) ||
+               (p.maintainers && p.maintainers.some(m => m.handle === leadHandle)) ||
+               leadAssigned.includes(p.slug) ||
+               leadAssigned.includes(p.id) ||
+               p.created_by === leadHandle;
+      });
+
       main.innerHTML = `
         <div class="dash-header-row">
           <div>
             <h1 class="dash-title">Assigned Projects Governance</h1>
             <p class="dash-subtitle">Manage specifications, live links, and whitepapers for projects under your lead.</p>
           </div>
+          <a href="repository_editor.html" class="btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>+ Create New Project</span>
+          </a>
         </div>
 
-        <div class="data-table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>Category</th>
-                <th>Live Website</th>
-                <th>Maintainers</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${projectsList.map(p => `
+        ${visibleProjects.length === 0 ? `
+          <div class="spotlight-card" style="padding: 40px 24px; text-align: center; max-width: 600px; margin: 40px auto;">
+            <div style="font-size: 2.2rem; margin-bottom: 12px;">📁</div>
+            <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 8px;">No Repositories Assigned Yet</div>
+            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin: 0 auto 20px;">
+              You do not currently have any repositories assigned to <code>@${leadHandle}</code>. As a Project Lead, you have authority to launch new repositories.
+            </p>
+            <a href="repository_editor.html" class="btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>+ Create New Project</span>
+            </a>
+          </div>
+        ` : `
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
                 <tr>
-                  <td>
-                    <div style="font-weight: 700;">${p.name}</div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">${p.tagline}</div>
-                  </td>
-                  <td><span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${p.category || 'Project'}</span></td>
-                  <td>
-                    ${p.live_url ? `<a href="${p.live_url}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">${p.live_url.replace('https://', '')}</a>` : 'None'}
-                  </td>
-                  <td><code>${(p.maintainer_handles || []).join(', ')}</code></td>
-                  <td>
-                    <div class="table-actions">
-                      <a href="repository_editor.html?id=${p.slug}" class="btn-icon-action">Edit Dossier</a>
-                      <a href="project.html?id=${p.slug}" class="btn-icon-action">View</a>
-                    </div>
-                  </td>
+                  <th>Project Name & Description</th>
+                  <th>Category</th>
+                  <th>Live Website</th>
+                  <th>Maintainers</th>
+                  <th>Actions</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                ${visibleProjects.map(p => `
+                  <tr>
+                    <td>
+                      <div style="font-weight: 700; font-size: 0.95rem;">${p.name}</div>
+                      <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); margin-top: 2px;">${p.repo || `ragetech/${p.slug}`}</div>
+                      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">${p.tagline || ''}</div>
+                    </td>
+                    <td><span class="stack-pill" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); font-size: 0.75rem;">${p.category || 'Project'}</span></td>
+                    <td>
+                      ${p.live_url ? `<a href="${p.live_url}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline; font-size: 0.82rem;">${p.live_url.replace('https://', '')}</a>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>'}
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                        ${(p.maintainer_handles || p.assignees || []).map(h => `<span class="stack-pill" style="font-size: 0.72rem;">@${h}</span>`).join('') || '<span style="color: var(--text-muted); font-size: 0.76rem;">None</span>'}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="table-actions">
+                        <a href="repository_editor.html?id=${p.slug}" class="btn-primary" style="padding: 5px 12px; font-size: 0.76rem; text-decoration: none;">Edit in Studio</a>
+                        <button onclick="openLeadModal('${p.slug}')" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem;">Quick Edit</button>
+                        <a href="project.html?id=${p.slug}" class="btn-secondary" style="padding: 5px 10px; font-size: 0.76rem; text-decoration: none;">View</a>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
       `;
     }
 
