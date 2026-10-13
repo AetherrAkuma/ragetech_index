@@ -1263,10 +1263,45 @@
     }
   }
 
+  function resetLoginPasswordVisibility() {
+    const passInput = document.getElementById('loginPassword');
+    const eyeShow = document.getElementById('eyeIconShow');
+    const eyeHide = document.getElementById('eyeIconHide');
+    const toggleBtn = document.getElementById('toggleLoginPasswordBtn');
+    if (passInput) passInput.type = 'password';
+    if (eyeShow) eyeShow.style.display = 'block';
+    if (eyeHide) eyeHide.style.display = 'none';
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-label', 'Show password');
+      toggleBtn.title = 'Show password';
+    }
+  }
+
+  function toggleLoginPassword() {
+    const passInput = document.getElementById('loginPassword');
+    const eyeShow = document.getElementById('eyeIconShow');
+    const eyeHide = document.getElementById('eyeIconHide');
+    const toggleBtn = document.getElementById('toggleLoginPasswordBtn');
+    if (!passInput) return;
+
+    const isPassword = passInput.type === 'password';
+    passInput.type = isPassword ? 'text' : 'password';
+
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      toggleBtn.title = isPassword ? 'Hide password' : 'Show password';
+    }
+    if (eyeShow && eyeHide) {
+      eyeShow.style.display = isPassword ? 'none' : 'block';
+      eyeHide.style.display = isPassword ? 'block' : 'none';
+    }
+  }
+
   function openLoginModal() {
     const modal = document.getElementById('loginModal');
     const form = document.getElementById('loginForm');
     if (form) form.reset();
+    resetLoginPasswordVisibility();
     const handleInput = document.getElementById('loginHandle');
     const passInput = document.getElementById('loginPassword');
     if (passInput) passInput.value = '';
@@ -1288,6 +1323,7 @@
     }
     const form = document.getElementById('loginForm');
     if (form) form.reset();
+    resetLoginPasswordVisibility();
     const handleInput = document.getElementById('loginHandle');
     const passInput = document.getElementById('loginPassword');
     if (passInput) passInput.value = '';
@@ -1498,6 +1534,7 @@
     },
     openLoginModal,
     closeLoginModal,
+    toggleLoginPassword,
     handleLogin,
     handleLogout,
     toggleFaq: toggleFaqItem
