@@ -41,7 +41,7 @@ A human-crafted central directory and engineering platform built referencing the
    * Saves directly to Cloudflare D1 with offline fallback parity.
 
 7. **Dedicated Developer Dossier (`developer.html`)**:
-   * Individual developer profile with verified status badge, bio, and squad focus.
+   * Individual developer profile with verified status badge, bio, and engineering role.
    * Cryptographic **GPG Public Key Widget** with one-click fingerprint copy.
    * Showcase of all repositories assigned to the engineer.
    * Direct links to personal website and GitHub.

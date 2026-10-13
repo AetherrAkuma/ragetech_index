@@ -1157,7 +1157,7 @@ export default {
         if (handle && env.DB) {
           try {
             const dev = await env.DB.prepare(`
-              SELECT name, role, squad, bio, avatar_url, handle
+              SELECT name, role, bio, avatar_url, handle
               FROM developers
               WHERE lower(handle) = lower(?) OR id = ?
             `).bind(handle, handle).first();
