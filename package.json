@@ -1,7 +1,7 @@
 {
   "name": "ragetech-platform",
   "version": "2.0.0",
-  "description": "Ragetech — Sovereign Systems Engineering Collective",
+  "description": "Ragetech — Central Directory for Academic Theses, Intelligent Systems & Open-Source Tools",
   "main": "worker.js",
   "scripts": {
     "dev": "wrangler dev",

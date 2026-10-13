@@ -1,6 +1,6 @@
-# Ragetech — Sovereign Systems Engineering Collective
+# Ragetech — Central Directory for Academic Theses, Intelligent Systems & Open-Source Tools
 
-A human-crafted, sovereign edge platform and engineering collective website built referencing the **Tailark Dusk** (`dusk-landing-10`) and **Tailark Quartz** (`blog-article/one` & `team`) design language, powered by **Cloudflare Workers** and a **Cloudflare D1** SQLite database with dynamic **RBAC**.
+A human-crafted central directory and engineering platform built referencing the **Tailark Dusk** (`dusk-landing-10`) and **Tailark Quartz** (`blog-article/one` & `team`) design language, powered by **Cloudflare Workers** and a **Cloudflare D1** SQLite database with dynamic **RBAC**.
 
 ---
 

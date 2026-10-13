@@ -467,8 +467,8 @@
     // 2. Active Verified Developers
     const devsEl = document.getElementById('metricDevelopers');
     if (devsEl) {
-      const activeDevs = state.developers.filter(d => (d.status || 'Active').toLowerCase() === 'active');
-      const count = activeDevs.length > 0 ? activeDevs.length : state.developers.length;
+      const activeDevs = state.developers.filter(d => (d.status || 'Active').toLowerCase() === 'active' && (d.is_verified === 1 || d.is_verified === undefined || Number(d.is_verified) === 1));
+      const count = activeDevs.length;
       devsEl.innerHTML = `${count}<span> active</span>`;
     }
 
@@ -841,12 +841,13 @@
     const gridEl = document.getElementById('teamCardsGrid');
     if (!gridEl) return;
 
-    if (!state.developers || state.developers.length === 0) {
+    const verifiedDevelopers = state.developers.filter(dev => dev.is_verified === 1 || dev.is_verified === undefined || Number(dev.is_verified) === 1);
+    if (verifiedDevelopers.length === 0) {
       gridEl.innerHTML = '<div style="grid-column: 1 / -1; color:var(--text-muted); padding: 60px 24px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;">No collective builders registered in platform database.</div>';
       return;
     }
 
-    gridEl.innerHTML = state.developers.map(dev => {
+    gridEl.innerHTML = verifiedDevelopers.map(dev => {
       const assignedNames = (dev.assigned_projects && dev.assigned_projects.length > 0)
         ? dev.assigned_projects.map(item => {
             const slug = typeof item === 'object' ? (item.slug || item.id) : item;

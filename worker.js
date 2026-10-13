@@ -695,23 +695,41 @@ export default {
         const body = await request.json();
         const { id, handle, name, email, password, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified, assigned_projects } = body;
 
+        const actorRole = (body.actor_role || request.headers.get('x-actor-role') || '').toLowerCase();
+        const actorHandle = (body.actor_handle || body.created_by || request.headers.get('x-actor-handle') || 'admin').toLowerCase();
+        const isLead = actorRole === 'lead';
+
         const cleanHandle = (handle || '').trim().toLowerCase();
         const cleanName = (name || cleanHandle || 'Anonymous').trim();
         const cleanEmail = (email || (cleanHandle ? `${cleanHandle}@ragetech.dev` : '')).trim().toLowerCase();
         const cleanRole = (role || 'Systems Engineer').trim();
-        const cleanAccountRole = (account_role || 'developer').trim();
+        // Project Leads cannot elevate account roles: members they add are strictly developers
+        const cleanAccountRole = isLead ? 'developer' : (account_role || 'developer').trim();
         const cleanSquad = (squad || 'systems').trim();
         const cleanBio = (bio || '').trim() || null;
         const cleanAvatar = (avatar_url || '').trim() || null;
         const cleanWebsite = (website_url || '').trim() || null;
         const cleanGithub = (github_url || (cleanHandle ? `https://github.com/${cleanHandle}` : '')).trim() || null;
         const cleanFingerprint = (gpg_fingerprint || '8F4A 2B19 E03C 41FA 98E1').trim();
-        const cleanVerified = is_verified !== undefined && is_verified !== null ? (is_verified ? 1 : 0) : 1;
+        
+        // Anti-abuse: Lead members are placed strictly into "In-Verification Mode" (is_verified = 0)
+        // An Administrator must review and accept or deny them.
+        let cleanVerified;
+        if (isLead) {
+          cleanVerified = 0; // Forced inverification mode for lead creations
+        } else {
+          cleanVerified = is_verified !== undefined && is_verified !== null ? (is_verified ? 1 : 0) : 1;
+        }
 
         if (env.DB) {
-          const existing = await env.DB.prepare('SELECT id, password_hash FROM developers WHERE id = ? OR lower(handle) = ?')
+          const existing = await env.DB.prepare('SELECT id, password_hash, is_verified FROM developers WHERE id = ? OR lower(handle) = ?')
             .bind((id || '').trim(), cleanHandle)
             .first();
+
+          // Anti-abuse: Leads cannot modify already verified collective members
+          if (isLead && existing && existing.is_verified === 1) {
+            return jsonResponse({ success: false, message: 'Project Leads cannot modify verified collective members.' }, corsHeaders, 403);
+          }
 
           let passHash = existing ? existing.password_hash : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
           if (body.password_hash) {
@@ -780,11 +798,13 @@ export default {
           }
 
           await recordAuditLog(env, {
-            actor_handle: body.actor_handle || body.created_by || (request.headers.get('x-actor-handle') || 'admin'),
-            action: existing ? 'DEVELOPER_UPDATE' : 'DEVELOPER_CREATE',
+            actor_handle: actorHandle,
+            action: isLead ? 'MEMBER_NOMINATED' : (existing ? 'DEVELOPER_UPDATE' : 'DEVELOPER_CREATE'),
             target_type: 'developer',
             target_id: devId,
-            details: `Developer @${cleanHandle} profile saved to D1`
+            details: isLead 
+              ? `Project Lead @${actorHandle} nominated candidate @${cleanHandle} in Verification Mode (Admin Approval Required)`
+              : `Developer @${cleanHandle} profile saved to D1`
           });
 
           // Invalidate edge cache for developers
@@ -796,7 +816,13 @@ export default {
             } catch (e) {}
           }
 
-          return jsonResponse({ success: true, message: 'Developer profile updated in Cloudflare D1', id: devId, handle: cleanHandle }, corsHeaders);
+          return jsonResponse({ 
+            success: true, 
+            message: isLead ? `Member @${cleanHandle} added in Verification Mode. Awaiting Administrator approval.` : 'Developer profile updated in Cloudflare D1', 
+            id: devId, 
+            handle: cleanHandle,
+            is_verified: cleanVerified
+          }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Saved (offline mode)' }, corsHeaders);
       } catch (err) {
@@ -804,7 +830,54 @@ export default {
       }
     }
 
-    // DELETE /api/manage/developers/:id — Remove developer
+    // POST /api/manage/developers/verify — Admin accepts / verifies a candidate member
+    if ((pathname === '/api/manage/developers/verify' || pathname === '/api/manage/developers/verify/') && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const target = (body.handle || body.id || '').trim().toLowerCase();
+        const adminActor = (body.actor_handle || request.headers.get('x-actor-handle') || 'admin').trim();
+
+        if (!target) {
+          return jsonResponse({ success: false, message: 'Missing developer handle or id' }, corsHeaders, 400);
+        }
+
+        if (env.DB) {
+          const dev = await env.DB.prepare('SELECT id, handle, name, is_verified FROM developers WHERE lower(handle) = ? OR id = ?')
+            .bind(target, target).first();
+
+          if (!dev) {
+            return jsonResponse({ success: false, message: 'Developer not found' }, corsHeaders, 404);
+          }
+
+          await env.DB.prepare('UPDATE developers SET is_verified = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+            .bind(dev.id).run();
+
+          await recordAuditLog(env, {
+            actor_handle: adminActor,
+            action: 'MEMBER_VERIFIED',
+            target_type: 'developer',
+            target_id: dev.id,
+            details: `Administrator @${adminActor} accepted and verified member @${dev.handle} into the collective`
+          });
+
+          // Invalidate edge cache
+          if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
+            try {
+              const origin = url.origin;
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers`)));
+              ctx.waitUntil(caches.default.delete(new Request(`${origin}/api/developers/${dev.handle}`)));
+            } catch (e) {}
+          }
+
+          return jsonResponse({ success: true, message: `Member @${dev.handle} verified successfully!`, handle: dev.handle }, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Verified (offline mode)' }, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, message: err.message }, corsHeaders, 500);
+      }
+    }
+
+    // DELETE /api/manage/developers/:id — Remove or Deny developer
     if (pathname.startsWith('/api/manage/developers') && request.method === 'DELETE') {
       try {
         let idOrHandle = pathname.replace('/api/manage/developers', '').replace(/^\/+|\/+$/g, '').trim();
@@ -825,24 +898,28 @@ export default {
 
         if (env.DB) {
           const dev = await env.DB.prepare(`
-            SELECT id, handle FROM developers 
+            SELECT id, handle, is_verified FROM developers 
             WHERE id = ? OR lower(handle) = lower(?) OR lower(id) = lower(?)
           `).bind(idOrHandle, idOrHandle, idOrHandle).first();
 
           const targetId = dev ? dev.id : idOrHandle;
           const targetHandle = dev ? dev.handle : idOrHandle;
+          const wasPending = dev && (!dev.is_verified || Number(dev.is_verified) === 0);
 
           await env.DB.batch([
             env.DB.prepare('DELETE FROM project_assignments WHERE developer_id = ? OR lower(developer_id) = lower(?)').bind(targetId, targetId),
             env.DB.prepare('DELETE FROM developers WHERE id = ? OR lower(handle) = lower(?) OR lower(id) = lower(?)').bind(targetId, targetHandle, targetId)
           ]);
 
+          const adminActor = request.headers.get('x-actor-handle') || 'admin';
           await recordAuditLog(env, {
-            actor_handle: 'admin',
-            action: 'DEVELOPER_DELETE',
+            actor_handle: adminActor,
+            action: wasPending ? 'MEMBER_DENIED' : 'DEVELOPER_DELETE',
             target_type: 'developer',
             target_id: targetId,
-            details: `Developer @${targetHandle} removed from D1`
+            details: wasPending 
+              ? `Administrator @${adminActor} denied candidate nomination for @${targetHandle}` 
+              : `Developer @${targetHandle} removed from D1`
           });
 
           // Invalidate edge cache
@@ -1017,18 +1094,18 @@ export default {
     // ------------------------------------------------------------------------
 
     // Friendly URL Rewrites & Dynamic Open Graph for Facebook / Social Crawlers:
-    // /r/:slug, /repository/:slug, /p/:slug, or /project.html?id=:slug
-    const isProjectRoute = pathname.startsWith('/r/') || pathname.startsWith('/repository/') || pathname.startsWith('/p/') || pathname === '/project.html';
+    // /r/:slug, /repository/:slug, /p/:slug, /project.html?id=:slug, or clean URL /project?id=:slug
+    const isProjectRoute = pathname.startsWith('/r/') || pathname.startsWith('/repository/') || pathname.startsWith('/p/') || pathname === '/project.html' || pathname === '/project';
     if (isProjectRoute) {
       let slug = '';
-      if (pathname === '/project.html') {
+      if (pathname === '/project.html' || pathname === '/project') {
         slug = url.searchParams.get('id') || url.searchParams.get('slug') || '';
       } else {
         slug = pathname.replace('/repository/', '').replace('/r/', '').replace('/p/', '').replace(/^\/+|\/+$/g, '');
       }
 
       if (env.ASSETS) {
-        const targetUrl = new URL(`/project.html?id=${encodeURIComponent(slug)}`, request.url);
+        const targetUrl = new URL('/project.html', request.url);
         const assetRes = await env.ASSETS.fetch(new Request(targetUrl, request));
 
         if (slug && env.DB) {
@@ -1042,7 +1119,7 @@ export default {
             if (project) {
               return rewriteMetaTags(assetRes, {
                 title: `${project.name} — Technical Specification | Ragetech`,
-                description: project.description || project.tagline || 'Technical whitepaper and engineering dossier from the Ragetech sovereign systems collective.',
+                description: project.description || project.tagline || 'Technical whitepaper, architecture thesis, and systems specification from the Ragetech central repository hub.',
                 image: project.cover_image_url || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&h=630&q=85',
                 url: `${url.origin}/project.html?id=${project.slug}`,
                 type: 'article'
@@ -1063,18 +1140,18 @@ export default {
       return env.ASSETS.fetch(new Request(redirectUrl, request));
     }
 
-    // /d/:handle, /@:handle, or /developer.html?id=:handle
-    const isDeveloperRoute = pathname.startsWith('/d/') || pathname.startsWith('/@') || pathname === '/developer.html';
+    // /d/:handle, /@:handle, /developer.html?id=:handle, or clean URL /developer?id=:handle
+    const isDeveloperRoute = pathname.startsWith('/d/') || pathname.startsWith('/@') || pathname === '/developer.html' || pathname === '/developer';
     if (isDeveloperRoute) {
       let handle = '';
-      if (pathname === '/developer.html') {
+      if (pathname === '/developer.html' || pathname === '/developer') {
         handle = url.searchParams.get('id') || url.searchParams.get('handle') || '';
       } else {
         handle = pathname.replace('/d/', '').replace('/@', '').replace(/^\/+|\/+$/g, '');
       }
 
       if (env.ASSETS) {
-        const targetUrl = new URL(`/developer.html?id=${encodeURIComponent(handle)}`, request.url);
+        const targetUrl = new URL('/developer.html', request.url);
         const assetRes = await env.ASSETS.fetch(new Request(targetUrl, request));
 
         if (handle && env.DB) {
@@ -1190,15 +1267,17 @@ async function recordAuditLog(env, { actor_handle, action, target_type, target_i
 function rewriteMetaTags(response, meta) {
   if (typeof HTMLRewriter === 'undefined' || !response) return response;
 
-  const title = meta.title || 'Ragetech — Sovereign Systems Engineering Collective';
-  const desc = meta.description || 'Independent collective of systems engineers crafting ultra-low-latency edge runtimes, distributed consensus engines, and open-source infrastructure.';
+  const title = meta.title || 'Ragetech — Central Directory for Academic Theses & Intelligent Systems';
+  const desc = meta.description || 'Central directory indexing academic theses, intelligent systems, computer vision models, and open-source software tools.';
   const image = meta.image || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&h=630&q=85';
   const pageUrl = meta.url || 'https://ragetech.dev';
   const type = meta.type || 'website';
+  const fbAppId = meta.fb_app_id || '966242223397117';
 
   return new HTMLRewriter()
     .on('title', { element(el) { el.setInnerContent(title); } })
     .on('meta[name="description"]', { element(el) { el.setAttribute('content', desc); } })
+    .on('meta[property="fb:app_id"]', { element(el) { el.setAttribute('content', fbAppId); } })
     .on('meta[property="og:title"]', { element(el) { el.setAttribute('content', title); } })
     .on('meta[property="og:description"]', { element(el) { el.setAttribute('content', desc); } })
     .on('meta[property="og:image"]', { element(el) { el.setAttribute('content', image); } })
