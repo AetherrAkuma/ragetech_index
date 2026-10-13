@@ -924,80 +924,14 @@ code, pre, .font-mono {
   }
 
   .sticky-sidebar-nav {
-    display: flex !important;
-    position: sticky !important;
-    top: calc(var(--header-height) + 12px) !important;
-    z-index: 40 !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 10px 12px !important;
-    margin: 0 -12px 14px !important;
-    background: rgba(9, 9, 11, 0.88) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 0 !important;
-    max-height: none !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-  }
-
-  .sticky-sidebar-nav::-webkit-scrollbar {
     display: none !important;
-  }
-
-  .sidebar-section-title {
-    display: none !important;
-  }
-
-  #sticky-project-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 8px !important;
-    width: 100% !important;
-    overflow-x: auto !important;
-    scrollbar-width: none !important;
-  }
-
-  #sticky-project-nav::-webkit-scrollbar {
-    display: none !important;
-  }
-
-  .sidebar-nav-button {
-    flex-shrink: 0 !important;
-    width: auto !important;
-    padding: 7px 14px !important;
-    font-size: 0.82rem !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    border-radius: var(--radius-full) !important;
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 1px solid var(--border-subtle) !important;
-    gap: 8px !important;
-  }
-
-  .sidebar-nav-button[data-state="active"] {
-    background: rgba(6, 182, 212, 0.15) !important;
-    border-color: rgba(6, 182, 212, 0.4) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 12px rgba(6, 182, 212, 0.25) !important;
-  }
-
-  .sidebar-nav-button[data-state="active"] .nav-bullet {
-    background: var(--accent-cyan) !important;
-    box-shadow: 0 0 8px var(--accent-cyan) !important;
   }
 
   .project-entry {
     grid-template-columns: 1fr;
     gap: 28px;
     padding: 24px;
-    scroll-margin-top: 130px !important;
+    scroll-margin-top: calc(var(--header-height) + 16px) !important;
   }
 }
 
@@ -2082,6 +2016,76 @@ code, pre, .font-mono {
   .edge-metrics-ribbon { grid-template-columns: 1fr; }
   .blueprint-stats-grid { grid-template-columns: 1fr; }
   .editor-grid-workspace { grid-template-columns: 1fr; height: auto; }
+}
+
+/* --- Floating Go To Top Circle Action --- */
+.btn-go-to-top {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  left: max(20px, env(safe-area-inset-left));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(14, 14, 19, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f4f4f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  z-index: 95;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(12px) scale(0.9);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.btn-go-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.btn-go-to-top:hover {
+  background: rgba(22, 22, 30, 0.95);
+  border-color: rgba(6, 182, 212, 0.6);
+  color: #ffffff;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6), 0 0 14px rgba(6, 182, 212, 0.3);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.btn-go-to-top:active {
+  transform: translateY(0) scale(0.94);
+}
+
+.btn-go-to-top:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+.btn-go-to-top svg {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.btn-go-to-top:hover svg {
+  transform: translateY(-1px);
 }
 
 /* --- 14. Dedicated Management Dashboards (admin.html, lead.html, developer-studio.html) --- */

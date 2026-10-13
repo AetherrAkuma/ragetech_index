@@ -253,6 +253,7 @@
     setupEqualSpotlightListeners();
     setupCommandPaletteListeners();
     setupFaqListeners();
+    setupGoToTopButton();
     initGSAPAnimations();
     initTelemetryHUD();
 
@@ -798,9 +799,9 @@
     document.querySelectorAll('.sidebar-nav-button').forEach(btn => {
       if (btn.getAttribute('data-project-id') === slug) {
         btn.setAttribute('data-state', 'active');
-        // Auto-scroll active tab into view horizontally on mobile/tablet viewports
-        if (window.innerWidth <= 960) {
-          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        // Auto-scroll active tab into view when visible (desktop sidebar)
+        if (btn.offsetParent !== null && window.innerWidth > 960) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         }
       } else {
         btn.removeAttribute('data-state');
@@ -822,7 +823,7 @@
       const header = document.querySelector('.site-header');
       const headerHeight = header ? header.offsetHeight : 64;
       const isMobile = window.innerWidth <= 960;
-      const navOffset = isMobile ? (headerHeight + 64) : (headerHeight + 36);
+      const navOffset = isMobile ? (headerHeight + 20) : (headerHeight + 36);
       const targetTop = target.getBoundingClientRect().top + window.pageYOffset - navOffset;
 
       window.scrollTo({
@@ -1436,6 +1437,40 @@
     if (!item) return;
     const trigger = item.querySelector('.faq-trigger');
     if (trigger) trigger.click();
+  }
+
+  // --------------------------------------------------------------------------
+  // 12. Floating Go To Top Circle Action
+  // --------------------------------------------------------------------------
+  function setupGoToTopButton() {
+    const btn = document.getElementById('goToTopBtn');
+    if (!btn) return;
+
+    let ticking = false;
+    function updateVisibility() {
+      if (window.scrollY > 280) {
+        btn.classList.add('visible');
+      } else {
+        btn.classList.remove('visible');
+      }
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateVisibility);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    updateVisibility();
+
+    btn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
   }
 
   // --------------------------------------------------------------------------
