@@ -82,42 +82,127 @@
     });
   }
 
-  // 5. Seamless Localhost Development Bridge (VS Code Live Server :5500, Vite, file://)
-  // When running locally on a static development server (e.g., Live Server port 5500),
-  // automatically proxy /api/* requests to the live Cloudflare D1 backend (https://ragetech.dev)
-  // so you can develop, test, and save changes locally without needing to push to Git!
-  const isLocalHost = typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' || 
-    window.location.hostname === '127.0.0.1' || 
-    window.location.protocol === 'file:'
-  );
-  const isLocalWorker = typeof window !== 'undefined' && window.location.port === '8787';
-  const REMOTE_API_BASE = 'https://ragetech.dev';
-
-  if (typeof window !== 'undefined' && isLocalHost && !isLocalWorker) {
-    const origFetch = window.fetch;
-    window.fetch = function (resource, options) {
-      if (typeof resource === 'string') {
-        if (resource.startsWith('/api/') || resource === '/api') {
-          return origFetch(`${REMOTE_API_BASE}${resource}`, options);
-        }
-        try {
-          const parsed = new URL(resource);
-          if (parsed.pathname.startsWith('/api')) {
-            return origFetch(`${REMOTE_API_BASE}${parsed.pathname}${parsed.search}`, options);
-          }
-        } catch (e) {}
-      } else if (resource instanceof Request) {
-        try {
-          const parsed = new URL(resource.url);
-          if (parsed.pathname.startsWith('/api')) {
-            const remoteUrl = `${REMOTE_API_BASE}${parsed.pathname}${parsed.search}`;
-            return origFetch(new Request(remoteUrl, resource), options);
-          }
-        } catch (e) {}
+  // 5. Ragetech Global Auth Helper
+  window.RagetechAuth = {
+    getSession() {
+      try {
+        const raw = localStorage.getItem('ragetech_session');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
       }
-      return origFetch(resource, options);
+    },
+    getToken() {
+      const sess = this.getSession();
+      return (sess && sess.token) ? sess.token : null;
+    },
+    getUser() {
+      const sess = this.getSession();
+      return (sess && sess.user) ? sess.user : null;
+    },
+    async logout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      localStorage.removeItem('ragetech_session');
+      if (window.RagetechSync) {
+        window.RagetechSync.broadcast({ type: 'AUTH_LOGOUT' });
+      }
+      window.location.href = 'index.html';
+    }
+  };
+
+  // 6. Universal Fetch Security & Localhost Bridge Interceptor
+  // Automatically attaches HMAC Bearer token to /api/ requests and proxies localhost dev requests
+  if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+    const origFetch = window.fetch;
+    const isLocalHost = (
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1' || 
+      window.location.protocol === 'file:'
+    );
+    const isLocalWorker = window.location.port === '8787';
+    const REMOTE_API_BASE = 'https://ragetech.dev';
+
+    window.fetch = async function (resource, options = {}) {
+      let url = '';
+      if (typeof resource === 'string') {
+        url = resource;
+      } else if (resource instanceof Request) {
+        url = resource.url;
+      } else if (resource && typeof resource.toString === 'function') {
+        url = resource.toString();
+      }
+
+      const isApiRoute = url.startsWith('/api/') || url === '/api' || url.includes('/api/');
+      let finalUrl = url;
+
+      // Localhost Static Server DevBridge: proxy /api/* to Cloudflare D1
+      if (isLocalHost && !isLocalWorker) {
+        if (url.startsWith('/api/') || url === '/api') {
+          finalUrl = `${REMOTE_API_BASE}${url}`;
+        } else {
+          try {
+            const parsed = new URL(url, window.location.href);
+            if (parsed.pathname.startsWith('/api')) {
+              finalUrl = `${REMOTE_API_BASE}${parsed.pathname}${parsed.search}`;
+            }
+          } catch (e) {}
+        }
+      }
+
+      // Clone or initialize options
+      const reqOptions = { ...options };
+
+      // Ensure credentials and auth header are attached for API calls
+      if (isApiRoute) {
+        if (!reqOptions.credentials) {
+          reqOptions.credentials = 'include';
+        }
+
+        const token = window.RagetechAuth.getToken();
+        if (token) {
+          if (reqOptions.headers instanceof Headers) {
+            if (!reqOptions.headers.has('Authorization')) {
+              reqOptions.headers.set('Authorization', `Bearer ${token}`);
+            }
+          } else if (Array.isArray(reqOptions.headers)) {
+            const hasAuth = reqOptions.headers.some(([k]) => k.toLowerCase() === 'authorization');
+            if (!hasAuth) {
+              reqOptions.headers.push(['Authorization', `Bearer ${token}`]);
+            }
+          } else {
+            reqOptions.headers = { ...(reqOptions.headers || {}) };
+            if (!reqOptions.headers['Authorization'] && !reqOptions.headers['authorization']) {
+              reqOptions.headers['Authorization'] = `Bearer ${token}`;
+            }
+          }
+        }
+      }
+
+      // Execute request with proper URL
+      let response;
+      if (resource instanceof Request && finalUrl === url) {
+        response = await origFetch(resource, reqOptions);
+      } else {
+        response = await origFetch(finalUrl, reqOptions);
+      }
+
+      // Handle 401 Unauthorized for management endpoints
+      if (response && response.status === 401 && isApiRoute && (url.includes('/api/manage') || url.includes('/api/auth/verify'))) {
+        localStorage.removeItem('ragetech_session');
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath.includes('admin') || currentPath.includes('lead') || currentPath.includes('developer-studio') || currentPath.includes('repository_editor')) {
+          console.warn('[Ragetech Auth] Session expired or unauthorized. Redirecting to home.');
+          window.location.href = 'index.html?auth=session_expired';
+        }
+      }
+
+      return response;
     };
-    console.info('[Ragetech DevBridge] Active: Localhost static server detected. Seamlessly routing /api/* requests to Cloudflare D1 (https://ragetech.dev).');
+
+    if (isLocalHost && !isLocalWorker) {
+      console.info('[Ragetech DevBridge] Active: Localhost static server detected. Seamlessly routing /api/* requests to Cloudflare D1 (https://ragetech.dev) with Web Crypto auth headers.');
+    }
   }
 })();

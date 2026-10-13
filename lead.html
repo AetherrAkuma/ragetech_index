@@ -140,8 +140,12 @@
     }
 
     function handleLogout() {
-      localStorage.removeItem('ragetech_session');
-      window.location.href = 'index.html';
+      if (window.RagetechAuth) {
+        window.RagetechAuth.logout();
+      } else {
+        localStorage.removeItem('ragetech_session');
+        window.location.href = 'index.html';
+      }
     }
 
     async function loadLeadData() {

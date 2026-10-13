@@ -232,8 +232,12 @@
     }
 
     function handleLogout() {
-      localStorage.removeItem('ragetech_session');
-      window.location.href = 'index.html';
+      if (window.RagetechAuth) {
+        window.RagetechAuth.logout();
+      } else {
+        localStorage.removeItem('ragetech_session');
+        window.location.href = 'index.html';
+      }
     }
 
     // Dynamic Data Loader (Direct Cloudflare D1 Database)

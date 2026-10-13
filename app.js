@@ -1384,6 +1384,9 @@
   }
 
   function handleLogout() {
+    try {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+    } catch (e) {}
     state.currentUser = null;
     state.sessionToken = null;
     localStorage.removeItem('ragetech_session');
@@ -1394,6 +1397,9 @@
     if (passInput) passInput.value = '';
     if (handleInput) handleInput.value = '';
     updateHeaderAuthUI();
+    if (window.RagetechSync) {
+      window.RagetechSync.broadcast({ type: 'AUTH_LOGOUT' });
+    }
   }
 
   // --------------------------------------------------------------------------

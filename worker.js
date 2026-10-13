@@ -10,14 +10,16 @@ export default {
     const pathname = url.pathname;
 
     // CORS Headers for API requests
+    const origin = request.headers.get('Origin');
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      ...(origin ? { 'Access-Control-Allow-Credentials': 'true' } : {})
     };
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
 
     // ------------------------------------------------------------------------
@@ -262,6 +264,7 @@ export default {
           `).bind(handle, handle).first();
 
           if (dev) {
+            const { password_hash, ...safeDev } = dev;
             const { results: assignedProjects } = await env.DB.prepare(`
               SELECT p.id, p.slug, p.name, p.tagline, p.category, p.status, pa.contribution_role
               FROM project_assignments pa
@@ -273,7 +276,7 @@ export default {
               success: true,
               source: 'd1',
               data: {
-                ...dev,
+                ...safeDev,
                 assigned_projects: assignedProjects
               }
             }, corsHeaders);
@@ -285,97 +288,122 @@ export default {
       return jsonResponse({ success: false, message: 'Developer not found' }, corsHeaders, 404);
     }
 
-    // POST /api/auth/login — RBAC Login System with SHA-256 verification
+    // POST /api/auth/login — RBAC Login System with HMAC-SHA256 Token Issuance & Anti-Brute-Force
     if (pathname === '/api/auth/login' && request.method === 'POST') {
+      const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '127.0.0.1';
+      if (!checkLoginRateLimit(clientIp)) {
+        return jsonResponse({
+          success: false,
+          message: 'Too many failed login attempts. Please wait 5 minutes before trying again.'
+        }, corsHeaders, 429);
+      }
+
       try {
         const body = await request.json();
         const identifier = (body.handle || body.email || body.username || '').trim().toLowerCase();
         const password = body.password || '';
-        const hashedInput = await sha256Hex(password);
+
+        if (!identifier || !password) {
+          return jsonResponse({ success: false, message: 'Handle/email and access key are required.' }, corsHeaders, 400);
+        }
 
         if (env.DB) {
           const dev = await env.DB.prepare(`
-            SELECT id, handle, name, email, role, account_role, squad, avatar_url, password_hash 
+            SELECT id, handle, name, email, role, account_role, squad, avatar_url, password_hash, is_verified 
             FROM developers 
             WHERE lower(handle) = ? OR lower(email) = ?
           `).bind(identifier, identifier).first();
 
           if (dev) {
+            // Anti-abuse: Check if candidate nomination is awaiting administrator verification
+            if (dev.is_verified !== undefined && Number(dev.is_verified) === 0) {
+              return jsonResponse({
+                success: false,
+                message: 'Account pending Administrator verification. Please await approval.'
+              }, corsHeaders, 403);
+            }
+
             const defaultHash = (dev.handle === 'reymartchua' || dev.email === 'reymartchua@ragetech.dev')
               ? 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08'
               : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
             const expectedHash = dev.password_hash || defaultHash;
-            const isValid = (hashedInput === expectedHash) ||
-              (dev.handle === 'reymartchua' && password === 'yuichirokanade') ||
-              (!dev.password_hash && password === 'admin123');
+
+            const isValid = await verifyPassword(password, expectedHash);
 
             if (isValid) {
+              recordSuccessfulLogin(clientIp);
+
+              // Transparent auto-upgrade: upgrade unsalted legacy hash to salted hash
+              if (!dev.password_hash || !dev.password_hash.includes(':')) {
+                const upgradedHash = await hashPassword(password);
+                await env.DB.prepare('UPDATE developers SET password_hash = ? WHERE id = ?')
+                  .bind(upgradedHash, dev.id)
+                  .run()
+                  .catch(() => {});
+              }
+
               const { password_hash, ...safeUser } = dev;
-              // Zero-write login: authentication remains read-only to strictly preserve D1 100k daily write budget
+              const token = await generateAuthToken(dev, env);
+              const cookieHeader = `ragetech_auth=${encodeURIComponent(token)}; Path=/; SameSite=Lax; HttpOnly; Secure; Max-Age=${7 * 86400}`;
+
+              await recordAuditLog(env, {
+                actor_handle: dev.handle,
+                action: 'AUTH_LOGIN',
+                target_type: 'developer',
+                target_id: dev.id,
+                details: `Signed in to ${dev.account_role} session with cryptographically verified token.`
+              });
+
               return jsonResponse({
                 success: true,
-                token: `tok_${dev.handle}_${Date.now()}`,
+                token,
                 user: safeUser
-              }, corsHeaders);
+              }, {
+                ...corsHeaders,
+                'Set-Cookie': cookieHeader
+              });
             }
           }
         }
 
-        // Offline / fallback verification
-        if (identifier === 'reymartchua@ragetech.dev' || identifier === 'reymart' || identifier === 'reymartchua') {
-          if (hashedInput === 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08' || password === 'yuichirokanade') {
-            return jsonResponse({
-              success: true,
-              token: `tok_reymartchua_${Date.now()}`,
-              user: {
-                id: 'dev-00',
-                handle: 'reymartchua',
-                name: 'Reymart Chua',
-                email: 'reymartchua@ragetech.dev',
-                role: 'Founding Lead & Systems Architect',
-                account_role: 'admin',
-                squad: 'systems',
-                avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=280&q=80'
-              }
-            }, corsHeaders);
-          }
-        } else if (identifier === 'sora' || identifier === 'sora@ragetech.dev') {
-          if (hashedInput === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9' || password === 'admin123') {
-            return jsonResponse({
-              success: true,
-              token: `tok_sora_${Date.now()}`,
-              user: {
-                id: 'dev-01',
-                handle: 'sora',
-                name: 'Sora Takahashi',
-                email: 'sora@ragetech.dev',
-                role: 'Founding Systems Architect',
-                account_role: 'admin',
-                squad: 'systems'
-              }
-            }, corsHeaders);
-          }
-        }
-
+        recordFailedLogin(clientIp);
         return jsonResponse({ success: false, message: 'Invalid credentials' }, corsHeaders, 401);
       } catch (err) {
         return jsonResponse({ success: false, message: 'Bad request' }, corsHeaders, 400);
       }
     }
 
-    // POST /api/auth/change-password — Update and SHA-256 hash access key
+    // POST /api/auth/logout — Invalidate auth session cookie
+    if (pathname === '/api/auth/logout' && request.method === 'POST') {
+      return jsonResponse({ success: true, message: 'Session terminated' }, {
+        ...corsHeaders,
+        'Set-Cookie': 'ragetech_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax'
+      });
+    }
+
+    // POST /api/auth/change-password — Update and cryptographically salt access key (Strictly Authenticated)
     if (pathname === '/api/auth/change-password' && request.method === 'POST') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser) {
+          return jsonResponse({ success: false, error: 'Unauthorized: Valid session required to modify access keys.' }, corsHeaders, 401);
+        }
+
         const body = await request.json();
-        const identifier = (body.handle || body.email || body.id || '').trim().toLowerCase();
+        const identifier = (body.handle || body.email || body.id || authUser.handle).trim().toLowerCase();
         const currentPassword = body.currentPassword || '';
         const newPassword = body.newPassword || '';
 
-        if (!identifier || !newPassword || newPassword.length < 6) {
+        if (!newPassword || newPassword.length < 6) {
           return jsonResponse({ success: false, error: 'New access key must be at least 6 characters.' }, corsHeaders, 400);
         }
 
-        const newHash = await sha256Hex(newPassword);
+        const isSelf = authUser.handle.toLowerCase() === identifier || authUser.id === identifier;
+        const isAdmin = authUser.account_role === 'admin';
+
+        if (!isSelf && !isAdmin) {
+          return jsonResponse({ success: false, error: 'Forbidden: Insufficient privileges to modify another developer access key.' }, corsHeaders, 403);
+        }
 
         if (env.DB) {
           const dev = await env.DB.prepare(`
@@ -384,26 +412,32 @@ export default {
           `).bind(identifier, identifier, identifier).first();
 
           if (!dev) {
-            return jsonResponse({ success: false, error: 'Developer not found in collective.' }, corsHeaders, 404);
+            return jsonResponse({ success: false, error: 'Developer record not found.' }, corsHeaders, 404);
           }
 
-          if (currentPassword) {
-            const currentHash = await sha256Hex(currentPassword);
+          // If modifying own password, currentPassword is required and verified
+          if (isSelf) {
+            if (!currentPassword) {
+              return jsonResponse({ success: false, error: 'Current access key is required to authorize password change.' }, corsHeaders, 400);
+            }
             const expectedHash = dev.password_hash || (
               dev.handle === 'reymartchua'
                 ? 'd269c02552aba73da1e4a2ec1e1a7cb20e737f6debfe3be5027c7eb8d2dc5a08'
                 : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
             );
-            if (currentHash !== expectedHash && currentPassword !== 'yuichirokanade' && currentPassword !== 'admin123') {
-              return jsonResponse({ success: false, error: 'Current password does not match existing record.' }, corsHeaders, 403);
+            const isMatch = await verifyPassword(currentPassword, expectedHash);
+            if (!isMatch) {
+              return jsonResponse({ success: false, error: 'Current access key is incorrect.' }, corsHeaders, 403);
             }
           }
+
+          const newSaltedHash = await hashPassword(newPassword);
 
           await env.DB.prepare(`
             UPDATE developers
             SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
-          `).bind(newHash, dev.id).run();
+          `).bind(newSaltedHash, dev.id).run();
 
           // Invalidate edge cache for developers
           if (typeof caches !== 'undefined' && caches.default && ctx && typeof ctx.waitUntil === 'function') {
@@ -414,25 +448,33 @@ export default {
           }
 
           await recordAuditLog(env, {
-            actor_handle: dev.handle,
+            actor_handle: authUser.handle,
             action: 'PASSWORD_CHANGE',
             target_type: 'developer',
             target_id: dev.id,
-            details: 'Access key updated and hashed via SHA-256'
+            details: `Access key securely updated with cryptographic salt by @${authUser.handle}`
           });
 
-          return jsonResponse({ success: true, message: 'Access key securely hashed and saved in Cloudflare D1.' }, corsHeaders);
+          return jsonResponse({ success: true, message: 'Access key securely updated with cryptographic salt.' }, corsHeaders);
         }
 
-        return jsonResponse({ success: true, message: 'Access key updated in offline runtime.' }, corsHeaders);
+        return jsonResponse({ success: false, error: 'Database service unavailable' }, corsHeaders, 503);
       } catch (err) {
         return jsonResponse({ success: false, error: err.message }, corsHeaders, 500);
       }
     }
 
-    // POST / PUT /api/manage/projects — Add or update project
+    // POST / PUT /api/manage/projects — Add or update project (Admin & Lead)
     if ((pathname === '/api/manage/projects' || pathname === '/api/manage/projects/') && (request.method === 'POST' || request.method === 'PUT')) {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser) {
+          return jsonResponse({ success: false, message: 'Unauthorized: Authentication required.' }, corsHeaders, 401);
+        }
+        if (authUser.account_role !== 'admin' && authUser.account_role !== 'lead') {
+          return jsonResponse({ success: false, message: 'Forbidden: Insufficient privileges to publish or edit repositories.' }, corsHeaders, 403);
+        }
+
         const body = await request.json();
         const { 
           id, slug, name, repo, badge, tagline, description, category, status, 
@@ -541,13 +583,13 @@ export default {
             }
           }
 
-          // Record audit log with deduplication and write throttling
+          // Record audit log with authentic actor handle
           await recordAuditLog(env, {
-            actor_handle: body.actor_handle || body.created_by || (request.headers.get('x-actor-handle') || 'admin'),
+            actor_handle: authUser.handle,
             action: existing ? 'PROJECT_UPDATE' : 'PROJECT_CREATE',
             target_type: 'project',
             target_id: existing ? existing.id : targetId,
-            details: `Repository ${effectiveName} (${effectiveSlug}) saved to D1 database`
+            details: `Repository ${effectiveName} (${effectiveSlug}) saved by @${authUser.handle}`
           });
 
           return jsonResponse({ success: true, message: 'Project saved successfully to Cloudflare D1', id: existing ? existing.id : targetId, slug: effectiveSlug }, corsHeaders);
@@ -558,9 +600,17 @@ export default {
       }
     }
 
-    // DELETE /api/manage/projects/:id — Remove project
+    // DELETE /api/manage/projects/:id — Remove project (Admin Only)
     if (pathname.startsWith('/api/manage/projects') && request.method === 'DELETE') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser) {
+          return jsonResponse({ success: false, message: 'Unauthorized: Authentication required.' }, corsHeaders, 401);
+        }
+        if (authUser.account_role !== 'admin') {
+          return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to delete repositories.' }, corsHeaders, 403);
+        }
+
         let idOrSlug = pathname.replace('/api/manage/projects', '').replace(/^\/+|\/+$/g, '').trim();
         if (!idOrSlug) {
           idOrSlug = url.searchParams.get('id') || url.searchParams.get('slug') || '';
@@ -627,29 +677,16 @@ export default {
     // POST /api/manage/projects/reorder — Persist drag-and-drop order for repositories (Admin Only)
     if (pathname === '/api/manage/projects/reorder' && request.method === 'POST') {
       try {
-        const body = await request.json();
-        const { order } = body;
-        let actorRole = request.headers.get('x-user-role') || body.actor_role;
-        const authHeader = request.headers.get('Authorization') || '';
-        const actorHandle = request.headers.get('x-actor-handle') || body.actor_handle;
-
-        if (env.DB && (actorHandle || authHeader)) {
-          let handleToCheck = actorHandle;
-          if (!handleToCheck && authHeader.startsWith('Bearer tok_')) {
-            const parts = authHeader.replace('Bearer tok_', '').split('_');
-            handleToCheck = parts[0];
-          }
-          if (handleToCheck) {
-            const actorDev = await env.DB.prepare('SELECT account_role FROM developers WHERE lower(handle) = lower(?)').bind(handleToCheck).first();
-            if (actorDev) {
-              actorRole = actorDev.account_role;
-            }
-          }
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser) {
+          return jsonResponse({ success: false, message: 'Unauthorized: Authentication required.' }, corsHeaders, 401);
         }
-
-        if (actorRole !== 'admin') {
+        if (authUser.account_role !== 'admin') {
           return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to customize layout and orientation.' }, corsHeaders, 403);
         }
+
+        const body = await request.json();
+        const { order } = body;
 
         if (!Array.isArray(order) || order.length === 0) {
           return jsonResponse({ success: false, message: 'Invalid or empty order array' }, corsHeaders, 400);
@@ -666,11 +703,11 @@ export default {
             await env.DB.batch(stmts);
           }
           await recordAuditLog(env, {
-            actor_handle: request.headers.get('x-actor-handle') || 'admin',
+            actor_handle: authUser.handle,
             action: 'PROJECTS_REORDER',
             target_type: 'project',
             target_id: 'all',
-            details: `Reordered ${order.length} projects on dashboard`
+            details: `Reordered ${order.length} projects on dashboard by @${authUser.handle}`
           });
 
           // Invalidate edge cache for projects
@@ -689,15 +726,22 @@ export default {
       }
     }
 
-    // POST / PUT /api/manage/developers — Create or Update developer
+    // POST / PUT /api/manage/developers — Create or Update developer (Strictly Authenticated)
     if ((pathname === '/api/manage/developers' || pathname === '/api/manage/developers/') && (request.method === 'POST' || request.method === 'PUT')) {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser) {
+          return jsonResponse({ success: false, message: 'Unauthorized: Authentication required.' }, corsHeaders, 401);
+        }
+
+        const isLead = authUser.account_role === 'lead';
+        const isAdmin = authUser.account_role === 'admin';
+        if (!isAdmin && !isLead) {
+          return jsonResponse({ success: false, message: 'Forbidden: Insufficient privileges to manage developers.' }, corsHeaders, 403);
+        }
+
         const body = await request.json();
         const { id, handle, name, email, password, role, account_role, squad, bio, avatar_url, website_url, github_url, gpg_fingerprint, is_verified, assigned_projects } = body;
-
-        const actorRole = (body.actor_role || request.headers.get('x-actor-role') || '').toLowerCase();
-        const actorHandle = (body.actor_handle || body.created_by || request.headers.get('x-actor-handle') || 'admin').toLowerCase();
-        const isLead = actorRole === 'lead';
 
         const cleanHandle = (handle || '').trim().toLowerCase();
         const cleanName = (name || cleanHandle || 'Anonymous').trim();
@@ -712,11 +756,10 @@ export default {
         const cleanGithub = (github_url || (cleanHandle ? `https://github.com/${cleanHandle}` : '')).trim() || null;
         const cleanFingerprint = (gpg_fingerprint || '8F4A 2B19 E03C 41FA 98E1').trim();
         
-        // Anti-abuse: Lead members are placed strictly into "In-Verification Mode" (is_verified = 0)
-        // An Administrator must review and accept or deny them.
+        // Anti-abuse: Lead creations are placed strictly into "In-Verification Mode" (is_verified = 0)
         let cleanVerified;
         if (isLead) {
-          cleanVerified = 0; // Forced inverification mode for lead creations
+          cleanVerified = 0;
         } else {
           cleanVerified = is_verified !== undefined && is_verified !== null ? (is_verified ? 1 : 0) : 1;
         }
@@ -731,11 +774,16 @@ export default {
             return jsonResponse({ success: false, message: 'Project Leads cannot modify verified collective members.' }, corsHeaders, 403);
           }
 
-          let passHash = existing ? existing.password_hash : '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+          let passHash;
           if (body.password_hash) {
             passHash = body.password_hash;
           } else if (password) {
-            passHash = await sha256Hex(password);
+            passHash = await hashPassword(password);
+          } else if (existing) {
+            passHash = existing.password_hash;
+          } else {
+            // New user without explicit password gets default salted password
+            passHash = await hashPassword('admin123');
           }
 
           const devId = existing ? existing.id : ((id || '').trim() || `dev-${Date.now()}`);
@@ -798,13 +846,13 @@ export default {
           }
 
           await recordAuditLog(env, {
-            actor_handle: actorHandle,
+            actor_handle: authUser.handle,
             action: isLead ? 'MEMBER_NOMINATED' : (existing ? 'DEVELOPER_UPDATE' : 'DEVELOPER_CREATE'),
             target_type: 'developer',
             target_id: devId,
             details: isLead 
-              ? `Project Lead @${actorHandle} nominated candidate @${cleanHandle} in Verification Mode (Admin Approval Required)`
-              : `Developer @${cleanHandle} profile saved to D1`
+              ? `Project Lead @${authUser.handle} nominated candidate @${cleanHandle} in Verification Mode (Admin Approval Required)`
+              : `Developer @${cleanHandle} profile saved by @${authUser.handle}`
           });
 
           // Invalidate edge cache for developers
@@ -830,12 +878,16 @@ export default {
       }
     }
 
-    // POST /api/manage/developers/verify — Admin accepts / verifies a candidate member
+    // POST /api/manage/developers/verify — Admin accepts / verifies a candidate member (Admin Only)
     if ((pathname === '/api/manage/developers/verify' || pathname === '/api/manage/developers/verify/') && request.method === 'POST') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser || authUser.account_role !== 'admin') {
+          return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to verify members.' }, corsHeaders, 403);
+        }
+
         const body = await request.json();
         const target = (body.handle || body.id || '').trim().toLowerCase();
-        const adminActor = (body.actor_handle || request.headers.get('x-actor-handle') || 'admin').trim();
 
         if (!target) {
           return jsonResponse({ success: false, message: 'Missing developer handle or id' }, corsHeaders, 400);
@@ -853,11 +905,11 @@ export default {
             .bind(dev.id).run();
 
           await recordAuditLog(env, {
-            actor_handle: adminActor,
+            actor_handle: authUser.handle,
             action: 'MEMBER_VERIFIED',
             target_type: 'developer',
             target_id: dev.id,
-            details: `Administrator @${adminActor} accepted and verified member @${dev.handle} into the collective`
+            details: `Administrator @${authUser.handle} accepted and verified member @${dev.handle} into the collective`
           });
 
           // Invalidate edge cache
@@ -877,9 +929,14 @@ export default {
       }
     }
 
-    // DELETE /api/manage/developers/:id — Remove or Deny developer
+    // DELETE /api/manage/developers/:id — Remove or Deny developer (Admin Only)
     if (pathname.startsWith('/api/manage/developers') && request.method === 'DELETE') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser || authUser.account_role !== 'admin') {
+          return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to remove collective members.' }, corsHeaders, 403);
+        }
+
         let idOrHandle = pathname.replace('/api/manage/developers', '').replace(/^\/+|\/+$/g, '').trim();
         if (!idOrHandle) {
           idOrHandle = url.searchParams.get('id') || url.searchParams.get('handle') || '';
@@ -904,6 +961,12 @@ export default {
 
           const targetId = dev ? dev.id : idOrHandle;
           const targetHandle = dev ? dev.handle : idOrHandle;
+
+          // Critical lockout safeguard: Prevent deleting primary founding admin
+          if (targetId === 'dev-00' || targetHandle.toLowerCase() === 'reymartchua') {
+            return jsonResponse({ success: false, message: 'Forbidden: Primary founding administrator cannot be removed.' }, corsHeaders, 403);
+          }
+
           const wasPending = dev && (!dev.is_verified || Number(dev.is_verified) === 0);
 
           await env.DB.batch([
@@ -911,15 +974,14 @@ export default {
             env.DB.prepare('DELETE FROM developers WHERE id = ? OR lower(handle) = lower(?) OR lower(id) = lower(?)').bind(targetId, targetHandle, targetId)
           ]);
 
-          const adminActor = request.headers.get('x-actor-handle') || 'admin';
           await recordAuditLog(env, {
-            actor_handle: adminActor,
+            actor_handle: authUser.handle,
             action: wasPending ? 'MEMBER_DENIED' : 'DEVELOPER_DELETE',
             target_type: 'developer',
             target_id: targetId,
             details: wasPending 
-              ? `Administrator @${adminActor} denied candidate nomination for @${targetHandle}` 
-              : `Developer @${targetHandle} removed from D1`
+              ? `Administrator @${authUser.handle} denied candidate nomination for @${targetHandle}` 
+              : `Developer @${targetHandle} removed from D1 by @${authUser.handle}`
           });
 
           // Invalidate edge cache
@@ -942,29 +1004,13 @@ export default {
     // POST /api/manage/developers/reorder — Persist drag-and-drop order for developers (Admin Only)
     if (pathname === '/api/manage/developers/reorder' && request.method === 'POST') {
       try {
-        const body = await request.json();
-        const { order } = body;
-        let actorRole = request.headers.get('x-user-role') || body.actor_role;
-        const authHeader = request.headers.get('Authorization') || '';
-        const actorHandle = request.headers.get('x-actor-handle') || body.actor_handle;
-
-        if (env.DB && (actorHandle || authHeader)) {
-          let handleToCheck = actorHandle;
-          if (!handleToCheck && authHeader.startsWith('Bearer tok_')) {
-            const parts = authHeader.replace('Bearer tok_', '').split('_');
-            handleToCheck = parts[0];
-          }
-          if (handleToCheck) {
-            const actorDev = await env.DB.prepare('SELECT account_role FROM developers WHERE lower(handle) = lower(?)').bind(handleToCheck).first();
-            if (actorDev) {
-              actorRole = actorDev.account_role;
-            }
-          }
-        }
-
-        if (actorRole !== 'admin') {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser || authUser.account_role !== 'admin') {
           return jsonResponse({ success: false, message: 'Forbidden: Only administrators have authority to customize layout and orientation.' }, corsHeaders, 403);
         }
+
+        const body = await request.json();
+        const { order } = body;
 
         if (!Array.isArray(order) || order.length === 0) {
           return jsonResponse({ success: false, message: 'Invalid or empty order array' }, corsHeaders, 400);
@@ -982,11 +1028,11 @@ export default {
             await env.DB.batch(stmts);
           }
           await recordAuditLog(env, {
-            actor_handle: request.headers.get('x-actor-handle') || 'admin',
+            actor_handle: authUser.handle,
             action: 'DEVELOPERS_REORDER',
             target_type: 'developer',
             target_id: 'all',
-            details: `Reordered ${order.length} developers on dashboard`
+            details: `Reordered ${order.length} developers on dashboard by @${authUser.handle}`
           });
 
           // Invalidate edge cache for developers
@@ -1005,9 +1051,14 @@ export default {
       }
     }
 
-    // POST /api/manage/assignments — Assign developer to project
+    // POST /api/manage/assignments — Assign developer to project (Admin & Lead)
     if ((pathname === '/api/manage/assignments' || pathname === '/api/manage/assignments/') && request.method === 'POST') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser || (authUser.account_role !== 'admin' && authUser.account_role !== 'lead')) {
+          return jsonResponse({ success: false, message: 'Forbidden: Insufficient permissions to manage project assignments.' }, corsHeaders, 403);
+        }
+
         const body = await request.json();
         const { project_id, developer_id, contribution_role } = body;
         if (env.DB) {
@@ -1027,9 +1078,14 @@ export default {
       }
     }
 
-    // DELETE /api/manage/assignments — Remove assignment
+    // DELETE /api/manage/assignments — Remove assignment (Admin & Lead)
     if ((pathname === '/api/manage/assignments' || pathname === '/api/manage/assignments/') && request.method === 'DELETE') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser || (authUser.account_role !== 'admin' && authUser.account_role !== 'lead')) {
+          return jsonResponse({ success: false, message: 'Forbidden: Insufficient permissions to manage project assignments.' }, corsHeaders, 403);
+        }
+
         const body = await request.json();
         const { project_id, developer_id } = body;
         if (env.DB) {
@@ -1048,8 +1104,12 @@ export default {
       }
     }
 
-    // GET /api/manage/audit or /api/logs — Retrieve audit logs
+    // GET /api/manage/audit or /api/logs — Retrieve audit logs (Admin Only)
     if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/' || pathname === '/api/logs' || pathname === '/api/logs/') && request.method === 'GET') {
+      const authUser = await authenticateRequest(request, env);
+      if (!authUser || authUser.account_role !== 'admin') {
+        return jsonResponse({ success: false, message: 'Forbidden: Audit logs are restricted to platform administrators.' }, corsHeaders, 403);
+      }
       if (env.DB) {
         try {
           const { results: logs } = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100').all();
@@ -1061,13 +1121,17 @@ export default {
       return jsonResponse({ success: true, data: [] }, corsHeaders);
     }
 
-    // POST /api/manage/audit or /api/logs — Record audit event
+    // POST /api/manage/audit or /api/logs — Record audit event (Admin Only)
     if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/' || pathname === '/api/logs' || pathname === '/api/logs/') && request.method === 'POST') {
       try {
+        const authUser = await authenticateRequest(request, env);
+        if (!authUser || authUser.account_role !== 'admin') {
+          return jsonResponse({ success: false, message: 'Forbidden: Audit event logging restricted to platform administrators.' }, corsHeaders, 403);
+        }
         const body = await request.json();
-        const { actor_handle, action, target_type, target_id, details } = body;
+        const { action, target_type, target_id, details } = body;
         if (env.DB) {
-          await recordAuditLog(env, { actor_handle, action, target_type, target_id, details });
+          await recordAuditLog(env, { actor_handle: authUser.handle, action, target_type, target_id, details });
           return jsonResponse({ success: true, message: 'Audit event processed' }, corsHeaders);
         }
         return jsonResponse({ success: true, message: 'Logged (offline)' }, corsHeaders);
@@ -1076,8 +1140,12 @@ export default {
       }
     }
 
-    // DELETE /api/manage/audit or /api/logs — Clear audit history
+    // DELETE /api/manage/audit or /api/logs — Clear audit history (Admin Only)
     if ((pathname === '/api/manage/audit' || pathname === '/api/manage/audit/' || pathname === '/api/logs' || pathname === '/api/logs/') && request.method === 'DELETE') {
+      const authUser = await authenticateRequest(request, env);
+      if (!authUser || authUser.account_role !== 'admin') {
+        return jsonResponse({ success: false, message: 'Forbidden: Only administrators can clear audit logs.' }, corsHeaders, 403);
+      }
       if (env.DB) {
         try {
           await env.DB.prepare('DELETE FROM audit_logs').run();
@@ -1090,8 +1158,24 @@ export default {
     }
 
     // ------------------------------------------------------------------------
-    // 2. Static Asset & Clean URL Routing
+    // 2. Static Asset & Clean URL Routing with Edge Dashboard Gating
     // ------------------------------------------------------------------------
+
+    // Edge-Level Dashboard Access Gating
+    const GATED_DASHBOARDS = {
+      '/admin.html': ['admin'],
+      '/lead.html': ['admin', 'lead'],
+      '/developer-studio.html': ['admin', 'lead', 'developer'],
+      '/repository_editor.html': ['admin', 'lead']
+    };
+
+    if (GATED_DASHBOARDS[pathname]) {
+      const allowedRoles = GATED_DASHBOARDS[pathname];
+      const authUser = await authenticateRequest(request, env);
+      if (!authUser || !allowedRoles.includes(authUser.account_role)) {
+        return Response.redirect(`${url.origin}/index.html?auth=unauthorized`, 302);
+      }
+    }
 
     // Friendly URL Rewrites & Dynamic Open Graph for Facebook / Social Crawlers:
     // /r/:slug, /repository/:slug, /p/:slug, /project.html?id=:slug, or clean URL /project?id=:slug
@@ -1289,4 +1373,176 @@ function rewriteMetaTags(response, meta) {
     .on('meta[name="twitter:image"]', { element(el) { el.setAttribute('content', image); } })
     .transform(response);
 }
+
+// ============================================================================
+// Cryptographic Authentication & Token Engine (Web Crypto HMAC-SHA256)
+// ============================================================================
+function getAuthSecret(env) {
+  return (env && env.AUTH_SECRET) ? env.AUTH_SECRET : 'ragetech_sovereign_edge_signing_key_2026_super_secure';
+}
+
+function base64UrlEncode(bytes) {
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+  let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+async function signHmac(data, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sigBuffer = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+  return base64UrlEncode(new Uint8Array(sigBuffer));
+}
+
+async function generateAuthToken(user, env) {
+  const payload = {
+    sub: user.handle,
+    id: user.id,
+    role: user.account_role,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days validity
+  };
+  const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const secret = getAuthSecret(env);
+  const sig = await signHmac(payloadB64, secret);
+  return `${payloadB64}.${sig}`;
+}
+
+async function verifyAuthToken(token, env) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [payloadB64, sig] = parts;
+  const secret = getAuthSecret(env);
+  const expectedSig = await signHmac(payloadB64, secret);
+  if (expectedSig !== sig) return null;
+
+  try {
+    const payload = JSON.parse(base64UrlDecode(payloadB64));
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function getRequestToken(request) {
+  const authHeader = request.headers.get('Authorization') || '';
+  if (authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7).trim();
+  }
+  const cookieHeader = request.headers.get('Cookie') || '';
+  const match = cookieHeader.match(/(?:^|;\s*)ragetech_auth=([^;]+)/);
+  if (match) {
+    return decodeURIComponent(match[1]).trim();
+  }
+  return null;
+}
+
+async function authenticateRequest(request, env) {
+  const token = getRequestToken(request);
+  if (!token) return null;
+  const payload = await verifyAuthToken(token, env);
+  if (!payload) return null;
+
+  if (env && env.DB) {
+    try {
+      const dev = await env.DB.prepare('SELECT id, handle, name, email, role, account_role, is_verified FROM developers WHERE id = ? OR lower(handle) = lower(?)')
+        .bind(payload.id || payload.sub, payload.sub)
+        .first();
+      if (!dev || (dev.is_verified !== undefined && Number(dev.is_verified) === 0)) {
+        return null;
+      }
+      return {
+        id: dev.id,
+        handle: dev.handle,
+        name: dev.name,
+        email: dev.email,
+        account_role: dev.account_role
+      };
+    } catch (e) {}
+  }
+
+  return {
+    id: payload.id,
+    handle: payload.sub,
+    account_role: payload.role
+  };
+}
+
+// ============================================================================
+// Salted Password Hashing Engine
+// ============================================================================
+async function hashPassword(password) {
+  const saltBytes = new Uint8Array(16);
+  crypto.getRandomValues(saltBytes);
+  const saltHex = Array.from(saltBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = await sha256Hex(saltHex + password);
+  return `${saltHex}:${hashHex}`;
+}
+
+async function verifyPassword(password, storedHash) {
+  if (!storedHash || !password) return false;
+  if (storedHash.includes(':')) {
+    const [saltHex, expectedHash] = storedHash.split(':');
+    const computedHash = await sha256Hex(saltHex + password);
+    return computedHash === expectedHash;
+  }
+  const legacyHash = await sha256Hex(password);
+  return legacyHash === storedHash;
+}
+
+// ============================================================================
+// Anti-Brute-Force Login Rate Limiting (In-Memory Sliding Window)
+// ============================================================================
+const loginRateLimitMap = new Map();
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 5 * 60 * 1000;
+
+function checkLoginRateLimit(ip) {
+  const now = Date.now();
+  const record = loginRateLimitMap.get(ip);
+  if (record) {
+    if (record.count >= LOGIN_MAX_ATTEMPTS) {
+      if (now - record.firstTime < LOGIN_LOCKOUT_MS) {
+        return false;
+      }
+      loginRateLimitMap.delete(ip);
+    }
+  }
+  return true;
+}
+
+function recordFailedLogin(ip) {
+  const now = Date.now();
+  const record = loginRateLimitMap.get(ip) || { count: 0, firstTime: now };
+  record.count += 1;
+  loginRateLimitMap.set(ip, record);
+}
+
+function recordSuccessfulLogin(ip) {
+  loginRateLimitMap.delete(ip);
+}
+
 
